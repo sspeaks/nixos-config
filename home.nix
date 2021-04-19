@@ -1,6 +1,20 @@
 { config, pkgs, ... }:
 
-{
+let
+  LS_COLORS = pkgs.fetchgit {
+    url = "https://github.com/trapd00r/LS_COLORS";
+    rev = "6fb72eecdcb533637f5a04ac635aa666b736cf50";
+    sha256 = "0czqgizxq7ckmqw9xbjik7i1dfwgc1ci8fvp1fsddb35qrqi857a";
+  };
+  ls-colors = pkgs.runCommand "ls-colors" { } ''
+    mkdir -p $out/bin $out/share
+    ln -s ${pkgs.coreutils}/bin/ls $out/bin/ls
+    ln -s ${pkgs.coreutils}/bin/dircolors $out/bin/dircolors
+    cp ${LS_COLORS}/LS_COLORS $out/share/LS_COLORS
+  '';
+
+  shell-prompt = pkgs.callPackage ./shell-prompt { };
+in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
@@ -8,55 +22,53 @@
   # paths it should manage.
   home.username = "sspeaks";
   home.homeDirectory = "/home/sspeaks";
-  home.packages = with pkgs; [ ripgrep git ];
+  home.packages = [ pkgs.ripgrep pkgs.git ls-colors shell-prompt ];
 
 
   programs.neovim = {
       enable = true;
       vimAlias = true;
-#      extraConfig = builtins.readFile ./home/extraConfig.vim;
-
       plugins = with pkgs.vimPlugins; [
         # Syntax / Language Support ##########################
         vim-nix
-        #vim-ruby # ruby
         vim-pandoc # pandoc (1/2)
         vim-pandoc-syntax # pandoc (2/2)
-        #es.next.syntax.vim # ES7 syntax
-
-        # UI #################################################
-        # vim-devicons
-        #vim-airline
-
-        # Editor Features ####################################
-        #vim-surround # cs"'
-        #vim-repeat # cs"'...
-        #vim-commentary # gcap
-        #vim-ripgrep
-        #vim-indent-object # >aI
-        #vim-easy-align # vipga
-        #vim-eunuch # :Rename foo.rb
-        #vim-sneak
-        #supertab
-        # vim-endwise        # add end, } after opening block
-        # gitv
-        # tabnine-vim
-        #ale # linting
-        #nerdtree
-        # vim-toggle-quickfix
-        # neosnippet.vim
-        # neosnippet-snippets
-        # splitjoin.vim
-        #nerdtree
-
-        # Buffer / Pane / File Management ####################
-        #fzf-vim # all the things
-
-        # Panes / Larger features ############################
-        #tagbar # <leader>5
-        #vim-fugitive # Gblame
       ];
     };
+  programs.zsh = {
+      enable = true;
+      enableCompletion = true;
+      enableAutosuggestions = true;
+
+      shellAliases = {
+        ls = "ls --color=auto -F";
+      };
+      initExtraBeforeCompInit = ''
+        eval $(${pkgs.coreutils}/bin/dircolors -b) 
+        ${builtins.readFile ./pre-compinit.zsh}
+      '';
+
+      plugins = [
+        {
+          name = "zsh-autosuggestions";
+          src = pkgs.fetchFromGitHub {
+            owner = "zsh-users";
+            repo = "zsh-autosuggestions";
+            rev = "v0.6.3";
+            sha256 = "1h8h2mz9wpjpymgl2p7pc146c1jgb3dggpvzwm9ln3in336wl95c";
+          };
+        }
+        {
+          name = "zsh-syntax-highlighting";
+          src = pkgs.fetchFromGitHub {
+            owner = "zsh-users";
+            repo = "zsh-syntax-highlighting";
+            rev = "be3882aeb054d01f6667facc31522e82f00b5e94";
+            sha256 = "0w8x5ilpwx90s2s2y56vbzq92ircmrf0l5x8hz4g1nx3qzawv6af";
+          };
+        }
+    ];
+  };
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
