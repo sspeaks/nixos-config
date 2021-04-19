@@ -22,14 +22,20 @@ in {
   # paths it should manage.
   home.username = "sspeaks";
   home.homeDirectory = "/home/sspeaks";
-  home.packages = [ pkgs.ripgrep pkgs.git ls-colors shell-prompt ];
+  home.packages = [ pkgs.ripgrep pkgs.git ls-colors shell-prompt pkgs.shellcheck ];
 
 
   programs.neovim = {
       enable = true;
       vimAlias = true;
+      extraConfig = ''
+        " Full config: when writing or reading a buffer, and on changes in insert and
+        " normal mode (after 500ms; no delay when writing).
+"        call neomake#configure#automake('nrwi', 500)
+        '';
       plugins = with pkgs.vimPlugins; [
         # Syntax / Language Support ##########################
+        ale
         vim-nix
         vim-pandoc # pandoc (1/2)
         vim-pandoc-syntax # pandoc (2/2)
@@ -47,6 +53,7 @@ in {
         eval $(${pkgs.coreutils}/bin/dircolors -b) 
         ${builtins.readFile ./pre-compinit.zsh}
       '';
+      initExtra = builtins.readFile ./post-compinit.zsh;
 
       plugins = [
         {
