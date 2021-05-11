@@ -23,6 +23,9 @@ in {
   home.username = "sspeaks";
   home.homeDirectory = "/home/sspeaks";
   home.packages = [ pkgs.ripgrep pkgs.git ls-colors shell-prompt pkgs.shellcheck ];
+  home.sessionVariables = {
+    EDITOR = "vim";
+  };
 
 
   programs.neovim = {
