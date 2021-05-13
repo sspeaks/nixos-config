@@ -55,7 +55,7 @@ in {
   programs.git = {
     enable = true;
     aliases = {
-      fixup = "commit --amend --no-edit --no-verify --allow-empty";
+        fixup = "commit --amend --no-edit --no-verify --allow-empty";
         flog = "log --name-status";
         graph = "!git lg1-specific";
         adog = "log --all --decorate --oneline --graph";
