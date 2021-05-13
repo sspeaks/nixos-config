@@ -13,18 +13,41 @@ let
     cp ${LS_COLORS}/LS_COLORS $out/share/LS_COLORS
   '';
 
-  shell-prompt = pkgs.callPackage ./shell-prompt { };
+  #shell-prompt = pkgs.callPackage ./shell-prompt { };
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
+
+  fonts.fontconfig.enable = true;
 
   # Home Manager needs a bit of information about you and the
   # paths it should manage.
   home.username = "sspeaks";
   home.homeDirectory = "/home/sspeaks";
-  home.packages = [ pkgs.ripgrep pkgs.git ls-colors shell-prompt pkgs.shellcheck ];
+  home.packages = [ pkgs.ripgrep pkgs.git ls-colors 
+  #shell-prompt 
+  pkgs.starship
+  pkgs.shellcheck ];
   home.sessionVariables = {
     EDITOR = "vim";
+  };
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = {
+      hostname = {
+        disabled = true;
+      };
+      line_break = {
+        disabled = true;
+      };
+      username = {
+        format = "[$user]($style) ";
+      };
+      git_branch = {
+        format = "[$symbol$branch]($style) ";
+      };
+    }; 
   };
 
 
@@ -44,7 +67,7 @@ in {
         vim-pandoc-syntax # pandoc (2/2)
       ];
     };
-  programs.zsh = {
+    programs.zsh = {
       enable = true;
       enableCompletion = true;
       enableAutosuggestions = true;
