@@ -27,8 +27,9 @@ in {
   home.packages = [ pkgs.ripgrep pkgs.git ls-colors 
   #shell-prompt 
   pkgs.starship
-  pkgs.shellcheck
-  pkgs.pandoc ];
+  pkgs.pandoc 
+  pkgs.htop
+  pkgs.shellcheck ];
   home.sessionVariables = {
     EDITOR = "vim";
   };
@@ -55,6 +56,8 @@ in {
 
   programs.git = {
     enable = true;
+    userEmail = "sspeaks610@gmail.com";
+    userName = "Seth Speaks";
     aliases = {
         fixup = "commit --amend --no-edit --no-verify --allow-empty";
         flog = "log --name-status";
@@ -71,6 +74,7 @@ in {
         lasthash = "log -1 --pretty=format:'%h'";
     };
   };
+  programs.git.lfs.enable = true;
 
 
   programs.neovim = {
