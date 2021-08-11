@@ -27,7 +27,8 @@ in {
   home.packages = [ pkgs.ripgrep pkgs.git ls-colors 
   #shell-prompt 
   pkgs.starship
-  pkgs.shellcheck ];
+  pkgs.shellcheck
+  pkgs.pandoc ];
   home.sessionVariables = {
     EDITOR = "vim";
   };
