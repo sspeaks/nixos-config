@@ -2,6 +2,9 @@
 autoload colors
 colors
 
+unalias run-help
+autoload -U run-help
+
 # Enable ..<TAB> -> ../
 zstyle ':completion:*' special-dirs true
 
@@ -12,6 +15,7 @@ zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 if [ -f ~/.nix-profile/etc/profile.d/nix.sh ]; then
   source ~/.nix-profile/etc/profile.d/nix.sh
 fi
+bindkey -e
 bindkey  "^[[H"   beginning-of-line
 bindkey  "^[[F"   end-of-line
 bindkey  "^[[3~"  delete-char
