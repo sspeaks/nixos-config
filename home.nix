@@ -76,6 +76,11 @@ in {
   };
   programs.git.lfs.enable = true;
 
+  programs.direnv.enable = true;
+  programs.direnv.nix-direnv.enable = true;
+  programs.direnv.nix-direnv.enableFlakes = true;
+  
+
 
   programs.neovim = {
       enable = true;
