@@ -1,3 +1,3 @@
 #!/bin/sh
-cp -r * ~/.config/nixpkgs/
+cp -r * ~/.config/home-manager/
 home-manager switch
