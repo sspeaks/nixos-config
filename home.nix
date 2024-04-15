@@ -27,7 +27,7 @@ in {
   home.packages = [ pkgs.ripgrep pkgs.git ls-colors 
   #shell-prompt 
   pkgs.starship
-  pkgs.pandoc 
+  pkgs.xclip
   pkgs.htop
   pkgs.shellcheck ];
   home.sessionVariables = {
@@ -87,7 +87,8 @@ in {
       extraConfig = ''
         " Full config: when writing or reading a buffer, and on changes in insert and
         " normal mode (after 500ms; no delay when writing).
-"        call neomake#configure#automake('nrwi', 500)
+        " call neomake#configure#automake('nrwi', 500)
+        set mouse=
         '';
       plugins = with pkgs.vimPlugins; [
         # Syntax / Language Support ##########################
@@ -130,6 +131,17 @@ in {
             sha256 = "0w8x5ilpwx90s2s2y56vbzq92ircmrf0l5x8hz4g1nx3qzawv6af";
           };
         }
+        {
+          name = "zsh-system-clipboard";
+          src = pkgs.fetchFromGitHub {
+            owner = "kutsan";
+            repo = "zsh-system-clipboard";
+            rev = "v0.8.0";
+            sha256 = "sha256-VWTEJGudlQlNwLOUfpo0fvh0MyA2DqV+aieNPx/WzSI=";
+
+          };
+          file = "zsh-system-clipboard.zsh";
+        }        
     ];
   };
 
