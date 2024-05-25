@@ -29,7 +29,7 @@
       homeConfigurations = {
         sspeaks = home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
-          modules = [ ./home/home.nix ];
+          modules = [ home/home.nix ];
         };
       };
       formatter.aarch64-linux = pkgs.nixpkgs-fmt;
