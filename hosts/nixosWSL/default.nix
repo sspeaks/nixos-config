@@ -19,6 +19,9 @@ in
     hostName = "NixOS-WSL";
   };
 
+  services.openssh.enable = false;
+  services.openssh.settings.X11Forwarding = false;
+
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.users.sspeaks = ../../home/sspeaks.nix;

@@ -1,4 +1,4 @@
-{ inputs, outputs, ... }:
+{ inputs, outputs, lib, ... }:
 {
   imports = [ inputs.home-manager.nixosModules.home-manager ];
   home-manager.useGlobalPkgs = true;
@@ -12,8 +12,8 @@
     };
   };
 
-  services.openssh.enable = true;
-  services.openssh.settings.X11Forwarding = true;
+  services.openssh.enable = lib.mkDefault true;
+  services.openssh.settings.X11Forwarding = lib.mkDefault true;
 
   hardware.enableRedistributableFirmware = true;
 

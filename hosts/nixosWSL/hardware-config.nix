@@ -12,69 +12,80 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/mnt/wsl" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "tmpfs";
     };
 
   fileSystems."/usr/lib/wsl/drivers" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "9p";
     };
 
   fileSystems."/lib/modules" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "tmpfs";
     };
 
   fileSystems."/lib/modules/5.15.146.1-microsoft-standard-WSL2" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "overlay";
     };
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/ebb261c5-271e-4a19-971d-814d53a8c24e";
+    {
+      device = "/dev/disk/by-uuid/ebb261c5-271e-4a19-971d-814d53a8c24e";
       fsType = "ext4";
     };
 
   fileSystems."/mnt/wslg" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "tmpfs";
     };
 
- fileSystems."/usr/lib/wsl/lib" =
-    { device = "none";
+  fileSystems."/usr/lib/wsl/lib" =
+    {
+      device = "none";
       fsType = "overlay";
     };
 
   fileSystems."/mnt/wslg/doc" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "overlay";
     };
 
   fileSystems."/tmp/.X11-unix" =
-    { device = "/mnt/wslg/.X11-unix";
+    {
+      device = "/mnt/wslg/.X11-unix";
       fsType = "none";
       options = [ "bind" ];
     };
 
   fileSystems."/mnt/c" =
-    { device = "C:\134";
+    {
+      device = "C:\134";
       fsType = "9p";
     };
 
   fileSystems."/mnt/d" =
-    { device = "D:\134";
+    {
+      device = "D:\134";
       fsType = "9p";
     };
 
   fileSystems."/mnt/f" =
-    { device = "F:\134";
+    {
+      device = "F:\134";
       fsType = "9p";
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/7bed0cad-5d2f-4f14-a828-e3b8365c9120"; }
-    ];
+    [{ device = "/dev/disk/by-uuid/7bed0cad-5d2f-4f14-a828-e3b8365c9120"; }];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
