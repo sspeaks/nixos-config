@@ -6,7 +6,7 @@
     home-manager.url = "github:nix-community/home-manager/release-23.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
-    
+
     systems.url = "github:nix-systems/default-linux";
   };
   outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, systems, ... }:
@@ -14,13 +14,13 @@
       inherit (self) outputs;
       lib = nixpkgs.lib;
       forEachSystem = f: lib.genAttrs (import systems) (system: f pkgsFor.${system});
-    pkgsFor = lib.genAttrs (import systems) (
-      system:
+      pkgsFor = lib.genAttrs (import systems) (
+        system:
         import nixpkgs {
           inherit system;
           config.allowUnfree = true;
         }
-    );
+      );
     in
     {
       nixosConfigurations = {
@@ -38,6 +38,6 @@
         };
       };
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
-      overlays = {};
+      overlays = { };
     };
 }
