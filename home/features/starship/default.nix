@@ -1,10 +1,10 @@
-{ ... }: {
+{ lib, ... }: {
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
     settings = {
       hostname = {
-        disabled = true;
+        disabled = lib.mkDefault true;
       };
       line_break = {
         disabled = true;
