@@ -17,6 +17,11 @@
       current = "log --decorate --stat -1";
       lasthash = "log -1 --pretty=format:'%h'";
     };
+    extraConfig = {
+      credential = {
+        helper = "store";
+      };
+    };
   };
 
 }
