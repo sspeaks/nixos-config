@@ -33,7 +33,7 @@
       };
       homeConfigurations = {
         "sspeaks@nixpi" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor "aarch64-linux";
+          pkgs = pkgsFor.aarch64-linux;
           modules = [ home/sspeaks.nix ];
         };
       };
