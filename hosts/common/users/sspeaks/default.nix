@@ -1,36 +1,5 @@
-{ config, pkgs, ... }:
-
+{ pkgs, config, lib, ... }:
 {
-  imports = [ ./modules/minecraft.nix ];
-  boot = {
-    kernelPackages = pkgs.linuxKernel.packages.linux_rpi4;
-    initrd.availableKernelModules = [ "xhci_pci" "usbhid" "usb_storage" ];
-    loader = {
-      grub.enable = false;
-      generic-extlinux-compatible.enable = true;
-    };
-  };
-
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "ext4";
-      options = [ "noatime" ];
-    };
-  };
-  swapDevices = [{ device = "/swapfile"; size = 4096; }];
-  nix.settings.trusted-users = [ "sspeaks" ];
-  nix.package = pkgs.nixFlakes;
-  nix.extraOptions = ''
-    experimental-features = nix-command flakes
-  '';
-  nixpkgs.config.allowUnfree = true;
-
-  environment.systemPackages = with pkgs; [ vim screen ];
-
-  services.openssh.enable = true;
-  services.openssh.settings.X11Forwarding = true;
-
   programs.zsh.enable = true;
   users.mutableUsers = false;
   users.users.sspeaks = {
@@ -44,10 +13,4 @@
       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDhirGFWX+DgCrQkI1Xy7qI2k9fMA/AWIRVi4lnPQwCn+eDM/OFt3K9vRkbRtzAD7bFHw1PVtjpbrch3IYoGTt+llWJO0BHqP6vRKkzmOqGXkdCspKojw3z16uHsI/mGA0Py7vVPxOo4OBcTX5WM9+Mp7OHYqxXmovxeMTXxHRI51OXtpAgyW+YO0oLPuwkSPcglLU3+XzX/wYb/Tf6gOta7MkXLZPQRES/8fAFGBbNmkTonM8RBbvkFnv9a7Xjt8rAlUAWBo5UAJHdhDJgZ44BDXw/ohn+IMEZulApBFlogBwLXN6mSCMd/NfVAkxvACbNg+jVsiXxTydlHKifxRHAoNvUsE+4dtlC6cyJtwZoPuu++iqDRu9Skzpm7idet+pQoSgrqAuB4sWVuAk1CyGe0pXCKRX9mXMngmCCZPo5d0w9hFlY+JJVKjYypNFbim9UyQW/RZ8qEXPpz5GVDC+2q8ov+r1C+QI6NGORrQgXuT4yHMIzMNx0sZ2QlS/Gtwc= seth@sspeaks-pc-windows"
     ];
   };
-  security.sudo.wheelNeedsPassword = false;
-
-  hardware.enableRedistributableFirmware = true;
-  time.timeZone = "America/Los_Angeles";
-  system.stateVersion = "23.05";
 }
-

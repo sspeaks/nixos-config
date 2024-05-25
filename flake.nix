@@ -6,32 +6,38 @@
     home-manager.url = "github:nix-community/home-manager/release-23.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
+    
+    systems.url = "github:nix-systems/default-linux";
   };
-  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, vscode-server, ... }:
+  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, systems, ... }:
     let
+      inherit (self) outputs;
       lib = nixpkgs.lib;
-      system = "aarch64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-      unstablePkgs = nixpkgs-unstable.legacyPackages.${system};
+      forEachSystem = f: lib.genAttrs (import systems) (system: f pkgsFor.${system});
+    pkgsFor = lib.genAttrs (import systems) (
+      system:
+        import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        }
+    );
     in
     {
-      nixosConfigurations.nixos = lib.nixosSystem {
-        inherit system;
-        specialArgs = { inherit inputs unstablePkgs; };
-        modules = [
-          ./configuration.nix
-          vscode-server.nixosModules.default
-          ({ config, pkgs, ... }: {
-            services.vscode-server.enable = true;
-          })
-        ];
-      };
-      homeConfigurations = {
-        sspeaks = home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [ home/home.nix ];
+      nixosConfigurations = {
+        nixpi = lib.nixosSystem {
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            hosts/nixpi
+          ];
         };
       };
-      formatter.aarch64-linux = pkgs.nixpkgs-fmt;
+      homeConfigurations = {
+        "sspeaks@nixpi" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor "aarch64-linux";
+          modules = [ home/sspeaks.nix ];
+        };
+      };
+      formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
+      overlays = {};
     };
 }
