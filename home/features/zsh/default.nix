@@ -7,7 +7,7 @@
 
     shellAliases = {
       ls = "ls --color=auto -F";
-      cat = "${pkgs.bat}";
+      cat = "${pkgs.bat}/bin/bat";
     };
     initExtraBeforeCompInit = ''
       eval $(${pkgs.coreutils}/bin/dircolors -b) 
