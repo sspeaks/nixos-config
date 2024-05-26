@@ -9,8 +9,7 @@
     ./pogbot.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
-    # Temporary until I can modularize this
-    # "/home/sspeaks/spock/spockServerSystemd.nix" # Temporary until I can modularize this
+    inputs.spock.nixosModules.default
   ];
 
   nixpkgs.overlays = outputs.overlays;
