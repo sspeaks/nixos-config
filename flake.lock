@@ -177,11 +177,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1716761838,
-        "narHash": "sha256-tU5up+FZaqfsWHNEDggr0lcVboFr2UfArmhufA+n/Jo=",
+        "lastModified": 1716762095,
+        "narHash": "sha256-p/qgaCTcf24orllh3u02t7Rung1ipwSU0CiOZn9+gB4=",
         "owner": "sspeaks",
         "repo": "pogbot",
-        "rev": "caad3947e66632a8be250cfc325681d34c1d1fb0",
+        "rev": "3bccc7a822b654f9004f6f2c3bc4e991701951e2",
         "type": "github"
       },
       "original": {
