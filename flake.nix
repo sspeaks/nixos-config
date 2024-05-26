@@ -16,6 +16,10 @@
       url = "github:sspeaks/pogbot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    spock = {
+      url = "github:sspeaks/Spock-clip-trimmer";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, nixos-wsl, systems, ... }:
     let

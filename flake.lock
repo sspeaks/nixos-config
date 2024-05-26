@@ -198,6 +198,7 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "pogbot": "pogbot",
         "sops-nix": "sops-nix",
+        "spock": "spock",
         "systems": "systems_2",
         "vscode-server": "vscode-server"
       }
@@ -220,6 +221,26 @@
       "original": {
         "owner": "mic92",
         "repo": "sops-nix",
+        "type": "github"
+      }
+    },
+    "spock": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1716767600,
+        "narHash": "sha256-GPcXM8f7kvHwS1BnSd6zdKGFkdlBtGPoOUeD9gHEz04=",
+        "owner": "sspeaks",
+        "repo": "Spock-clip-trimmer",
+        "rev": "243a51af968004bfb893ce085774da59e724ec5e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sspeaks",
+        "repo": "Spock-clip-trimmer",
         "type": "github"
       }
     },
