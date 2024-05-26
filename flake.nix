@@ -8,6 +8,10 @@
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     systems.url = "github:nix-systems/default-linux";
+    sops-nix = {
+      url = "github:/mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, nixos-wsl, systems, ... }:
     let
