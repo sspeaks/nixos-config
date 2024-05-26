@@ -2,14 +2,14 @@
 
 {
   imports = [
-    "${modulesPath}/virtualisation/azure-common.nix"
+    "${inputs.nixpkgs}/nixos/modules/virtualisation/azure-common.nix"
     ../common/global
     ../common/users/sspeaks
     ../../modules/wireguard
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
-    "/home/sspeaks/pogbot/pogbot.nix" # Temporary until I can modularize this
-    "/home/sspeaks/spock/spockServerSystemd.nix" # Temporary until I can modularize this
+#    "/home/sspeaks/pogbot/pogbot.nix" # Temporary until I can modularize this
+ #   "/home/sspeaks/spock/spockServerSystemd.nix" # Temporary until I can modularize this
   ];
 
   nixpkgs.overlays = outputs.overlays;
@@ -17,7 +17,7 @@
   swapDevices = [{ device = "/swapfile"; size = 8192; }];
 
   networking = {
-    hostName = "nixos-azure";
+    hostName = ""; # Needs to be empty so we pull the hostname from azure
     enableIPv6 = false;
   };
 
