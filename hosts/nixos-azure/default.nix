@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, modulesPath, ... }:
+{ config, pkgs, lib, inputs, outputs, modulesPath, ... }:
 
 {
   imports = [
@@ -11,6 +11,8 @@
     "/home/sspeaks/pogbot/pogbot.nix" # Temporary until I can modularize this
     "/home/sspeaks/spock/spockServerSystemd.nix" # Temporary until I can modularize this
   ];
+
+  nixpkgs.overlays = outputs.overlays;
 
   swapDevices = [{ device = "/swapfile"; size = 8192; }];
 
@@ -37,7 +39,7 @@
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+ZOxlbIpvXB6NDFUqX2OGGbEyIfA+7Zd6mxq78e5abuYD80bMyJdAS1H/05oBKFI5zV45Bb39DXV9HHxVJXVKQ35bs3sfrf6myTK94grgHbCn3o0pru+PsdtXBnCjsC8EMS9pua17ZPyLgCy1jYxGocCoYpxZoP1CLV+LkHauL2IxXAvZkU+W7pHgphF1jnUNjEl52TY++W5BfEJ6xvCUKj7xDMyXpAmNNdpohFpL2ughbdkL5F8s7O/RQFfzh7O13hWlbdgLHMOcoA3tuLSd5pTZjHvqEs0n1CLT/SnvONtD9uNUMGdLGisMydRVFYmOOJ9LxF1pdEvowExbMvAEa0a7nFLASnmnxqzL1lbFxvUQ5p55s3CO4y1B72lpIRRAwuvOUBrpHw83zq6FQ8Z0C2bbmJa/YFOPre6GPw6WbnvUhsYegvxBEHFPUf5zFBqzZGfjbneRptexq8Yl7vtbXP3jyRMj59IumRBOAKHXQj/6fxo4n3WnkiXGmaWh2pk="
   ];
 
-    time.timeZone = "America/Los_Angeles";
-    nixpkgs.hostPlatform = "x86_64-linux";
+  time.timeZone = "America/Los_Angeles";
+  nixpkgs.hostPlatform = "x86_64-linux";
 }
 

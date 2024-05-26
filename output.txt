@@ -1,2 +1,0 @@
-warning: Git tree '/home/sspeaks/nixos-config' is dirty
-error: interrupted by the user

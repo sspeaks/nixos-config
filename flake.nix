@@ -58,6 +58,6 @@
         };
       };
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
-      overlays = { };
+      overlays = import ./overlays.nix;
     };
 }
