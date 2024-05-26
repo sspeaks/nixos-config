@@ -3,10 +3,12 @@ keys:
     - &sspeaks age1ngm5476nk6y7vqqj0anwqsf3vr4yw6ppr0wn20prrp6zv96g4fuswqzrlv
   hosts:
     - &mbp age1m02wz3xqkg6z0fflpdhvph0psw0vavhdusz9lzg3daa5aammc5xsxtwzds
+    - &nixpi age1n3f5w5hwsl4r0fh3ur4v5pejg5lr05m4qzj5vytrlcemdve0g3lqn94spj
 creation_rules:
   - path_regex: secrets.yaml$
     key_groups:
       - age:
         - *sspeaks
         - *mbp
+        - *nixpi
 
