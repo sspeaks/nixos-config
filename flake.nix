@@ -12,6 +12,10 @@
       url = "github:/mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    pogbot = {
+      url = "github:sspeaks/pogbot";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, nixos-wsl, systems, ... }:
     let

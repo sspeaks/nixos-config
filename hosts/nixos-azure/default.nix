@@ -6,10 +6,11 @@
     ../common/global
     ../common/users/sspeaks
     ../../modules/wireguard
+    ./pogbot.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
-#    "/home/sspeaks/pogbot/pogbot.nix" # Temporary until I can modularize this
- #   "/home/sspeaks/spock/spockServerSystemd.nix" # Temporary until I can modularize this
+    # Temporary until I can modularize this
+    # "/home/sspeaks/spock/spockServerSystemd.nix" # Temporary until I can modularize this
   ];
 
   nixpkgs.overlays = outputs.overlays;
