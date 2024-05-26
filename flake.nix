@@ -40,6 +40,12 @@
             hosts/nixosWSL
           ];
         };
+        nixos-azure = lib.nixosSystem {
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            hosts/nixos-azure
+          ];
+        };
       };
       homeConfigurations = {
         "sspeaks@nixpi" = home-manager.lib.homeManagerConfiguration {
