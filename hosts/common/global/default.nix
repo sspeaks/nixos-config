@@ -1,8 +1,9 @@
 { inputs, outputs, lib, ... }:
 {
-  imports = [ 
+  imports = [
     inputs.home-manager.nixosModules.home-manager
-];
+    ../sops.nix
+  ];
   home-manager.useGlobalPkgs = true;
   home-manager.extraSpecialArgs = {
     inherit inputs outputs;

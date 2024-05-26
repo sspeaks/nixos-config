@@ -18,8 +18,8 @@ in
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
-  home-manager.users.sspeaks = {...} : {
-    imports = [../../home/sspeaks.nix ];
+  home-manager.users.sspeaks = { ... }: {
+    imports = [ ../../home/sspeaks.nix ];
     programs.starship.settings.hostname.disabled = false;
   };
 
