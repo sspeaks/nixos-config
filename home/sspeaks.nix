@@ -13,7 +13,6 @@ in
     features/zsh
   ];
   nix.settings.trusted-users = [ "sspeaks" ];
-  fonts.fontconfig.enable = true;
   home = {
     packages = with pkgs; [
       ls-colors
