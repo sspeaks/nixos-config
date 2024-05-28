@@ -1,9 +1,8 @@
 { config, pkgs, lib, inputs, outputs, modulesPath, ... }:
-
 {
   imports = [
-    "${inputs.nixpkgs}/nixos/modules/virtualisation/azure-common.nix"
     ../common/global
+    ./hardware-configuration.nix
     ../common/users/sspeaks
     ../../modules/wireguard
     ./pogbot.nix
@@ -13,13 +12,6 @@
   ];
 
   nixpkgs.overlays = outputs.overlays;
-
-  swapDevices = [{ device = "/swapfile"; size = 8192; }];
-
-  networking = {
-    hostName = ""; # Needs to be empty so we pull the hostname from azure
-    enableIPv6 = false;
-  };
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
@@ -40,6 +32,5 @@
   ];
 
   time.timeZone = "America/Los_Angeles";
-  nixpkgs.hostPlatform = "x86_64-linux";
 }
 
