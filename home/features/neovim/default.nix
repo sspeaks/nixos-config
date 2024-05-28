@@ -13,8 +13,6 @@
       # Syntax / Language Support ##########################
       ale
       vim-nix
-      vim-pandoc # pandoc (1/2)
-      vim-pandoc-syntax # pandoc (2/2)
     ];
   };
 }
