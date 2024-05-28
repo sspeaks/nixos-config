@@ -55,6 +55,12 @@
             hosts/nixos-azure
           ];
         };
+        vm = lib.nixosSystem {
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            hosts/vm
+          ];
+        };
       };
       homeConfigurations = {
         "sspeaks@nixpi" = home-manager.lib.homeManagerConfiguration {
