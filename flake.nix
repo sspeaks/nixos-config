@@ -53,6 +53,13 @@
             hosts/nixosWSL
           ];
         };
+        NixOS-WSL-work = lib.nixosSystem {
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            hosts/nixosWSL-work
+          ];
+        };
+
         nixos-azure = lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
