@@ -1,3 +1,4 @@
+{ pkgs, ... }:
 let
   pTunnel =
     { lib
@@ -44,6 +45,5 @@ let
       ];
 
     });
-  pkgs = import <nixpkgs> { };
 in
 pkgs.callPackage pTunnel { }

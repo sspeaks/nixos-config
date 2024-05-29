@@ -1,5 +1,5 @@
+{ pkgs, ... }:
 let
-  pkgs = import <nixpkgs> { };
   udp2raw =
     { lib
     , stdenv
