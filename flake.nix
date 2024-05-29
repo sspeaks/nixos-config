@@ -36,7 +36,8 @@
       );
     in
     {
-      nixosConfigurations = {
+      packages = forEachSystem (pkgs: import ./packages {inherit pkgs;});
+      nixosConfigurations = { 
         nixpi = lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
