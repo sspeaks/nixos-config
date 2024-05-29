@@ -21,6 +21,9 @@
       credential = {
         helper = "store";
       };
+      core = {
+        sshCommand = "ssh -i ~/.ssh/github";
+      };
     };
   };
 
