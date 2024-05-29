@@ -34,17 +34,6 @@
           sha256 = "0w8x5ilpwx90s2s2y56vbzq92ircmrf0l5x8hz4g1nx3qzawv6af";
         };
       }
-      {
-        name = "zsh-system-clipboard";
-        src = pkgs.fetchFromGitHub {
-          owner = "kutsan";
-          repo = "zsh-system-clipboard";
-          rev = "v0.8.0";
-          sha256 = "sha256-VWTEJGudlQlNwLOUfpo0fvh0MyA2DqV+aieNPx/WzSI=";
-
-        };
-        file = "zsh-system-clipboard.zsh";
-      }
     ];
   };
 }
