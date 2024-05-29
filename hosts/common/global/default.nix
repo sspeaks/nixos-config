@@ -1,4 +1,4 @@
-{ inputs, outputs, lib, ... }:
+{ inputs, outputs, pkgs, lib, config, ... }:
 {
   imports = [
     inputs.home-manager.nixosModules.home-manager
@@ -16,6 +16,23 @@
     };
   };
 
+  sops.secrets.open-ai-api-key = {
+#    neededForUsers = true;
+    mode = "444";
+    owner = "sspeaks";
+    group = "users";
+  };
+  environment.systemPackages = [
+    (pkgs.askGPT4.overrideAttrs (_: rec {
+      OPEN_AI_KEY_FILE = config.sops.secrets.open-ai-api-key.path;
+      postFixup = ''
+        wrapProgram $out/bin/askGPT4 \
+        --set OPEN_AI_KEY ${OPEN_AI_KEY_FILE}
+      '';
+
+    }))
+
+  ];
   services.openssh.enable = lib.mkDefault true;
   services.openssh.settings.X11Forwarding = lib.mkDefault false;
 
