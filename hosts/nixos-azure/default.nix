@@ -11,7 +11,12 @@
     inputs.spock.nixosModules.default
   ];
 
+  systemd.tmpfiles.rules = [
+    "d /opt 0666 root root"
+  ];
+
   nixpkgs.overlays = outputs.overlays;
+  programs.nix-ld.enable = true;
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
