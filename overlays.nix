@@ -14,7 +14,7 @@
         patchShebangs --build "$out/bin/"
       '';
     });
-  })
+  }) 
   (
     (final: prev:
       import ./packages { pkgs = final; }
