@@ -15,7 +15,6 @@
     "d /opt 0666 root root"
   ];
 
-  nixpkgs.overlays = outputs.overlays;
   programs.nix-ld.enable = true;
 
   home-manager.useGlobalPkgs = true;
