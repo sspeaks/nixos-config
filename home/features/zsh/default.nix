@@ -3,7 +3,7 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    enableAutosuggestions = true;
+    autosuggestion.enable = true;
 
     shellAliases = {
       ls = "ls --color=auto -F";

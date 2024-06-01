@@ -59,27 +59,27 @@
         ]
       },
       "locked": {
-        "lastModified": 1716729592,
-        "narHash": "sha256-Y3bOjoh2cFBqZN0Jw1zUdyr7tjygyxl2bD/QY73GZP0=",
+        "lastModified": 1716736833,
+        "narHash": "sha256-rNObca6dm7Qs524O4st8VJH6pZ/Xe1gxl+Rx6mcWYo0=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "2c78a57c544dd19b07442350727ced097e1aa6e6",
+        "rev": "a631666f5ec18271e86a5cde998cba68c33d9ac6",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
-        "ref": "release-23.11",
+        "ref": "release-24.05",
         "repo": "home-manager",
         "type": "github"
       }
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1716798306,
-        "narHash": "sha256-s8+OhT1WSPMoqbTawT30hj4NVMg+w03/a+2HVqcNhY0=",
+        "lastModified": 1716987116,
+        "narHash": "sha256-uuEkErFVsFdg2K0cKbNQ9JlFSAm/xYqPr4rbPLI91Y8=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "9a20e17a73b052d6be912adcee220cb483477094",
+        "rev": "8251761f93d6f5b91cee45ac09edb6e382641009",
         "type": "github"
       },
       "original": {
@@ -142,16 +142,16 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1716633019,
-        "narHash": "sha256-xim1b5/HZYbWaZKyI7cn9TJCM6ewNVZnesRr00mXeS4=",
+        "lastModified": 1717144377,
+        "narHash": "sha256-F/TKWETwB5RaR8owkPPi+SPJh83AQsm6KrQAlJ8v/uA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "9d29cd266cebf80234c98dd0b87256b6be0af44e",
+        "rev": "805a384895c696f802a9bf5bf4720f37385df547",
         "type": "github"
       },
       "original": {
         "id": "nixpkgs",
-        "ref": "nixos-23.11",
+        "ref": "nixos-24.05",
         "type": "indirect"
       }
     },
@@ -176,11 +176,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1716762095,
-        "narHash": "sha256-p/qgaCTcf24orllh3u02t7Rung1ipwSU0CiOZn9+gB4=",
+        "lastModified": 1717200619,
+        "narHash": "sha256-e5q8DxACU37m+Qvw1xtJWb4dwoXyeqtu6iMTeiAA870=",
         "owner": "sspeaks",
         "repo": "pogbot",
-        "rev": "3bccc7a822b654f9004f6f2c3bc4e991701951e2",
+        "rev": "05483b4c425a1d69299b6068ba1ce99fe155c842",
         "type": "github"
       },
       "original": {
@@ -230,11 +230,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1716767600,
-        "narHash": "sha256-GPcXM8f7kvHwS1BnSd6zdKGFkdlBtGPoOUeD9gHEz04=",
+        "lastModified": 1717226025,
+        "narHash": "sha256-uakOb8UzjfvdLxbXyY5CSLTgTJQVN/6ZSVq/Ei1doQg=",
         "owner": "sspeaks",
         "repo": "Spock-clip-trimmer",
-        "rev": "243a51af968004bfb893ce085774da59e724ec5e",
+        "rev": "b895ea04aa124511e3fd3f04af969fa0273bff0c",
         "type": "github"
       },
       "original": {

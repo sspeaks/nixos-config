@@ -1,7 +1,7 @@
 [
   (final: prev: {
     waagent = prev.waagent.overrideAttrs (f: p: {
-      runtimeDeps = p.runtimeDeps ++ [ prev.pkgs.which prev.pkgs.python3 prev.pkgs.gawk prev.pkgs.openssl prev.pkgs.gnupg prev.pkgs.lsof ];
+      runtimeDeps = [ prev.pkgs.which prev.pkgs.python3 prev.pkgs.gawk prev.pkgs.openssl prev.pkgs.gnupg prev.pkgs.lsof ];
       fixupPhase = ''
         mkdir -p $out/bin/
         WAAGENT=$(find $out -name waagent | grep sbin)
