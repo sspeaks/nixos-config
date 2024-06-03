@@ -66,15 +66,13 @@
           ];
         };
       };
-      inherit (forEachSystem (systemPackages: {
-        homeConfigurations = {
-          "sspeaks" = home-manager.lib.homeManagerConfiguration {
-            pkgs = systemPackages;
-            extraSpecialArgs = { inherit inputs; };
-            modules = [ home/sspeaks.nix ];
-          };
+      homeConfigurations = {
+        "sspeaks@NixOS-WSL" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor.x86_64-linux;
+          extraSpecialArgs = { inherit inputs; };
+          modules = [ home/sspeaks.nix ];
         };
-      }));
+      };
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       overlays = import ./overlays.nix;
     };
