@@ -6,8 +6,8 @@
     enable = true;
     vimAlias = true;
     extraConfigVim = ''
-        set mouse=
-      '';
+      set mouse=
+    '';
 
     globals.mapleader = ",";
     plugins = {

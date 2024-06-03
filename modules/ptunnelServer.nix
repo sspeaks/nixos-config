@@ -1,6 +1,7 @@
-{ pkgs, lib,config, ... }:
-let cfg = config.services.ptunnServer;
-    iN = v: v != null;
+{ pkgs, lib, config, ... }:
+let
+  cfg = config.services.ptunnServer;
+  iN = v: v != null;
 in
 {
   options.services.ptunnServer = {
@@ -20,20 +21,20 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
-  systemd.services.ptunnelserver = {
-    description = "pTunnel Server";
-    serviceConfig = {
-      ExecStart = "${pkgs.ptunn}/bin/ptunnel" 
-        + lib.optionalString (iN cfg.interface) " -c ${cfg.interface}"
-        + lib.optionalString (iN cfg.logDir) " -f \"${cfg.logDir}\""
-        + lib.optionalString (iN cfg.password) " -x \"${cfg.password}\"";
-      Restart = "always";
-      RestartSec = 1;
+    systemd.services.ptunnelserver = {
+      description = "pTunnel Server";
+      serviceConfig = {
+        ExecStart = "${pkgs.ptunn}/bin/ptunnel"
+          + lib.optionalString (iN cfg.interface) " -c ${cfg.interface}"
+          + lib.optionalString (iN cfg.logDir) " -f \"${cfg.logDir}\""
+          + lib.optionalString (iN cfg.password) " -x \"${cfg.password}\"";
+        Restart = "always";
+        RestartSec = 1;
+      };
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
     };
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" ];
-  };
 
-  systemd.services.ptunnelserver.enable = true;
-};
+    systemd.services.ptunnelserver.enable = true;
+  };
 }

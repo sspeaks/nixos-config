@@ -8,7 +8,7 @@
     group = "users";
     mode = "0600";
   };
-    sops.secrets.open-ai-api-key = {
+  sops.secrets.open-ai-api-key = {
     mode = "444";
     owner = "sspeaks";
     group = "users";

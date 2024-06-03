@@ -39,8 +39,8 @@
       );
     in
     {
-      packages = forEachSystem (pkgs: import ./packages {inherit pkgs;});
-      nixosConfigurations = { 
+      packages = forEachSystem (pkgs: import ./packages { inherit pkgs; });
+      nixosConfigurations = {
         nixpi = lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
@@ -66,16 +66,15 @@
           ];
         };
       };
-      homeConfigurations = {
-        "sspeaks@nixpi" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor.aarch64-linux;
-          modules = [ home/sspeaks.nix ];
+      inherit (forEachSystem (systemPackages: {
+        homeConfigurations = {
+          "sspeaks" = home-manager.lib.homeManagerConfiguration {
+            pkgs = systemPackages;
+            extraSpecialArgs = { inherit inputs; };
+            modules = [ home/sspeaks.nix ];
+          };
         };
-        "sspeaks@NixOS-WSL" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor.x86_64-linux;
-          modules = [ home/sspeaks.nix ];
-        };
-      };
+      }));
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       overlays = import ./overlays.nix;
     };
