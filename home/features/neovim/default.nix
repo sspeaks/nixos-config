@@ -1,18 +1,25 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
-  programs.neovim = {
+  imports = [ inputs.nixvim.homeManagerModules.nixvim ];
+
+  programs.nixvim = {
     enable = true;
     vimAlias = true;
-    extraConfig = ''
-      " Full config: when writing or reading a buffer, and on changes in insert and
-      " normal mode (after 500ms; no delay when writing).
-      " call neomake#configure#automake('nrwi', 500)
-      set mouse=
-    '';
-    plugins = with pkgs.vimPlugins; [
-      # Syntax / Language Support ##########################
-      ale
-      vim-nix
-    ];
+    extraConfigVim = ''
+        set mouse=
+      '';
+
+    globals.mapleader = ",";
+    plugins = {
+      telescope = {
+        enable = true;
+        keymaps = {
+          "<leader>ff" = "find_files";
+          "<leader>gf" = "git_files";
+          "<leader>fg" = "live_grep";
+        };
+      };
+    };
+    extraPlugins = with pkgs.vimPlugins; [ ale vim-nix ];
   };
 }

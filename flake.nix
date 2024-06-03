@@ -20,6 +20,10 @@
       url = "github:sspeaks/Spock-clip-trimmer";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixvim = {
+      url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs@{ self, nixpkgs, home-manager, nixos-wsl, systems, ... }:
     let
