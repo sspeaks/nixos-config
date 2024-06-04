@@ -7,7 +7,7 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
-    systems.url = "github:nix-systems/default-linux";
+    systems.url = "github:nix-systems/default";
     sops-nix = {
       url = "github:/mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -72,6 +72,12 @@
           extraSpecialArgs = { inherit inputs; };
           modules = [ home/sspeaks.nix ];
         };
+        "sspeaks@darwin" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor.aarch64-darwin;
+          extraSpecialArgs = { inherit inputs; };
+          modules = [ home/sspeaks.nix ];
+        };
+
       };
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       overlays = import ./overlays.nix;
