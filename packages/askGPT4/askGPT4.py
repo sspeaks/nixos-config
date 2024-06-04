@@ -11,7 +11,7 @@ from openai import OpenAI
 
 client = OpenAI(
     # This is the default and can be omitted
-    api_key=OPEN_AI_API,
+    api_key=OPEN_AI_API.strip(),
 )
 
 response = client.chat.completions.create(

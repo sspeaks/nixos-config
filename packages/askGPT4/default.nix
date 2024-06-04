@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, openaikey ? "/dev/null", ... }:
+#  
+# Install Example without flakes
+# nix build --impure --expr "let pkgs = import <nixpkgs> {};  in pkgs.callPackage ./packages/askGPT4/default.nix {openaikey = \"/Users/sspeaks/.openapikey\";}"
 let
   openai = pkgs.python311Packages.buildPythonPackage rec {
     pname = "openai";
@@ -19,7 +22,7 @@ pkgs.stdenv.mkDerivation rec {
   name = "askGPT4";
   buildInputs = [ pythonP pkgs.makeWrapper ];
   unpackPhase = "true";
-  OPEN_AI_KEY_FILE = "/dev/null";
+  OPEN_AI_KEY_FILE = openaikey;
   installPhase = ''
     mkdir -p $out/bin
     cp ${./askGPT4.py} $out/bin/askGPT4
