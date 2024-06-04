@@ -16,6 +16,7 @@ in
 
   programs.nixvim = {
     enable = true;
+    enableMan = false;
     vimAlias = true;
     extraConfigVim = ''
       set mouse=
