@@ -39,6 +39,9 @@ in
       treesitter.enable = true;
       treesitter.gccPackage = pkgs.gcc;
 
+      lsp.enable = true;
+      cmp-nvim-lsp.enable = true;
+      cmp.enable = true;
       lsp.servers.csharp-ls.enable = true;
       lsp.servers.nixd.enable = true;
     };
