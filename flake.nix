@@ -13,7 +13,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pogbot = {
-      url = "github:sspeaks/pogbot";
+      url = "github:sspeaks/clipbot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     spock = {
