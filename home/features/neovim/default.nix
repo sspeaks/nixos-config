@@ -32,10 +32,14 @@ in
           "<leader>gf" = "git_files";
           "<leader>fg" = "live_grep_args";
           "<leader>b" = "buffers";
+          "<leader>fs" = "treesitter";
         };
         enabledExtensions = [ "live_grep_args" ];
       };
+      treesitter.enable = true;
+      treesitter.gccPackage = pkgs.gcc;
     };
     extraPlugins = with pkgs.vimPlugins; [ ale vim-nix telescope_live_args ];
+    extraPackages = with pkgs; [ fd ];
   };
 }
