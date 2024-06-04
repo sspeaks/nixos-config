@@ -1,18 +1,55 @@
-{ pkgs, ... }:
+{ pkgs, lib, config, ... }:
 let
-  ptunnelPackage = import ./default.nix;
+  cfg = config.services.udp2rawServer;
+  iN = v: v != null;
 in
 {
-  systemd.services.ptunnelserver = {
-    description = "pTunnel Server";
-    serviceConfig = {
-      ExecStart = "${ptunnelPackage}/bin/udp2raw -s -l 0.0.0.0:25565 -r 127.0.0.1:51820 -k \"password\" --raw-mode icmp -a --log-level 5";
-      Restart = "always";
-      RestartSec = 1;
+  options.services.udp2rawServer = {
+    enable = lib.mkEnableOption "Should enable udp2raw server";
+    localAddressAndPort = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
     };
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" ];
-  };
+    remoteAddressAndPort = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+    };
+    autoAddIpTablesRules = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    rawMode = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+    };
+    logLevel = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+    };
+    password = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
 
-  systemd.services.ptunnelserver.enable = true;
+    };
+  };
+  config = lib.mkIf cfg.enable {
+    systemd.services.udp2rawserver = {
+      description = "udp2raw Server";
+      serviceConfig = {
+        ExecStart = "${pkgs.udp2raw}/bin/udp2raw -s"
+          + lib.optionalString (iN cfg.localAddressAndPort) " -l ${cfg.localAddressAndPort}"
+          + lib.optionalString (iN cfg.remoteAddressAndPort) " -r ${cfg.remoteAddressAndPort}"
+          + lib.optionalString (iN cfg.password) " -k \"${cfg.password}\""
+          + lib.optionalString (iN cfg.rawMode) " --raw-mode ${cfg.rawMode}"
+          + lib.optionalString (cfg.autoAddIpTablesRules) " -a"
+          + lib.optionalString (iN cfg.logLevel) " --log-level ${cfg.logLevel}";
+        Restart = "always";
+        RestartSec = 1;
+      };
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+    };
+
+    systemd.services.udp2rawserver.enable = true;
+  };
 }
