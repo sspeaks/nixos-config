@@ -15,7 +15,7 @@
   };
   environment.systemPackages = [
     (pkgs.askGPT4.override {
-      openaikey = config.sops.open-ai-api-key.path;
+      openaikey = config.sops.secrets.open-ai-api-key.path;
     })
   ];
 
