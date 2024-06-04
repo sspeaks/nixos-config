@@ -14,13 +14,9 @@
     group = "users";
   };
   environment.systemPackages = [
-    (pkgs.askGPT4.overrideAttrs (_: rec {
-      OPEN_AI_KEY_FILE = config.sops.secrets.open-ai-api-key.path;
-      postFixup = ''
-        wrapProgram $out/bin/askGPT4 \
-        --set OPEN_AI_KEY ${OPEN_AI_KEY_FILE}
-      '';
-    }))
+    (pkgs.askGPT4.override {
+      openaikey = config.sops.open-ai-api-key.path;
+    })
   ];
 
   programs.zsh.enable = true;
