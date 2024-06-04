@@ -17,7 +17,10 @@
   };
   home = {
     username = lib.mkDefault "sspeaks";
-    homeDirectory = lib.mkDefault "/home/${config.home.username}";
+    homeDirectory = lib.mkDefault (
+      (if pkgs.system == "aarch64-darwin" then "/Users/" else "/home/") +
+      "${config.home.username}"
+    );
     stateVersion = lib.mkDefault "23.05";
   };
 }
