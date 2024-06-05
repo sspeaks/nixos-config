@@ -22,6 +22,7 @@ in
       xclip
       htop
       shellcheck
+      direnv
     ];
     sessionVariables = {
       EDITOR = "vim";
