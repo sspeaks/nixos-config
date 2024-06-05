@@ -42,8 +42,10 @@ in
       lsp = {
         enable = true;
         servers = {
-          csharp-ls.enable = true;
+          csharp-ls.enable = false;
           nixd.enable = true;
+          hls.enable = false;
+          pylsp.enable = true;
         };
         keymaps.lspBuf = {
         "gd" = "definition";
