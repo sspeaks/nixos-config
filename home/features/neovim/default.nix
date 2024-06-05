@@ -39,11 +39,24 @@ in
       treesitter.enable = true;
       treesitter.gccPackage = pkgs.gcc;
 
-      lsp.enable = true;
+      lsp = {
+        enable = true;
+        servers = {
+          csharp-ls.enable = true;
+          nixd.enable = true;
+        };
+        keymaps.lspBuf = {
+        "gd" = "definition";
+        "gD" = "references";
+        "gt" = "type_definition";
+        "gi" = "implementation";
+        "K" = "hover";
+      };
+      };
       cmp-nvim-lsp.enable = true;
+      cmp-buffer.enable = true;
+      cmp-path.enable = true;
       cmp.enable = true;
-      lsp.servers.csharp-ls.enable = true;
-      lsp.servers.nixd.enable = true;
     };
     extraPlugins = with pkgs.vimPlugins; [ ale vim-nix telescope_live_args ];
     extraPackages = with pkgs; [ fd ];
