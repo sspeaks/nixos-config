@@ -17,7 +17,6 @@ in
   programs.nixvim = {
     enable = true;
     enableMan = false;
-    colorscheme = "desert";
     vimAlias = true;
     extraConfigVim = ''
       set mouse=
