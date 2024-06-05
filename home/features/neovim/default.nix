@@ -39,6 +39,7 @@ in
       treesitter.enable = true;
       treesitter.gccPackage = pkgs.gcc;
 
+
       lsp = {
         enable = true;
         servers = {
@@ -48,17 +49,36 @@ in
           pylsp.enable = true;
         };
         keymaps.lspBuf = {
-        "gd" = "definition";
-        "gD" = "references";
-        "gt" = "type_definition";
-        "gi" = "implementation";
-        "K" = "hover";
-      };
+          "gd" = "definition";
+          "gD" = "references";
+          "gt" = "type_definition";
+          "gi" = "implementation";
+          "K" = "hover";
+          "ga" = "code_action";
+        };
       };
       cmp-nvim-lsp.enable = true;
       cmp-buffer.enable = true;
       cmp-path.enable = true;
-      cmp.enable = true;
+      cmp = {
+        enable = true;
+        settings = {
+          sources = [
+            { name = "nvim_lsp"; }
+            { name = "buffer"; }
+            { name = "path"; }
+          ];
+          mapping = {
+            "<C-n>" = "cmp.mapping.select_next_item()";
+            "<C-p>" = "cmp.mapping.select_prev_item()";
+            "<C-u>" = "cmp.mapping.scroll_docs(-4)";
+            "<C-d>" = "cmp.mapping.scroll_docs(4)";
+            "<C-Space>" = "cmp.mapping.complete()";
+            "<C-e>" = "cmp.mapping.abort()";
+            "<CR>" = "cmp.mapping.confirm({ select = true })";
+          };
+        };
+      };
     };
     extraPlugins = with pkgs.vimPlugins; [ ale vim-nix telescope_live_args ];
     extraPackages = with pkgs; [ fd ];
