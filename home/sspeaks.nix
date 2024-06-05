@@ -8,6 +8,7 @@ in
   imports = [
     ./global
     features/git
+    features/tmux
     features/neovim
     features/starship
     features/zsh
