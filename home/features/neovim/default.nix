@@ -36,6 +36,7 @@ in
         };
         enabledExtensions = [ "live_grep_args" ];
       };
+      luasnip.enable = true;
       treesitter.enable = true;
       treesitter.gccPackage = pkgs.gcc;
 
@@ -65,6 +66,7 @@ in
         settings = {
           sources = [
             { name = "nvim_lsp"; }
+            { name = "luasnip"; }
             { name = "buffer"; }
             { name = "path"; }
           ];
