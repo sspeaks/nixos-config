@@ -1,4 +1,4 @@
-{ pkgs, lib, config, ... }: {
+{sopsFileLocation}:{ pkgs, lib, config, ... }: {
   options.myWireguard.enable = lib.mkEnableOption "enable my local wireguard";
   config = lib.mkIf config.myWireguard.enable {
     # enable NAT
@@ -9,6 +9,11 @@
       allowedUDPPorts = [ 51820 ];
     };
     networking.wireguard.enable = true;
+
+    sops.secrets = {
+      wireguard-public-key = sopsFileLocation;
+      wireguard-private-key = sopsFileLocation;
+    };
 
     networking.wireguard.interfaces = {
       # "wg0" is the network interface name. You can name the interface arbitrarily.
@@ -35,7 +40,7 @@
         # Note: The private key can also be included inline via the privateKey option,
         # but this makes the private key world-readable; thus, using privateKeyFile is
         # recommended.
-        privateKeyFile = "/home/sspeaks/wireguard/private";
+        privateKeyFile = config.sops.secrets.wireguard-private-key.path;
 
         peers = [
           # List of allowed peers.
