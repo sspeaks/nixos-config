@@ -1,4 +1,4 @@
-{ pkgs, ...}:
+{ pkgs, ... }:
 {
   programs.tmux = {
     enable = true;
@@ -9,10 +9,10 @@
       bind-key j select-pane -D
       bind-key k select-pane -U
       bind-key l select-pane -R
-          '';
-    plugins =  with pkgs; [ 
-      tmuxPlugins.cpu 
-      { 
+    '';
+    plugins = with pkgs; [
+      tmuxPlugins.cpu
+      {
         plugin = tmuxPlugins.catppuccin;
         extraConfig = ''
           set -g @catppuccin_window_left_separator ""
