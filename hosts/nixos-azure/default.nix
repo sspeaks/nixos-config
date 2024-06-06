@@ -1,9 +1,11 @@
 { inputs, ... }:
-let sopsFileLocation  = {
-  format = "yaml";
-  sopsFile = ./secrets.yaml;
-};
-in {
+let
+  sopsFileLocation = {
+    format = "yaml";
+    sopsFile = ./secrets.yaml;
+  };
+in
+{
   imports = [
     ../common/global
     ./hardware-configuration.nix

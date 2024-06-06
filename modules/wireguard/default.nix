@@ -1,4 +1,4 @@
-{sopsFileLocation}:{ pkgs, lib, config, ... }: {
+{ sopsFileLocation }: { pkgs, lib, config, ... }: {
   options.myWireguard.enable = lib.mkEnableOption "enable my local wireguard";
   config = lib.mkIf config.myWireguard.enable {
     # enable NAT
