@@ -1,14 +1,18 @@
-{ config, pkgs, lib, inputs, outputs, modulesPath, ... }:
-{
+{ inputs, ... }:
+let sopsFileLocation  = {
+  format = "yaml";
+  sopsFile = ./secrets.yaml;
+};
+in {
   imports = [
     ../common/global
     ./hardware-configuration.nix
     ../common/users/sspeaks
-    ../../modules/wireguard
     ./pogbot.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
     inputs.spock.nixosModules.default
+    (import ../../modules/wireguard/default.nix { inherit sopsFileLocation; })
   ];
 
   systemd.tmpfiles.rules = [
@@ -37,4 +41,3 @@
 
   time.timeZone = "America/Los_Angeles";
 }
-
