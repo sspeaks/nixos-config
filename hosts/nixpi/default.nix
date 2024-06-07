@@ -5,6 +5,7 @@
     ../common/global
     ../common/users/sspeaks
     ./hardware-config.nix
+        ./networking.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
   ];
