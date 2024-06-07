@@ -35,10 +35,8 @@ in
         };
         enabledExtensions = [ "live_grep_args" ];
       };
-      luasnip.enable = true;
       treesitter.enable = true;
       treesitter.gccPackage = pkgs.gcc;
-
 
       lsp = {
         enable = true;
@@ -57,6 +55,7 @@ in
           "ga" = "code_action";
         };
       };
+      luasnip.enable = true;
       cmp-nvim-lsp.enable = true;
       cmp-buffer.enable = true;
       cmp-path.enable = true;
@@ -77,6 +76,9 @@ in
             "<C-Space>" = "cmp.mapping.complete()";
             "<C-e>" = "cmp.mapping.abort()";
             "<CR>" = "cmp.mapping.confirm({ select = true })";
+          };
+          snippet = {
+            expand = "function(args) require('luasnip').lsp_expand(args.body) end";
           };
         };
       };
