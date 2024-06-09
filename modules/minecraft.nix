@@ -1,15 +1,16 @@
 { unstablePkgs, pkgs, lib, fetchurl, ... }:
 let
-  enable = false;
+  enable = true;
   eulaFile = builtins.toFile "eula.txt" ''
     # eula.txt managed by NixOS Configuration
     eula=true
   '';
-  jvmOpts = "-Xms512M -Xmx512M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Djava.net.preferIPv4Stack=true ";
+  jvmOpts = "-Xms2G -Xmx2G -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Djava.net.preferIPv4Stack=true ";
   dataDir = "/var/lib/minecraft";
   defaultServerPort = 25565;
 in
 lib.mkIf enable {
+
   nixpkgs.overlays = [
     (final: prev: {
       papermc =
@@ -24,12 +25,12 @@ lib.mkIf enable {
           jre = unstablePkgs.jdk21_headless;
         }).overrideAttrs (_: {
           inherit version;
-          installPhase = ''
-            install -Dm444 ${paperJar} $out/share/papermc/papermc.jar
-            install -Dm555 -t $out/bin minecraft-server
-          '';
+          src = paperJar;
         });
     })
+  ];
+  environment.systemPackages = [
+    pkgs.screen
   ];
   users.users.minecraft = {
     description = "Minecraft server service user";

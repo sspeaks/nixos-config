@@ -59,6 +59,7 @@ in
       cmp-nvim-lsp.enable = true;
       cmp-buffer.enable = true;
       cmp-path.enable = true;
+      comment.enable = true;
       cmp = {
         enable = true;
         settings = {
