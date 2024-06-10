@@ -24,6 +24,10 @@
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    factorio = {
+      url = "github:sspeaks/factorio-server-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs@{ self, nixpkgs, home-manager, systems, ... }:
     let

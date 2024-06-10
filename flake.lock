@@ -22,6 +22,23 @@
         "type": "github"
       }
     },
+    "factorio": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 0,
+        "narHash": "sha256-9g6gxG+h8lCqeX/ywqqdWB/bL0K5GaV7UmeJi0cRPsw=",
+        "type": "git",
+        "url": "file:///home/sspeaks/factorio"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/sspeaks/factorio"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -257,11 +274,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1717994667,
-        "narHash": "sha256-InZNhRvAxD0MXbHmyAFTenLIqWpG1dlNKQjW75sRxRI=",
+        "lastModified": 1717995329,
+        "narHash": "sha256-lQJXEFHHVsFdFLx0bvoRbZH3IXUBsle6EWj9JroTJ/s=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "35f2177d6656b4db8797f4dbb0f9a70e34fbbc8f",
+        "rev": "58b52b0dd191af70f538c707c66c682331cfdffc",
         "type": "github"
       },
       "original": {
@@ -400,6 +417,7 @@
     },
     "root": {
       "inputs": {
+        "factorio": "factorio",
         "home-manager": "home-manager",
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
