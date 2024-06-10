@@ -18,6 +18,7 @@ in
     (import ../../modules/wireguard/default.nix { inherit sopsFileLocation; })
   ];
 
+  # Needed for waagent
   systemd.tmpfiles.rules = [
     "d /opt 0666 root root"
   ];
