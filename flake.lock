@@ -29,14 +29,17 @@
         ]
       },
       "locked": {
-        "lastModified": 0,
-        "narHash": "sha256-9g6gxG+h8lCqeX/ywqqdWB/bL0K5GaV7UmeJi0cRPsw=",
-        "type": "git",
-        "url": "file:///home/sspeaks/factorio"
+        "lastModified": 1718001880,
+        "narHash": "sha256-uWrp0sjufQKNPJiWU4sLehQLUtOnd4LTp+zX7XjNuRY=",
+        "owner": "sspeaks",
+        "repo": "factorio-server-nix",
+        "rev": "e64a1b1d1c795b3220a99d7a17c6d09bc1529689",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///home/sspeaks/factorio"
+        "owner": "sspeaks",
+        "repo": "factorio-server-nix",
+        "type": "github"
       }
     },
     "flake-compat": {
