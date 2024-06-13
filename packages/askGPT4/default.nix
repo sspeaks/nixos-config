@@ -1,7 +1,9 @@
 { pkgs, openaikey ? "/dev/null", ... }:
 #  
-# Install Example without flakes
+# Build Example without flakes
 # nix build --impure --expr "let pkgs = import <nixpkgs> {};  in pkgs.callPackage ./packages/askGPT4/default.nix {openaikey = \"/Users/sspeaks/.openapikey\";}"
+# Install example without flakes 
+# nix-env -i -f ./packages/askGPT4/default.nix -E 'p: let pkgs = import <nixpkgs> {}; in p {inherit pkgs; openaikey = "/home/sspeaks/.openaiapikey";}'
 let
   openai = pkgs.python311Packages.buildPythonPackage rec {
     pname = "openai";
