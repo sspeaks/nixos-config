@@ -5,6 +5,7 @@
     ../common/global
     ../common/users/sspeaks
     ./hardware-config.nix
+    ./wifi.nix
     ./networking.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
@@ -31,7 +32,14 @@
   security.sudo.wheelNeedsPassword = false;
 
   time.timeZone = "America/Los_Angeles";
-
+  console = {
+    font = "ter-i32b";
+    packages = with pkgs; [ terminus_font ];
+    earlySetup = true;
+  };
+  #  services.xserver.enable = true;
+  #  programs.sway.enable = true;
+  #  services.xserver.displayManager.gdm.enable = true;
   nixpkgs.hostPlatform = "aarch64-linux";
 }
 
