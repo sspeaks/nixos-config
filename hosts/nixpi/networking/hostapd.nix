@@ -1,18 +1,9 @@
-{ config, ... }:
+{config, ...}:
 {
   sops.secrets = {
     wifi-password = {
       format = "yaml";
-      sopsFile = ./secrets.yaml;
-    };
-  };
-  #  networking.networkmanager.enable = true;
-  networking.wireless = {
-    enable = true;
-    networks = {
-      "hide your kids hide your wifi" = {
-        pskRaw = "";
-      };
+      sopsFile = ../secrets.yaml;
     };
   };
   services.hostapd = {
@@ -45,4 +36,3 @@
     };
   };
 }
-
