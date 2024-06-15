@@ -51,6 +51,11 @@
             # List of IPs assigned to this peer within the tunnel subnet. Used to configure routing.
             allowedIPs = [ "10.100.0.2/32" ];
           }
+          # Nixpi
+          {
+            publicKey = "MPilzux/f1DnhjhsE7ykqkQO+4/F60tkw0s9JYHisWE=";
+            allowedIPs = [ "10.100.0.3/32" ];
+          }
         ];
       };
     };
