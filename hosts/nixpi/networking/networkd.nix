@@ -95,9 +95,9 @@ in
       "10-wg0" = lib.mkIf enableWireguard {
         matchConfig.Name = "wg0";
         address = [ "10.100.0.3/24" ];
-#        gateway = [
- #         "10.100.0.1"
-  #      ];
+        #        gateway = [
+        #         "10.100.0.1"
+        #      ];
         routingPolicyRules = [
           {
             routingPolicyRuleConfig = {
