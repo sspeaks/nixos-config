@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   sops.secrets = {
     wifi-password = {
@@ -6,30 +6,32 @@
       sopsFile = ../secrets.yaml;
     };
   };
-  hardware.wirelessRegulatoryDatabase = true;
-  boot.extraModprobeConfig = ''
-    options cfg80211 ieee80211_regdom="US"
-  '';
-  services.hostapd = {
+    services.hostapd = {
     enable = true;
     radios = {
       wlp1s0u2 = {
         band = "5g";
         countryCode = "US";
-        channel = 40;
+        channel = 48;
 
         wifi4.enable = true;
         # Values found in https://w1.fi/cgit/hostap/plain/hostapd/hostapd.conf
-        wifi4.capabilities = [ 
-          "LDPC" 
+        wifi4.capabilities = [
+          "LDPC"
           # "HT40-" 
           # "HT40+" 
-          "SMPS disabled" 
-          "SHORT-GI-20" 
-          "SHORT-GI-40" 
-          "GF" 
-          "TX-STBC" 
-          "RX-STBC1" ];
+          "SMPS disabled"
+          "SHORT-GI-20"
+          "SHORT-GI-40"
+          "GF"
+          "TX-STBC"
+          "RX-STBC1"
+        ];
+        wifi5.capabilities = [
+          "MAX-MPDU-3895"
+          "RXLDPC"
+          "SHORT-GI-80"
+        ];
 
 
         networks = {
