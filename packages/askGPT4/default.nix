@@ -18,7 +18,7 @@ let
     propagatedBuildInputs = with pkgs.python311Packages; [ typing-extensions pydantic httpx distro ];
     pythonImportsCheck = [ "openai" ];
   };
-  pythonP = pkgs.python311.withPackages (ps: [ openai ]);
+  pythonP = pkgs.python311.withPackages (ps: [ openai ps.python-magic ]);
 in
 pkgs.stdenv.mkDerivation rec {
   name = "askGPT4";
