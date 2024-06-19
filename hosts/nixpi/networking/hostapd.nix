@@ -6,6 +6,10 @@
       sopsFile = ../secrets.yaml;
     };
   };
+  hardware.wirelessRegulatoryDatabase = true;
+  boot.extraModprobeConfig = ''
+    options cfg80211 ieee80211_regdom="US"
+  '';
   services.hostapd = {
     enable = true;
     radios = {
@@ -15,7 +19,17 @@
         channel = 40;
 
         wifi4.enable = true;
-        wifi4.capabilities = [ "LDPC" "HT40+" "SMPS disabled" "SHORT-GI-20" "SHORT-GI-40" "GF" "TX-STBC" "RX-STBC1" ];
+        # Values found in https://w1.fi/cgit/hostap/plain/hostapd/hostapd.conf
+        wifi4.capabilities = [ 
+          "LDPC" 
+          # "HT40-" 
+          # "HT40+" 
+          "SMPS disabled" 
+          "SHORT-GI-20" 
+          "SHORT-GI-40" 
+          "GF" 
+          "TX-STBC" 
+          "RX-STBC1" ];
 
 
         networks = {
