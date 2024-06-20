@@ -131,4 +131,5 @@ in
       };
     };
   };
+  services.irqbalance.enable = false;
 }
