@@ -1,4 +1,5 @@
 { pkgs, ... }:
+# See https://github.com/ghostbuster91/nixos-router for inspiration
 {
   imports = [
     ./networking/dnsmasq.nix
