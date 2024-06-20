@@ -53,8 +53,13 @@
           }
           # Nixpi
           {
-            publicKey = "MPilzux/f1DnhjhsE7ykqkQO+4/F60tkw0s9JYHisWE=";
+            publicKey = "uB527Y0lyfRQTYtYF0zJeqxrAti+6Z2JAtg/8PujrUw=";
             allowedIPs = [ "10.100.0.3/32" ];
+          }
+          # home pc 
+          {
+            publicKey = "jj/PlPfdyY1kakJVTlI1IcLDqf/eHMRymjH/IxCtpVE=";
+            allowedIPs = [ "10.100.0.10/32" ];
           }
         ];
       };
