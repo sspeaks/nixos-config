@@ -20,12 +20,12 @@ class GPTSession:
         self.client = OpenAI(
             api_key=api_key.strip(),
         )
+        self.contextMessages = [];
 
         self.parse_args()
 
         if self.args.newSession:
             self.wipe_context_dir()
-        
         if not os.path.exists(context_dir):
             os.makedirs(context_dir)
         recent_epochs = sorted([int(os.path.splitext(f)[0]) for f in os.listdir(context_dir)],reverse=True)
@@ -35,8 +35,6 @@ class GPTSession:
             isWithinSpan = new_context_span >= (abs(int(time.time()) - latest))
             if isWithinSpan:
                 self.load_context(latest)
-        else:
-            self.contextMessages = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description="Optional arguments")
