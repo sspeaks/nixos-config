@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 let
-  enableWireguard = true;
+  enableWireguard = false;
   wgFwMark = 4242;
   wgTable = 4000;
 in
