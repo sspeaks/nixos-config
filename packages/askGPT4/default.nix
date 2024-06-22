@@ -27,11 +27,11 @@ pkgs.stdenv.mkDerivation rec {
   OPEN_AI_KEY_FILE = openaikey;
   installPhase = ''
     mkdir -p $out/bin
-    cp ${./askGPT4.py} $out/bin/askGPT4
-    chmod +x $out/bin/askGPT4
+    cp ${./askGPT4.py} $out/bin/aai
+    chmod +x $out/bin/aai
   '';
   postFixup = ''
-    wrapProgram $out/bin/askGPT4 \
+    wrapProgram $out/bin/aai \
     --set OPEN_AI_KEY ${OPEN_AI_KEY_FILE}
   '';
 }
