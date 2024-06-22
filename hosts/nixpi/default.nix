@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   imports = [
@@ -7,7 +7,6 @@
     ./hardware-config.nix
     ./networking.nix
     inputs.home-manager.nixosModules.home-manager
-    inputs.vscode-server.nixosModules.default
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [
@@ -27,7 +26,6 @@
     programs.starship.settings.hostname.disabled = false;
   };
 
-  services.vscode-server.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
   time.timeZone = "America/Los_Angeles";
