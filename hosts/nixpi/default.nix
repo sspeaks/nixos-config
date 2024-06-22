@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
@@ -27,6 +27,7 @@
   };
 
   security.sudo.wheelNeedsPassword = false;
+  services.openssh.settings.X11Forwarding = true;
 
   time.timeZone = "America/Los_Angeles";
   console = {

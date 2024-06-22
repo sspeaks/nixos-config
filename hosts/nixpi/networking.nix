@@ -12,6 +12,6 @@
   environment.systemPackages = with pkgs; [
     wpa_supplicant
     tcpdump
-    links2
+    midori
   ];
 }
