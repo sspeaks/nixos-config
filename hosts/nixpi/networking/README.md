@@ -3,3 +3,7 @@ Should only need to connect via phone hotspot of I forgot the dongle or the wifi
 Once phone hotspot is on, I can ssh to the pi via wireguard because pi is configured to auto connnect to my phone and wireguard
 If hostapd is failing to start `journalctl -u hostapd -f` then it means it isn't configured to use a channel that works. 
 `iw list` is how I determine what channels I can use. There'll be 2 phys listed and the more complicated one is the one connected via usb (at least for pi 4)
+
+
+f = p: builtins.map (i: p + "/${i}") ( pkgs.lib.attrNames (builtins.readDir p))
+
