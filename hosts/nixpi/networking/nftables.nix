@@ -35,8 +35,8 @@
           chain forward {
             type filter hook forward priority filter; policy drop;
 
+            tcp flags syn tcp option maxseg size set 1260 # Needed for iOS devices... Not sure why?
             # meta nftrace set 1
-
             iifname { "br-lan" } oifname { "wlan0", "wg0" } accept comment "Allow trusted LAN to WAN"
             iifname { "wlan0", "wg0" } oifname { "br-lan" } ct state { established, related } accept comment "Allow established back to LAN" 
           }
@@ -46,11 +46,12 @@
         table ip nat {
           chain postrouting {
             type nat hook postrouting priority 100; policy accept;
-            oifname "wlan0" masquerade
-            iifname "br-lan" oifname "wg0"  masquerade
+            iifname { "br-lan" } oifname { "wlan0", "wg0" } masquerade
+            #oifname { "wg0" } masquerade
           }
         }
       '';
     };
   };
 }
+

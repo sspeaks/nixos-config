@@ -8,6 +8,7 @@
   };
   boot.extraModprobeConfig = ''
     options cfg80211 ieee80211_regdom="US"
+    options mt76_usb disable_usb_sg=1
   '';
   boot.kernelPatches = [{
     name = "cfg80211-config";
@@ -25,7 +26,7 @@
       wlp1s0u2 = {
         band = "5g";
         countryCode = "US";
-        channel = 36;
+        channel = 44;
 
         wifi4.enable = true;
         # Values found in https://w1.fi/cgit/hostap/plain/hostapd/hostapd.conf
