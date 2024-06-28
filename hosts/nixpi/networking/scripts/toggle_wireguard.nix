@@ -1,5 +1,6 @@
 {pkgs, ...}:
 pkgs.writeShellScriptBin "toggle_wireguard" ''
+#! ${pkgs.bash}/bin/bash
 # Define the file path
 FILE="/home/sspeaks/osConfig/hosts/nixpi/networking/networkd.nix"
 
