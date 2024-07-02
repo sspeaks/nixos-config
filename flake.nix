@@ -2,12 +2,24 @@
   description = "NixOS Config";
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-24.05";
-    nixos-hardware.url = "nixos-hardware";
-    home-manager.url = "github:nix-community/home-manager/release-24.05";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    vscode-server.url = "github:nix-community/nixos-vscode-server";
-    nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
-    systems.url = "github:nix-systems/default";
+    nixos-hardware = {
+      url = "nixos-hardware";
+    };
+    home-manager = {
+      url = "github:nix-community/home-manager/release-24.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    vscode-server = {
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    systems = {
+      url = "github:nix-systems/default";
+    };
     sops-nix = {
       url = "github:/mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,8 +33,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixvim = {
-      url = "github:nix-community/nixvim";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:nix-community/nixvim/nixos-24.05";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+      };
     };
     factorio = {
       url = "github:sspeaks/factorio-server-nix";
