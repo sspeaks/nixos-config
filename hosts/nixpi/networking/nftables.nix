@@ -24,10 +24,10 @@
             # meta nftrace set 1
 
             iifname { "br-lan" } accept comment "Allow local network to access the router"
-            #iifname "wlan0" ct state { established, related } accept comment "Allow established traffic"
-            iifname "wlan0" accept comment "meant for use in home network to allow ssh"
+            iifname "wlan0" ct state { established, related } accept comment "Allow established traffic"
+            #iifname "wlan0" accept comment "meant for use in home network to allow ssh"
             iifname "wlan0" icmp type { echo-request, destination-unreachable, time-exceeded } counter accept comment "Allow select ICMP"
-            iifname "wg0" accept
+            iifname "wg0" ct state { established, related } accept comment "Allow established wireguard traffic"
             iifname "wlan0" udp dport $wg_port accept comment "Accept wireguard traffic incoming"
             iifname "wlan0" counter drop comment "Drop all other unsolicited traffic from wlan0"
             iifname "lo" accept comment "Accept everything from loopback"
