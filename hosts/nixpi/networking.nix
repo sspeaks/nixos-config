@@ -13,7 +13,7 @@
     wpa_supplicant
     tcpdump
     midori
-    (callPackage ./networking/scripts/get_networks.nix {})
-    (callPackage ./networking/scripts/toggle_wireguard.nix {})
+    (callPackage ./networking/scripts/get_networks.nix { })
+    (callPackage ./networking/scripts/toggle_wireguard.nix { })
   ];
 }

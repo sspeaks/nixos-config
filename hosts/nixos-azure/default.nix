@@ -11,7 +11,7 @@ in
     ./hardware-configuration.nix
     ../common/users/sspeaks
     ./pogbot.nix
-#    ../../modules/minecraft.nix
+    #    ../../modules/minecraft.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
     inputs.spock.nixosModules.default
