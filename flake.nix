@@ -43,8 +43,16 @@
       url = "github:sspeaks/factorio-server-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixos-apple-silicon = {
+      url = "github:tpwrules/nixos-apple-silicon";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    raspberry-pi-nix = {
+      url = "github:tstat/raspberry-pi-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs = inputs@{ self, nixpkgs, home-manager, systems, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, systems, raspberry-pi-nix, ... }:
     let
       inherit (self) outputs;
       lib = nixpkgs.lib;
@@ -89,6 +97,19 @@
           specialArgs = { inherit inputs outputs; };
           modules = [
             hosts/vm
+          ];
+        };
+        asahi = lib.nixosSystem {
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            hosts/asahi
+          ];
+        };
+        nixpi5 = lib.nixosSystem {
+          specialArgs = {inherit inputs outputs; };
+          modules = [
+            raspberry-pi-nix.nixosModules.raspberry-pi
+            hosts/nixpi5
           ];
         };
       };
