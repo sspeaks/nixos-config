@@ -15,10 +15,7 @@
       '';
     });
   })
-  (
-    (final: prev:
+  (final: prev:
       import ./packages { pkgs = final; }
-    )
   )
 ]
-

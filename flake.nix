@@ -5,6 +5,10 @@
     nixos-hardware = {
       url = "nixos-hardware";
     };
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager/release-24.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -66,6 +70,12 @@
             hosts/nixpi
           ];
         };
+        nixpi5 = lib.nixosSystem {
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            hosts/nixpi5
+          ];
+        };
         NixOS-WSL = lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
@@ -78,7 +88,6 @@
             hosts/nixosWSL-work
           ];
         };
-
         nixos-azure = lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
