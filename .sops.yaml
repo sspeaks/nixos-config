@@ -6,7 +6,7 @@ keys:
     - &nixpi age1nfquhf85wlt2ez7c4me0y8yqpcrnyn68vy7lkfu5tec873rad5gsmg2n3x
     - &nixosazure age1a04su9wxnvtzrs5kpjyhl22jzt56r0222xmzhr7pcsrdg5u7ze9qe38r29
     - &nixosWSLwork age1rq8j2df482hyksxcatvmvetcta9lkvuyhwz3h52037d7xele7udq24pe23
-    - &nixosWSL age106k2pwqk6nvnenu0tc773l3uc9r07r4txxlq7nz8zky2t0uvp3lqy96vr4
+    - &nixosWSL age1cmn5tf4xtyrw2we9h37yjvjw96rqq08xlguuw7vwfwcz28qewsds6qhg2f
     - &asahi age1wdfa5rgtmpnf5v40gy0n0fr7sldjeqkqqgn74euqjy5nd4elq9asnfps6n
     - &nixpi5 age17gq4myuue6fq0n859svnzl9dt8s9dq2w3ax67tcq0lptsqsmceuqzyglp5
 creation_rules:
