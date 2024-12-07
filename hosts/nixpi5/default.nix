@@ -4,6 +4,7 @@
   imports = [
     ../common/global
     ../common/users/sspeaks
+    ./networking.nix
     inputs.home-manager.nixosModules.home-manager
   ];
 
@@ -13,14 +14,20 @@
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDhirGFWX+DgCrQkI1Xy7qI2k9fMA/AWIRVi4lnPQwCn+eDM/OFt3K9vRkbRtzAD7bFHw1PVtjpbrch3IYoGTt+llWJO0BHqP6vRKkzmOqGXkdCspKojw3z16uHsI/mGA0Py7vVPxOo4OBcTX5WM9+Mp7OHYqxXmovxeMTXxHRI51OXtpAgyW+YO0oLPuwkSPcglLU3+XzX/wYb/Tf6gOta7MkXLZPQRES/8fAFGBbNmkTonM8RBbvkFnv9a7Xjt8rAlUAWBo5UAJHdhDJgZ44BDXw/ohn+IMEZulApBFlogBwLXN6mSCMd/NfVAkxvACbNg+jVsiXxTydlHKifxRHAoNvUsE+4dtlC6cyJtwZoPuu++iqDRu9Skzpm7idet+pQoSgrqAuB4sWVuAk1CyGe0pXCKRX9mXMngmCCZPo5d0w9hFlY+JJVKjYypNFbim9UyQW/RZ8qEXPpz5GVDC+2q8ov+r1C+QI6NGORrQgXuT4yHMIzMNx0sZ2QlS/Gtwc= seth@sspeaks-pc-windows"
   ];
 
+  hardware.raspberry-pi.config.all.dt-overlays.pcie-32bit-dma = {
+    enable = true;
+    params = {};
+  };
+
+
   networking = {
     hostName = "nixpi5";
   };
 
-  networking.wireless.iwd = {
-    enable = true;
-    settings.General.EnableNetworkConfiguration = true;
-  };
+  # networking.wireless.iwd = {
+  #   enable = true;
+  #   settings.General.EnableNetworkConfiguration = true;
+  # };
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
