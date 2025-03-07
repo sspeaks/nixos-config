@@ -24,6 +24,9 @@ in
       htop
       shellcheck
       direnv
+      ghc
+      cabal-install
+      haskell-language-server
     ];
     sessionVariables = {
       EDITOR = "vim";
