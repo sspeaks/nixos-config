@@ -38,10 +38,12 @@ in
       treesitter.enable = true;
       treesitter.gccPackage = pkgs.gcc;
 
+      web-devicons.enable = true;
+
       lsp = {
         enable = true;
         servers = {
-          csharp-ls.enable = false;
+          csharp_ls.enable = false;
           nixd.enable = true;
           hls.enable = false;
           pylsp.enable = true;
