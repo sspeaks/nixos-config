@@ -106,7 +106,7 @@
           ];
         };
         nixpi5 = lib.nixosSystem {
-          specialArgs = {inherit inputs outputs; };
+          specialArgs = { inherit inputs outputs; };
           modules = [
             raspberry-pi-nix.nixosModules.raspberry-pi
             hosts/nixpi5

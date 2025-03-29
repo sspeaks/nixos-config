@@ -39,12 +39,13 @@
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
-  home-manager.users.sspeaks = {...}:
-  {
-    imports = [../../home/sspeaks.nix
-#      ./waybar.nix
-    ];
-  };
+  home-manager.users.sspeaks = { ... }:
+    {
+      imports = [
+        ../../home/sspeaks.nix
+        #      ./waybar.nix
+      ];
+    };
 
   security.sudo.wheelNeedsPassword = false;
 

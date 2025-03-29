@@ -25,7 +25,7 @@
         "cpu"
         "memory"
         "temperature"
-      ]      ++ [
+      ] ++ [
         "clock"
         "tray"
       ];

@@ -48,12 +48,10 @@ in
         };
         wireguardPeers = [
           {
-            wireguardPeerConfig = {
-              PublicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0="; # server public key
-              AllowedIPs = [ "0.0.0.0/0" ];
-              Endpoint = "13.91.123.214:51820";
-              RouteTable = "off";
-            };
+            PublicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0="; # server public key
+            AllowedIPs = [ "0.0.0.0/0" ];
+            Endpoint = "13.91.123.214:51820";
+            RouteTable = "off";
           }
         ];
       };
@@ -86,7 +84,7 @@ in
           DNSOverTLS = true;
           DNSSEC = true;
           IPv6PrivacyExtensions = false;
-          IPForward = true;
+          IPv4Forwarding = true;
         };
         # make routing on this interface a dependency for network-online.target
         linkConfig.RequiredForOnline = "routable";
@@ -100,30 +98,24 @@ in
         #      ];
         routingPolicyRules = [
           {
-            routingPolicyRuleConfig = {
-              Family = "both";
-              Table = "main";
-              SuppressPrefixLength = 0;
-              Priority = 10;
-            };
+            Family = "both";
+            Table = "main";
+            SuppressPrefixLength = 0;
+            Priority = 10;
           }
           {
-            routingPolicyRuleConfig = {
-              Family = "both";
-              InvertRule = true;
-              FirewallMark = wgFwMark;
-              Table = wgTable;
-              Priority = 11;
-            };
+            Family = "both";
+            InvertRule = true;
+            FirewallMark = wgFwMark;
+            Table = wgTable;
+            Priority = 11;
           }
         ];
         routes = [
           {
-            routeConfig = {
-              Destination = "0.0.0.0/0";
-              Table = wgTable;
-              Scope = "link";
-            };
+            Destination = "0.0.0.0/0";
+            Table = wgTable;
+            Scope = "link";
           }
         ];
         linkConfig.RequiredForOnline = false;
