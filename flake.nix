@@ -40,7 +40,11 @@
       };
     };
     factorio = {
-      url = "github:sspeaks/factorio-server-nix";
+      url = "github:sspeaks/factorio-server-nix/space_age";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    boggle = { 
+      url = "github:sspeaks/boggle-sovler";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-apple-silicon = {
@@ -86,7 +90,6 @@
             hosts/nixosWSL-work
           ];
         };
-
         nixos-azure = lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [

@@ -11,10 +11,12 @@ in
     ./hardware-configuration.nix
     ../common/users/sspeaks
     ./pogbot.nix
+    inputs.boggle.nixosModules.default
+    #./factorio.nix
     #    ../../modules/minecraft.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.vscode-server.nixosModules.default
-    inputs.spock.nixosModules.default
+    #inputs.spock.nixosModules.default
     (import ../../modules/wireguard/default.nix { inherit sopsFileLocation; })
   ];
 
