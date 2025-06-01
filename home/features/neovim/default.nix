@@ -1,15 +1,15 @@
 { pkgs, inputs, ... }:
-let
-  telescope_live_args = pkgs.vimUtils.buildVimPlugin {
-    name = "telescope-live-grep-args";
-    src = pkgs.fetchFromGitHub {
-      owner = "nvim-telescope";
-      repo = "telescope-live-grep-args.nvim";
-      rev = "4122e146d199c0d6d1cfb359c76bc1250d522460";
-      sha256 = "sha256-a5IaLd7q9vRJmfiXux7xvXg6vPNouV2+ShdqY/vbHnw=";
-    };
-  };
-in
+# let
+#   telescope_live_args = pkgs.vimUtils.buildVimPlugin {
+#     name = "telescope-live-grep-args";
+#     src = pkgs.fetchFromGitHub {
+#       owner = "nvim-telescope";
+#       repo = "telescope-live-grep-args.nvim";
+#       rev = "b80ec2c70ec4f32571478b501218c8979fab5201";
+#       sha256 = "sha256-VmX7K21v3lErm7f5I7/1rJ/+fSbFxZPrbDokra9lZpQ=";
+#     };
+#   };
+# in
 
 {
   imports = [ inputs.nixvim.homeManagerModules.nixvim ];
@@ -23,6 +23,14 @@ in
     '';
 
     globals.mapleader = ",";
+
+    dependencies = {
+      gcc = {
+        enable = true;
+        package = pkgs.gcc;
+      };
+    };
+
     plugins = {
       telescope = {
         enable = true;
@@ -34,9 +42,9 @@ in
           "<leader>fs" = "treesitter";
         };
         enabledExtensions = [ "live_grep_args" ];
+
       };
       treesitter.enable = true;
-      treesitter.gccPackage = pkgs.gcc;
 
       web-devicons.enable = true;
 
@@ -86,7 +94,7 @@ in
         };
       };
     };
-    extraPlugins = with pkgs.vimPlugins; [ ale vim-nix telescope_live_args ];
+    extraPlugins = with pkgs.vimPlugins; [ ale vim-nix telescope-live-grep-args-nvim ];
     extraPackages = with pkgs; [ fd ];
   };
 }

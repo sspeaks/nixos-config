@@ -4,7 +4,7 @@ keys:
   hosts:
     - &mbp age1m02wz3xqkg6z0fflpdhvph0psw0vavhdusz9lzg3daa5aammc5xsxtwzds
     - &nixpi age1nfquhf85wlt2ez7c4me0y8yqpcrnyn68vy7lkfu5tec873rad5gsmg2n3x
-    - &nixosazure age1a04su9wxnvtzrs5kpjyhl22jzt56r0222xmzhr7pcsrdg5u7ze9qe38r29
+    - &nixosazure age1kw6rmz7v2v3p88tazheyv3a80ls55e2x8jy33svewu58q7w7gqzs2nuagp
     - &nixosWSLwork age1rq8j2df482hyksxcatvmvetcta9lkvuyhwz3h52037d7xele7udq24pe23
     - &nixosWSL age1cmn5tf4xtyrw2we9h37yjvjw96rqq08xlguuw7vwfwcz28qewsds6qhg2f
     - &asahi age1wdfa5rgtmpnf5v40gy0n0fr7sldjeqkqqgn74euqjy5nd4elq9asnfps6n

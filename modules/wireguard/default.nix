@@ -9,6 +9,7 @@
       allowedUDPPorts = [ 51820 ];
     };
     networking.wireguard.enable = true;
+    networking.wireguard.useNetworkd = false;
 
     sops.secrets = {
       wireguard-public-key = sopsFileLocation;

@@ -11,11 +11,16 @@
       pbpaste = "wslpath -u $(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -command '$f=New-TemporaryFile;(Get-Clipboard -Format image).save($f.FullName);echo $f.FullName') |  tr -d '\\r\\n\'";
 
     };
-    initExtraBeforeCompInit = ''
-      eval $(${pkgs.coreutils}/bin/dircolors -b) 
-      ${builtins.readFile ./pre-compinit.zsh}
-    '';
-    initExtra = builtins.readFile ./post-compinit.zsh;
+
+    initContent = pkgs.lib.mkMerge [
+      (pkgs.lib.mkOrder 550 ''
+        eval $(${pkgs.coreutils}/bin/dircolors -b)
+        ${builtins.readFile ./pre-compinit.zsh}
+      '')
+      (
+        pkgs.lib.mkOrder 1000 (builtins.readFile ./post-compinit.zsh)
+      )
+    ];
 
     plugins = [
       {

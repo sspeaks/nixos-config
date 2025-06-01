@@ -18,7 +18,10 @@ in
     inputs.vscode-server.nixosModules.default
     #inputs.spock.nixosModules.default
     (import ../../modules/wireguard/default.nix { inherit sopsFileLocation; })
+    inputs.determinate.nixosModules.default
   ];
+
+  nix.settings.lazy-trees = true;
 
   # Needed for waagent
   systemd.tmpfiles.rules = [
@@ -35,6 +38,7 @@ in
   };
 
   services.vscode-server.enable = true;
+
   security.sudo.wheelNeedsPassword = false;
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [
