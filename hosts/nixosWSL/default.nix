@@ -1,8 +1,4 @@
 { config, pkgs, lib, inputs, ... }:
-
-let
-
-in
 {
   imports = [
     ../common/global
@@ -10,10 +6,13 @@ in
     ./hardware-config.nix
     inputs.nixos-wsl.nixosModules.default
     inputs.home-manager.nixosModules.home-manager
+    inputs.determinate.nixosModules.default
   ];
 
   wsl.enable = true;
   wsl.defaultUser = "sspeaks";
+
+  nix.settings.lazy-trees = true;
 
   networking = {
     hostName = "NixOS-WSL";
