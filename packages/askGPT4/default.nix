@@ -7,15 +7,15 @@
 let
   openai = pkgs.python311Packages.buildPythonPackage rec {
     pname = "openai";
-    version = "1.16.2";
+    version = "1.83.0";
     format = "wheel";
     src = pkgs.python311Packages.fetchPypi {
       inherit pname version format;
       dist = "py3";
       python = "py3";
-      sha256 = "46a435380921e42dae218d04d6dd0e89a30d7f3b9d8a778d5887f78003cf9354";
+      sha256 = "d15ec58ba52537d4abc7b744890ecc4ab3cffb0fdaa8e5389830f6e1a2f7f128";
     };
-    propagatedBuildInputs = with pkgs.python311Packages; [ typing-extensions pydantic httpx distro ];
+    propagatedBuildInputs = with pkgs.python311Packages; [ typing-extensions pydantic httpx distro jiter ];
     pythonImportsCheck = [ "openai" ];
   };
   pythonP = pkgs.python311.withPackages (ps: [ openai ps.python-magic ]);
