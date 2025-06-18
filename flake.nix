@@ -125,6 +125,11 @@
           extraSpecialArgs = { inherit inputs; };
           modules = [ home/sspeaks.nix ];
         };
+        "sspeaks@blog" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor.x86_64-linux;
+          extraSpecialArgs = { inherit inputs; };
+          modules = [ home/sspeaks-blog.nix ];
+        };
         "sspeaks@darwin" = home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor.aarch64-darwin;
           extraSpecialArgs = { inherit inputs; };
