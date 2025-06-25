@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1722113426,
-        "narHash": "sha256-Yo/3loq572A8Su6aY5GP56knpuKYRvM2a1meP9oJZCw=",
+        "lastModified": 1728330715,
+        "narHash": "sha256-xRJ2nPOXb//u1jaBnDP56M7v5ldavjbtR6lfGqSvcKg=",
         "owner": "numtide",
         "repo": "devshell",
-        "rev": "67cce7359e4cd3c45296fb4aaf6a19e2a9c757ae",
+        "rev": "dd6b80932022cea34a019e2bb32f6fa9e494dfef",
         "type": "github"
       },
       "original": {
@@ -110,11 +110,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1722555600,
-        "narHash": "sha256-XOQkdLafnb/p9ij77byFQjDf5m5QYl9b2REiVClC+x4=",
+        "lastModified": 1730504689,
+        "narHash": "sha256-hgmguH29K2fvs9szpq2r3pz2/8cJd2LPS+b4tfNFCwE=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "8471fe90ad337a8074e957b69ca4d0089218391d",
+        "rev": "506278e768c2a08bec68eb62932193e341f55c90",
         "type": "github"
       },
       "original": {
@@ -128,11 +128,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1710146030,
-        "narHash": "sha256-SZ5L6eA7HJ/nmkzGG7/ISclqe6oZdOZTNoesiInkXPQ=",
+        "lastModified": 1726560853,
+        "narHash": "sha256-X6rJYSESBVr3hBoH0WbKE5KvhPU5bloyZ2L4K60/fPQ=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "b1d9ab70662946ef0850d488da1c9019f3a9752a",
+        "rev": "c1dfcf08411b08f6b8615f7d8971a2bfa81d5e8a",
         "type": "github"
       },
       "original": {
@@ -173,11 +173,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1724440431,
-        "narHash": "sha256-9etXEOUtzeMgqg1u0wp+EdwG7RpmrAZ2yX516bMj2aE=",
+        "lastModified": 1730302582,
+        "narHash": "sha256-W1MIJpADXQCgosJZT8qBYLRuZls2KSiKdpnTVdKBuvU=",
         "owner": "cachix",
         "repo": "git-hooks.nix",
-        "rev": "c8a54057aae480c56e28ef3e14e4960628ac495b",
+        "rev": "af8a16fe5c264f5e9e18bcee2859b40a656876cf",
         "type": "github"
       },
       "original": {
@@ -215,11 +215,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1720042825,
-        "narHash": "sha256-A0vrUB6x82/jvf17qPCpxaM+ulJnD8YZwH9Ci0BsAzE=",
+        "lastModified": 1726989464,
+        "narHash": "sha256-Vl+WVTJwutXkimwGprnEtXc/s/s8sMuXzqXaspIGlwM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "e1391fb22e18a36f57e6999c7a9f966dc80ac073",
+        "rev": "2f23fa308a7c067e52dfcc30a0758f47043ec176",
         "type": "github"
       },
       "original": {
@@ -232,33 +232,33 @@
     "libcamera-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1718617480,
-        "narHash": "sha256-qqEMJzMotybf1nJp1dsz3zc910Qj0TmqCm1CwuSb1VY=",
+        "lastModified": 1725630279,
+        "narHash": "sha256-KH30jmHfxXq4j2CL7kv18DYECJRp9ECuWNPnqPZajPA=",
         "owner": "raspberrypi",
         "repo": "libcamera",
-        "rev": "6ddd79b5bdbedc1f61007aed35391f1559f9e29a",
+        "rev": "69a894c4adad524d3063dd027f5c4774485cf9db",
         "type": "github"
       },
       "original": {
         "owner": "raspberrypi",
         "repo": "libcamera",
-        "rev": "6ddd79b5bdbedc1f61007aed35391f1559f9e29a",
+        "rev": "69a894c4adad524d3063dd027f5c4774485cf9db",
         "type": "github"
       }
     },
     "libpisp-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1718613892,
-        "narHash": "sha256-V/d4RrXoq8HNc8r/Kr1gH3E7YTZzfIdgbaJtq/Xi7uQ=",
+        "lastModified": 1724944683,
+        "narHash": "sha256-Fo2UJmQHS855YSSKKmGrsQnJzXog1cdpkIOO72yYAM4=",
         "owner": "raspberrypi",
         "repo": "libpisp",
-        "rev": "b567f04556801ca350331ed21a1ae3eef4675c23",
+        "rev": "28196ed6edcfeda88d23cc5f213d51aa6fa17bb3",
         "type": "github"
       },
       "original": {
         "owner": "raspberrypi",
-        "ref": "v1.0.6",
+        "ref": "v1.0.7",
         "repo": "libpisp",
         "type": "github"
       }
@@ -271,11 +271,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1724469941,
-        "narHash": "sha256-+U5152FwmDD9EUOiFi5CFxCK6/yFESyDei9jEIlmUtI=",
+        "lastModified": 1730448474,
+        "narHash": "sha256-qE/cYKBhzxHMtKtLK3hlSR3uzO1pWPGLrBuQK7r0CHc=",
         "owner": "lnl7",
         "repo": "nix-darwin",
-        "rev": "ea319a737939094b48fda9063fa3201ef2479aac",
+        "rev": "683d0c4cd1102dcccfa3f835565378c7f3cbe05e",
         "type": "github"
       },
       "original": {
@@ -293,11 +293,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1722469787,
-        "narHash": "sha256-P20oAmbgXHl1E77TXPXiAj1Ntycc1mf7fZMI7X13VYw=",
+        "lastModified": 1733377410,
+        "narHash": "sha256-tZ9JEAaHIs3TPdRZeZzHsnJmUilkcnVaUTvyprbRb1A=",
         "owner": "tpwrules",
         "repo": "nixos-apple-silicon",
-        "rev": "8a665fee82901878edaeb8ee120296a979db2dd2",
+        "rev": "e8c07c3ae199b55a8c1c35a7c067c5cef9c7e929",
         "type": "github"
       },
       "original": {
@@ -308,11 +308,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1724878143,
-        "narHash": "sha256-UjpKo92iZ25M05kgSOw/Ti6VZwpgdlOa73zHj8OcaDk=",
+        "lastModified": 1733481457,
+        "narHash": "sha256-IS3bxa4N1VMSh3/P6vhEAHQZecQ3oAlKCDvzCQSO5Is=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "95c3dfe6ef2e96ddc1ccdd7194e3cda02ca9a8ef",
+        "rev": "e563803af3526852b6b1d77107a81908c66a9fcf",
         "type": "github"
       },
       "original": {
@@ -329,11 +329,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1724664098,
-        "narHash": "sha256-4SgV4jCoN5RffR1Mtn3HI1cjgHmARh+rZrpVlBclj9U=",
+        "lastModified": 1733516684,
+        "narHash": "sha256-yz3mZyTnPlxZW2f51kJyfofDsBeX7WxAPvTXZtr2lW4=",
         "owner": "nix-community",
         "repo": "NixOS-WSL",
-        "rev": "345dfa06658a37873ca18aa205f409e4aaf1caa6",
+        "rev": "dd20ebde771edbdececade73dbb8791ff987d0db",
         "type": "github"
       },
       "original": {
@@ -345,33 +345,17 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1724727824,
-        "narHash": "sha256-0XH9MJk54imJm+RHOLTUJ7e+ponLW00tw5ke4MTVa1Y=",
+        "lastModified": 1733220138,
+        "narHash": "sha256-Yh5XZ9yVurrcYdNTSWxYgW4+EJ0pcOqgM1043z9JaRc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "36bae45077667aff5720e5b3f1a5458f51cf0776",
+        "rev": "bcb68885668cccec12276bbb379f8f2557aa06ce",
         "type": "github"
       },
       "original": {
         "id": "nixpkgs",
         "ref": "nixos-24.05",
         "type": "indirect"
-      }
-    },
-    "nixpkgs-stable": {
-      "locked": {
-        "lastModified": 1721524707,
-        "narHash": "sha256-5NctRsoE54N86nWd0psae70YSLfrOek3Kv1e8KoXe/0=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "556533a23879fc7e5f98dd2e0b31a6911a213171",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "release-24.05",
-        "repo": "nixpkgs",
-        "type": "github"
       }
     },
     "nixvim": {
@@ -390,11 +374,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1724502615,
-        "narHash": "sha256-g206hhNghyxMO9Sdv9fD22MRgWQppws10x+oDHKDVdU=",
+        "lastModified": 1732295842,
+        "narHash": "sha256-kH3532gNJ89+9fNJSedXuMPhUBxtiFLCUH9hIVR3N/Q=",
         "owner": "nix-community",
         "repo": "nixvim",
-        "rev": "764b89aa14543da7266719757cfcf0cce8c1679f",
+        "rev": "07f23a60fdd0ea402bb0d0b6c4c9df89fa638c81",
         "type": "github"
       },
       "original": {
@@ -434,21 +418,22 @@
         "rpi-bluez-firmware-src": "rpi-bluez-firmware-src",
         "rpi-firmware-nonfree-src": "rpi-firmware-nonfree-src",
         "rpi-firmware-src": "rpi-firmware-src",
-        "rpi-linux-6_10_0-rc5-src": "rpi-linux-6_10_0-rc5-src",
-        "rpi-linux-6_6_31-src": "rpi-linux-6_6_31-src",
+        "rpi-linux-6_10_12-src": "rpi-linux-6_10_12-src",
+        "rpi-linux-6_6_54-src": "rpi-linux-6_6_54-src",
         "rpicam-apps-src": "rpicam-apps-src",
         "u-boot-src": "u-boot-src"
       },
       "locked": {
-        "lastModified": 1724522279,
-        "narHash": "sha256-z8NqgTMCIWejRlRHb0VfxPHl95PwthCTwicd+7CI5Fc=",
-        "owner": "tstat",
+        "lastModified": 1730778617,
+        "narHash": "sha256-DzqHK+JpH+uqXIuq7QM+GU5g4Z6H6ne1tVKMqBYj0g4=",
+        "owner": "nix-community",
         "repo": "raspberry-pi-nix",
-        "rev": "97c85054d16579b5bbc3e31ea346e273990f0f93",
+        "rev": "57e8e8e84221c0f89d50a871ce1705e345fd7912",
         "type": "github"
       },
       "original": {
-        "owner": "tstat",
+        "owner": "nix-community",
+        "ref": "v0.4.1",
         "repo": "raspberry-pi-nix",
         "type": "github"
       }
@@ -490,11 +475,11 @@
     "rpi-firmware-nonfree-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1708967191,
-        "narHash": "sha256-BGq0+cr+xBRwQM/LqiQuRWuZpQsKM5jfcrNCqWMuVzM=",
+        "lastModified": 1723266537,
+        "narHash": "sha256-T7eTKXqY9cxEMdab8Snda4CEOrEihy5uOhA6Fy+Mhnw=",
         "owner": "RPi-Distro",
         "repo": "firmware-nonfree",
-        "rev": "223ccf3a3ddb11b3ea829749fbbba4d65b380897",
+        "rev": "4b356e134e8333d073bd3802d767a825adec3807",
         "type": "github"
       },
       "original": {
@@ -507,28 +492,28 @@
     "rpi-firmware-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1716978780,
-        "narHash": "sha256-KsCo7ZG6vKstxRyFljZtbQvnDSqiAPdUza32xTY/tlA=",
+        "lastModified": 1727798811,
+        "narHash": "sha256-eavbshXGYmkYR33y9FLcQMJoAYdYTESVEy0g/RRXnb0=",
         "owner": "raspberrypi",
         "repo": "firmware",
-        "rev": "3590de0c181d433af368a95f15bc480bdaff8b47",
+        "rev": "287e6a6c2d3b50eee3e2c5b2eacdd907e5cbe09a",
         "type": "github"
       },
       "original": {
         "owner": "raspberrypi",
-        "ref": "1.20240529",
+        "ref": "1.20241001",
         "repo": "firmware",
         "type": "github"
       }
     },
-    "rpi-linux-6_10_0-rc5-src": {
+    "rpi-linux-6_10_12-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1719265450,
-        "narHash": "sha256-xd/Pz/uZFYW9hJIFKryWDE9Aks6f2EIvEDCmfk0C70c=",
+        "lastModified": 1728305462,
+        "narHash": "sha256-LtvNmGD1D5YYv+C9xxxddAeHw69o3OX/H9M7F663L74=",
         "owner": "raspberrypi",
         "repo": "linux",
-        "rev": "f61d3aca8045e70d64b55f7b98f083738f639ad2",
+        "rev": "26ee50d56618c2d98100b1bc672fd201aed4d00f",
         "type": "github"
       },
       "original": {
@@ -538,19 +523,19 @@
         "type": "github"
       }
     },
-    "rpi-linux-6_6_31-src": {
+    "rpi-linux-6_6_54-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1716545726,
-        "narHash": "sha256-UWUTeCpEN7dlFSQjog6S3HyEWCCnaqiUqV5KxCjYink=",
+        "lastModified": 1728155174,
+        "narHash": "sha256-/8RjW35XQMnshjAE4Ey8j3oWzE2GOntnBYY6PlvZGhs=",
         "owner": "raspberrypi",
         "repo": "linux",
-        "rev": "c1432b4bae5b6582f4d32ba381459f33c34d1424",
+        "rev": "12f0f28db3afe451a81a34c5a444f6841c10067c",
         "type": "github"
       },
       "original": {
         "owner": "raspberrypi",
-        "ref": "stable_20240529",
+        "ref": "rpi-6.6.y",
         "repo": "linux",
         "type": "github"
       }
@@ -558,16 +543,16 @@
     "rpicam-apps-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1717081637,
-        "narHash": "sha256-s4zJh6r3VhiquO54KWZ78dVCH1BmlphY9zEB9BidNyo=",
+        "lastModified": 1727515047,
+        "narHash": "sha256-qCYGrcibOeGztxf+sd44lD6VAOGoUNwRqZDdAmcTa/U=",
         "owner": "raspberrypi",
         "repo": "rpicam-apps",
-        "rev": "49344f2a8d1817558d4e6463032fcf11be618b38",
+        "rev": "a8ccf9f3cd9df49875dfb834a2b490d41d226031",
         "type": "github"
       },
       "original": {
         "owner": "raspberrypi",
-        "ref": "v1.5.0",
+        "ref": "v1.5.2",
         "repo": "rpicam-apps",
         "type": "github"
       }
@@ -592,15 +577,14 @@
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "nixpkgs-stable": "nixpkgs-stable"
+        ]
       },
       "locked": {
-        "lastModified": 1723501126,
-        "narHash": "sha256-N9IcHgj/p1+2Pvk8P4Zc1bfrMwld5PcosVA0nL6IGdE=",
+        "lastModified": 1733128155,
+        "narHash": "sha256-m6/qwJAJYcidGMEdLqjKzRIjapK4nUfMq7rDCTmZajc=",
         "owner": "mic92",
         "repo": "sops-nix",
-        "rev": "be0eec2d27563590194a9206f551a6f73d52fa34",
+        "rev": "c6134b6fff6bda95a1ac872a2a9d5f32e3c37856",
         "type": "github"
       },
       "original": {
@@ -682,11 +666,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1724338379,
-        "narHash": "sha256-kKJtaiU5Ou+e/0Qs7SICXF22DLx4V/WhG1P6+k4yeOE=",
+        "lastModified": 1730321837,
+        "narHash": "sha256-vK+a09qq19QNu2MlLcvN4qcRctJbqWkX7ahgPZ/+maI=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "070f834771efa715f3e74cd8ab93ecc96fabc951",
+        "rev": "746901bb8dba96d154b66492a29f5db0693dbfcc",
         "type": "github"
       },
       "original": {
@@ -698,14 +682,14 @@
     "u-boot-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1712055538,
-        "narHash": "sha256-IlaDdjKq/Pq2orzcU959h93WXRZfvKBGDO/MFw9mZMg=",
+        "lastModified": 1719857238,
+        "narHash": "sha256-mJ2TBy0Y5ZtcGFgtU5RKr0UDUp5FWzojbFb+o/ebRJU=",
         "type": "tarball",
-        "url": "https://ftp.denx.de/pub/u-boot/u-boot-2024.04.tar.bz2"
+        "url": "https://ftp.denx.de/pub/u-boot/u-boot-2024.07.tar.bz2"
       },
       "original": {
         "type": "tarball",
-        "url": "https://ftp.denx.de/pub/u-boot/u-boot-2024.04.tar.bz2"
+        "url": "https://ftp.denx.de/pub/u-boot/u-boot-2024.07.tar.bz2"
       }
     },
     "vscode-server": {
@@ -716,11 +700,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1713958148,
-        "narHash": "sha256-8PDNi/dgoI2kyM7uSiU4eoLBqUKoA+3TXuz+VWmuCOc=",
+        "lastModified": 1729422940,
+        "narHash": "sha256-DlvJv33ml5UTKgu4b0HauOfFIoDx6QXtbqUF3vWeRCY=",
         "owner": "nix-community",
         "repo": "nixos-vscode-server",
-        "rev": "fc900c16efc6a5ed972fb6be87df018bcf3035bc",
+        "rev": "8b6db451de46ecf9b4ab3d01ef76e59957ff549f",
         "type": "github"
       },
       "original": {

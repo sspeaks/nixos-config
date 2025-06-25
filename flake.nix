@@ -48,7 +48,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     raspberry-pi-nix = {
-      url = "github:tstat/raspberry-pi-nix";
+      url = "github:nix-community/raspberry-pi-nix/v0.4.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -110,6 +110,7 @@
           modules = [
             raspberry-pi-nix.nixosModules.raspberry-pi
             hosts/nixpi5
+            { raspberry-pi-nix.board = "bcm2712"; }
           ];
         };
       };
