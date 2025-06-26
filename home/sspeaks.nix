@@ -14,6 +14,7 @@ in
     features/zsh
   ];
   nix.settings.trusted-users = [ "root" "sspeaks" ];
+  nix.settings.builders-use-substitutes = true;
   home = {
     packages = with pkgs; [
       ls-colors
