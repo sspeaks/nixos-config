@@ -12,54 +12,62 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/mnt/wsl" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "tmpfs";
     };
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/db4d8ee9-ac02-48d5-a440-8cd2e51db1c8";
+    {
+      device = "/dev/disk/by-uuid/db4d8ee9-ac02-48d5-a440-8cd2e51db1c8";
       fsType = "ext4";
     };
 
   fileSystems."/mnt/wslg" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "tmpfs";
     };
 
   fileSystems."/usr/lib/wsl/lib" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "overlay";
     };
 
   fileSystems."/tmp/.X11-unix" =
-    { device = "/mnt/wslg/.X11-unix";
+    {
+      device = "/mnt/wslg/.X11-unix";
       fsType = "none";
       options = [ "bind" ];
     };
 
   fileSystems."/mnt/wslg/doc" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "overlay";
     };
 
   fileSystems."/mnt/c" =
-    { device = "C:\134";
+    {
+      device = "C:\134";
       fsType = "9p";
     };
 
   fileSystems."/mnt/wslg/run/user/1000" =
-    { device = "tmpfs";
+    {
+      device = "tmpfs";
       fsType = "tmpfs";
     };
 
   fileSystems."/lib/modules" =
-    { device = "none";
+    {
+      device = "none";
       fsType = "tmpfs";
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/d238a623-1735-4296-8544-25307a9fc2f7"; }
-    ];
+    [{ device = "/dev/disk/by-uuid/d238a623-1735-4296-8544-25307a9fc2f7"; }];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's

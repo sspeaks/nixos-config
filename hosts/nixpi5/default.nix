@@ -6,6 +6,7 @@
     ../common/users/sspeaks
     inputs.home-manager.nixosModules.home-manager
     ./hardware-configuration.nix
+    inputs.determinate.nixosModules.default
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [
@@ -18,10 +19,17 @@
     hostName = "nixpi5";
   };
 
-  networking.wireless.iwd = {
-    enable = true;
-    settings.General.EnableNetworkConfiguration = true;
-  };
+  environment.systemPackages = [
+    pkgs.libraspberrypi
+  ];
+
+  nix.settings.trusted-users = [ "sspeaks" ];
+  nix.settings.lazy-trees = true;
+
+  # networking.wireless.iwd = {
+  #   enable = true;
+  #   settings.General.EnableNetworkConfiguration = true;
+  # };
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;

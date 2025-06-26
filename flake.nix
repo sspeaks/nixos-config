@@ -55,8 +55,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-raspberrypi = {
-	url = "github:nvmd/nixos-raspberrypi/main";
-};
+      url = "github:nvmd/nixos-raspberrypi/main";
+    };
   };
   outputs = inputs@{ self, nixpkgs, home-manager, systems, nixos-raspberrypi, ... }:
     let
@@ -114,12 +114,12 @@
           specialArgs = { inherit nixos-raspberrypi inputs outputs; };
           modules = [
             hosts/nixpi5
-            ({...}: {
-imports = with nixos-raspberrypi.nixosModules; [
-            raspberry-pi-5.base 
+            ({ ... }: {
+              imports = with nixos-raspberrypi.nixosModules; [
+                raspberry-pi-5.base
+              ];
+            })
           ];
-})
-];
         };
       };
       homeConfigurations = {
@@ -143,12 +143,14 @@ imports = with nixos-raspberrypi.nixosModules; [
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       overlays = import ./overlays.nix;
     };
-nixConfig = {
+  nixConfig = {
     extra-substituters = [
       "https://nixos-raspberrypi.cachix.org"
+      "https://install.determinate.systems"
     ];
     extra-trusted-public-keys = [
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+      "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
     ];
   };
 }
