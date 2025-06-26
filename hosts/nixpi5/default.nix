@@ -5,6 +5,7 @@
     ../common/global
     ../common/users/sspeaks
     inputs.home-manager.nixosModules.home-manager
+    ./hardware-configuration.nix
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [
