@@ -8,7 +8,7 @@ keys:
     - &nixosWSLwork age1rq8j2df482hyksxcatvmvetcta9lkvuyhwz3h52037d7xele7udq24pe23
     - &nixosWSL age1tu7k447prh3229y00nq2makh6a6a5f9c558djm92amzyahnwvy9qa0jv3r
     - &asahi age1wdfa5rgtmpnf5v40gy0n0fr7sldjeqkqqgn74euqjy5nd4elq9asnfps6n
-    - &nixpi5 age17gq4myuue6fq0n859svnzl9dt8s9dq2w3ax67tcq0lptsqsmceuqzyglp5
+    - &nixpi5 age1q9khmexesfhl56c4ste9ur59fdcyfauy728jvmzlay2nhvlz74ssvh784j 
 creation_rules:
   - path_regex: secrets.yaml$
     key_groups:
