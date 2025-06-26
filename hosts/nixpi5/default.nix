@@ -23,7 +23,7 @@
     pkgs.libraspberrypi
   ];
 
-  nix.settings.trusted-users = [ "sspeaks" ];
+  nix.settings.trusted-users = [ "sspeaks" "root" ];
   nix.settings.lazy-trees = true;
 
   # networking.wireless.iwd = {
