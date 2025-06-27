@@ -21,6 +21,7 @@
 
   environment.systemPackages = [
     pkgs.libraspberrypi
+    /*     pkgs.linuxPackages.v4l2loopback */
   ];
 
   nix.settings.trusted-users = [ "sspeaks" "root" ];

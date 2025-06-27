@@ -6,8 +6,11 @@
 {
   boot.initrd.availableKernelModules = [ ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ ];
-  boot.extraModulePackages = [ ];
+  boot.kernelModules = [ "v4l2loopback" ];
+  boot.extraModprobeConfig = ''
+    options v4l2loopback nr_devices=2 exclusive_caps=1,1,1,1,1,1,1,1 video_nr=0,1 card_label=v4l2lo0,v4l2lo1
+  '';
+  boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
 
   fileSystems."/" =
     {
@@ -21,7 +24,7 @@
       fsType = "autofs";
     };
 
-  swapDevices = [ ];
+ swapDevices = [{ device = "/swapfile"; size = 4096; }];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
