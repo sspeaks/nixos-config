@@ -11,24 +11,45 @@
         background: transparent;
         border-bottom: none;
       }
+      #backlight-slider slider {
+        min-height: 10px;
+        min-width: 10px;
+        color: white;
+      }
+      #backlight-slider trough {
+          min-height: 10px;
+          min-width: 80px;
+          border-radius: 5px;
+          background-color: black;
+      }
+      #backlight-slider highlight {
+          min-width: 10px;
+          border-radius: 5px;
+          background-color: red;
+      }
     '';
     settings = [{
       height = 30;
       layer = "top";
       position = "bottom";
       tray = { spacing = 10; };
-      modules-center = [ "sway/window" ];
-      modules-left = [ "sway/workspaces" "sway/mode" ];
+      modules-center = [ "hyprland/window" ];
+      modules-left = [ "hyprland/workspaces" "backlight/slider" ];
       modules-right = [
         "pulseaudio"
         "network"
         "cpu"
         "memory"
-        "temperature"
+        "battery"
       ] ++ [
         "clock"
         "tray"
       ];
+      "backlight/slider" = {
+        "min" = 0;
+        "max" = 100;
+        "orientation" = "horizontal";
+      };
       battery = {
         format = "{capacity}% {icon}";
         format-alt = "{time} {icon}";
@@ -75,7 +96,6 @@
         format-source-muted = "";
         on-click = "pavucontrol";
       };
-      "sway/mode" = { format = ''<span style="italic">{}</span>''; };
       temperature = {
         critical-threshold = 80;
         format = "{temperatureC}°C {icon}";

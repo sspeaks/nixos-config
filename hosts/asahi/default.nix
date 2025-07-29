@@ -12,6 +12,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = false;
 
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
   networking.wireless.iwd = {
     enable = true;
     settings.General.EnableNetworkConfiguration = true;
@@ -20,14 +21,20 @@
   hardware.asahi.enable = true;
   hardware.asahi.setupAsahiSound = true;
 
-  hardware.asahi.useExperimentalGPUDriver = true;
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+  ];
+
+  #hardware.asahi.useExperimentalGPUDriver = true;
 
   programs.hyprland.enable = true;
   programs.waybar.enable = true;
-  sound.enable = true;
   environment.systemPackages = with pkgs; [
     firefox
-    kitty
+    #kitty
+    foot
+    hyprpaper
+    vscode
   ];
 
   networking = {
@@ -43,7 +50,7 @@
     {
       imports = [
         ../../home/sspeaks.nix
-        #      ./waybar.nix
+        ./waybar.nix
       ];
     };
 
