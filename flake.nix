@@ -142,6 +142,12 @@
       };
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       overlays = import ./overlays.nix;
+      templates = {
+        haskell-template = {
+          path = ./haskell-template;
+          description = "Just a few files to help bootstrap a haskell project with nix";
+        };
+      };
     };
   nixConfig = {
     extra-substituters = [
