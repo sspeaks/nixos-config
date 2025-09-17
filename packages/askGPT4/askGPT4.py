@@ -10,7 +10,7 @@ import magic
 from openai import OpenAI
 
 
-model = "gpt-4o"
+model = "gpt-5"
 context_dir = "/tmp/askGPT4"
 epoch = int(time.time())
 new_context_span = 5 * 60 # 5 minutes in seconds
