@@ -28,7 +28,6 @@ in
       ghc
       cabal-install
       haskell-language-server
-      garnet
     ];
     sessionVariables = {
       EDITOR = "vim";
