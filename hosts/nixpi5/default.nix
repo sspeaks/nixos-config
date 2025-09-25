@@ -21,6 +21,7 @@
 
   environment.systemPackages = [
     pkgs.libraspberrypi
+#    pkgs.linuxPackages_rpi5.v4l2loopback
     /*     pkgs.linuxPackages.v4l2loopback */
   ];
 
