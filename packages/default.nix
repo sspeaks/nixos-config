@@ -4,4 +4,5 @@
   udp2raw = pkgs.callPackage ./udp2raw/default.nix { };
   simc = pkgs.callPackage ./simc/default.nix { };
   local-garnet = (pkgs.callPackage ./garnet/default.nix { }).server;
+  garnet-image = (pkgs.callPackage ./garnet/default.nix { }).image;
 }
