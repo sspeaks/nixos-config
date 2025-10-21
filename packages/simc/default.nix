@@ -4,8 +4,8 @@ stdenv.mkDerivation {
   src = fetchFromGitHub {
     owner = "simulationcraft";
     repo = "simc";
-    rev = "8a2bf5fb29d3b83ea8d864825b4c6f58981bf8bb";
-    sha256 = "sha256-opJex9wFSd2zuZCNqdVn5AExhvW3+AUD39X89C7umYw=";
+    rev = "26f71da0bdc55355b5ba479c6ecebcb987cdbeec";
+    sha256 = "sha256-2aURkencFKA8CuxVN04vmnTURIE63jwUxouM9kOD1g0=";
   };
   nativeBuildInputs = [ curl cmake pkg-config qt5Full ];
   buildPhase = ''
