@@ -54,7 +54,7 @@
           csharp_ls.enable = false;
           nixd.enable = true;
           hls.enable = false;
-          pylsp.enable = true;
+          pylsp.enable = false;
         };
         keymaps.lspBuf = {
           "gd" = "definition";
