@@ -138,7 +138,11 @@
           extraSpecialArgs = { inherit inputs; };
           modules = [ home/sspeaks.nix ];
         };
-
+        "sspeaks@aarch64-linux" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor.aarch64-linux;
+          extraSpecialArgs = { inherit inputs; };
+          modules = [ home/sspeaks.nix ];
+        };
       };
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       overlays = import ./overlays.nix;

@@ -67,9 +67,24 @@ else
     log_info "home-manager configuration directory already exists"
 fi
 
-# Step 3: Switch to the nixos-config flake
+# Step 3: Detect architecture and select appropriate flake target
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64)
+        FLAKE_TARGET="sspeaks@NixOS-WSL"
+        ;;
+    aarch64|arm64)
+        FLAKE_TARGET="sspeaks@aarch64-linux"
+        ;;
+    *)
+        log_error "Unsupported architecture: $ARCH"
+        exit 1
+        ;;
+esac
+
+log_info "Detected architecture: $ARCH, using flake target: $FLAKE_TARGET"
 log_info "Switching to nixos-config flake from GitHub..."
-if ! home-manager switch --flake github:sspeaks/nixos-config#sspeaks@NixOS-WSL; then
+if ! home-manager switch --flake "github:sspeaks/nixos-config#$FLAKE_TARGET"; then
     log_error "Failed to switch home-manager configuration"
     log_warn "You may need to manually resolve conflicts in ~/.config/home-manager"
     exit 1
