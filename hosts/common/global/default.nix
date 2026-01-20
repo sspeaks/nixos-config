@@ -21,5 +21,5 @@
 
   hardware.enableRedistributableFirmware = true;
 
-  system.stateVersion = "23.05";
+  stdenv.hostPlatform.system.stateVersion = "23.05";
 }

@@ -26,8 +26,8 @@ in
       EDITOR = "vim";
     };
   };
-  programs.git.userName = "Seth Speaks";
-  programs.git.userEmail = "sspeaks610@gmail.com";
+  programs.git.settings.user.name = "Seth Speaks";
+  programs.git.settings.user.email = "sspeaks610@gmail.com";
 
   programs.direnv.enable = true;
   programs.direnv.nix-direnv.enable = true;
