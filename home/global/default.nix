@@ -23,4 +23,20 @@
     );
     stateVersion = lib.mkDefault "23.05";
   };
+
+  systemd.user.services.nix-gc-user = {
+    Unit.Description = "Nix user profile garbage collection";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.nix}/bin/nix-collect-garbage --delete-older-than 14d";
+    };
+  };
+  systemd.user.timers.nix-gc-user = {
+    Unit.Description = "Nix user profile garbage collection timer";
+    Timer = {
+      OnCalendar = "weekly";
+      Persistent = true;
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
 }

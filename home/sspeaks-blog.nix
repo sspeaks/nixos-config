@@ -11,7 +11,6 @@ in
     features/starship
     features/zsh
   ];
-  nix.settings.trusted-users = [ "root" "sspeaks" ];
   home = {
     packages = with pkgs; [
       ls-colors
