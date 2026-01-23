@@ -7,7 +7,7 @@
     inputs.home-manager.nixosModules.home-manager
     ./hardware-configuration.nix
     inputs.determinate.nixosModules.default
-    ../../modules/postgresql.nix
+#    ../../modules/postgresql.nix
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [

@@ -6,11 +6,13 @@
 {
   boot.initrd.availableKernelModules = [ ];
   boot.initrd.kernelModules = [ ];
-  # boot.kernelModules = [ "v4l2loopback" ];
+  #boot.kernelModules = [ "v4l2loopback" ];
   # boot.extraModprobeConfig = ''
   #   options v4l2loopback nr_devices=2 exclusive_caps=1,1,1,1,1,1,1,1 video_nr=0,1 card_label=v4l2lo0,v4l2lo1
   # '';
-  # boot.extraModulePackages = [ pkgs.linuxPackages_rpi5.v4l2loopback ];
+  #boot.extraModulePackages = [ pkgs.linuxPackages_rpi5.v4l2loopback ];
+
+  boot.loader.raspberryPi.bootloader = "kernel";
 
   fileSystems."/" =
     {
