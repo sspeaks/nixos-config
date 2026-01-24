@@ -7,7 +7,8 @@
     inputs.home-manager.nixosModules.home-manager
     ./hardware-configuration.nix
     inputs.determinate.nixosModules.default
-#    ../../modules/postgresql.nix
+    #    ../../modules/postgresql.nix
+    ./authentik.nix
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [
@@ -22,6 +23,7 @@
 
   environment.systemPackages = [
     pkgs.libraspberrypi
+    #    pkgs.docker-compose
     #    pkgs.linuxPackages_rpi5.v4l2loopback
     /*     pkgs.linuxPackages.v4l2loopback */
   ];
@@ -43,6 +45,8 @@
 
   security.sudo.wheelNeedsPassword = false;
   services.openssh.settings.X11Forwarding = true;
+
+  #  virtualisation.docker.enable = true;
 
   time.timeZone = "America/Los_Angeles";
   console = {
