@@ -8,8 +8,6 @@
     };
     authentik-nix = {
       url = "github:nix-community/authentik-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.authentik-src.url = "github:goauthentik/authentik/version-2025.10";
     };
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";
