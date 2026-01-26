@@ -9,6 +9,7 @@
     inputs.determinate.nixosModules.default
     #    ../../modules/postgresql.nix
     ./authentik.nix
+    ./home-assistant.nix
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [

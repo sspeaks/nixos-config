@@ -40,5 +40,5 @@ in
 
       inherit (overriddenScope) authentikComponents;
     };
-    networking.firewall.allowedTCPPorts = [9443 9000 9001];
+  networking.firewall.allowedTCPPorts = [ 9443 9000 9001 ];
 }
