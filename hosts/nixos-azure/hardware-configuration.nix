@@ -27,7 +27,11 @@
 
   virtualisation.vmVariant = {
     networking.hostName = lib.mkForce "nixos-azure-local-vm";
-    virtualisation.azure.agent.enable = lib.mkForce false;
+    disabledModules = [
+      "${inputs.nixpkgs}/nixos/modules/virtualisation/azure-common.nix"
+    ];
+    users.users.sspeaks.initialPassword = "test";
+    users.users.sspeaks.hashedPasswordFile = lib.mkForce null;
     services.udev.extraRules = "";
     myWireguard.enable = false;
   };
