@@ -6,8 +6,8 @@
     customComponents = [
       (config.services.home-assistant.package.python.pkgs.callPackage ./hass-openid.nix { })
     ];
-      config = null;
-      configDir = "/etc/home-assistant";
+    config = null;
+    configDir = "/etc/home-assistant";
 
   };
 }
