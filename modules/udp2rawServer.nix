@@ -33,7 +33,16 @@ in
       description = ''
         Password for udp2raw server authentication.
         WARNING: This will be visible in the Nix store and process listings.
-        Consider using sops-nix or another secret management solution for production use.
+        
+        For better security, use sops-nix with systemd LoadCredential:
+        1. Store password in sops-encrypted secrets file
+        2. Add to sops secrets: `sops.secrets."udp2raw-password" = {};`
+        3. Use LoadCredential: `LoadCredential = "password:''${config.sops.secrets."udp2raw-password".path}";`
+        4. Modify ExecStart to read from: `$CREDENTIALS_DIRECTORY/password`
+        5. Or create wrapper script: `ExecStart = pkgs.writeShellScript "udp2raw-start" ''
+           PASSWORD=$(cat $CREDENTIALS_DIRECTORY/password)
+           exec ${pkgs.udp2raw}/bin/udp2raw -s ... -k "$PASSWORD"
+        ''`
       '';
     };
   };
@@ -51,6 +60,8 @@ in
         Restart = "always";
         RestartSec = 1;
       };
+      # wantedBy automatically enables the service - no need for explicit enable = true
+      # When a service is "wanted by" a target, systemd activates it when that target is reached
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
     };
