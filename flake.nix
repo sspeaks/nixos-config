@@ -50,7 +50,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     boggle = {
-      url = "github:sspeaks/boggle-solver";
+      url = "github:sspeaks/boggle-sovler";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-apple-silicon = {
