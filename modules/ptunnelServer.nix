@@ -1,7 +1,8 @@
 { pkgs, lib, config, ... }:
 let
   cfg = config.services.ptunnServer;
-  iN = v: v != null;
+  helpers = import ../lib { inherit lib; };
+  inherit (helpers) isNotNull;
 in
 {
   options.services.ptunnServer = {
@@ -25,16 +26,14 @@ in
       description = "pTunnel Server";
       serviceConfig = {
         ExecStart = "${pkgs.ptunn}/bin/ptunnel"
-          + lib.optionalString (iN cfg.interface) " -c ${cfg.interface}"
-          + lib.optionalString (iN cfg.logDir) " -f \"${cfg.logDir}\""
-          + lib.optionalString (iN cfg.password) " -x \"${cfg.password}\"";
+          + lib.optionalString (isNotNull cfg.interface) " -c ${cfg.interface}"
+          + lib.optionalString (isNotNull cfg.logDir) " -f \"${cfg.logDir}\""
+          + lib.optionalString (isNotNull cfg.password) " -x \"${cfg.password}\"";
         Restart = "always";
         RestartSec = 1;
       };
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
     };
-
-    systemd.services.ptunnelserver.enable = true;
   };
 }

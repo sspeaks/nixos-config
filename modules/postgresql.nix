@@ -4,7 +4,7 @@
     enable = true;
     package = pkgs.postgresql_16;
     settings = {
-      listen_addresses = lib.mkForce "*";
+      listen_addresses = lib.mkDefault "*";
       port = 5432;
     };
     authentication = ''
