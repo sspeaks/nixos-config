@@ -1,7 +1,8 @@
 { pkgs, lib, config, ... }:
 let
   cfg = config.services.ptunnServer;
-  iN = v: v != null;
+  helpers = import ./lib { inherit lib; };
+  inherit (helpers) isNotNull;
 in
 {
   options.services.ptunnServer = {
@@ -17,24 +18,25 @@ in
     password = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-
+      description = ''
+        Password for ptunnel server authentication.
+        WARNING: This will be visible in the Nix store and process listings.
+        Consider using sops-nix or another secret management solution for production use.
+      '';
     };
   };
   config = lib.mkIf cfg.enable {
     systemd.services.ptunnelserver = {
       description = "pTunnel Server";
       serviceConfig = {
-        ExecStart = "${pkgs.ptunn}/bin/ptunnel"
-          + lib.optionalString (iN cfg.interface) " -c ${cfg.interface}"
-          + lib.optionalString (iN cfg.logDir) " -f \"${cfg.logDir}\""
-          + lib.optionalString (iN cfg.password) " -x \"${cfg.password}\"";
+        ExecStart = "${pkgs.ptunn}/bin/ptunnel -c ${cfg.interface}"
+          + lib.optionalString (isNotNull cfg.logDir) " -f \"${cfg.logDir}\""
+          + lib.optionalString (isNotNull cfg.password) " -x \"${cfg.password}\"";
         Restart = "always";
         RestartSec = 1;
       };
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
     };
-
-    systemd.services.ptunnelserver.enable = true;
   };
 }

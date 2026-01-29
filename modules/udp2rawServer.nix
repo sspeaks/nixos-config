@@ -1,7 +1,8 @@
 { pkgs, lib, config, ... }:
 let
   cfg = config.services.udp2rawServer;
-  iN = v: v != null;
+  helpers = import ./lib { inherit lib; };
+  inherit (helpers) isNotNull;
 in
 {
   options.services.udp2rawServer = {
@@ -29,7 +30,11 @@ in
     password = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-
+      description = ''
+        Password for udp2raw server authentication.
+        WARNING: This will be visible in the Nix store and process listings.
+        Consider using sops-nix or another secret management solution for production use.
+      '';
     };
   };
   config = lib.mkIf cfg.enable {
@@ -37,19 +42,17 @@ in
       description = "udp2raw Server";
       serviceConfig = {
         ExecStart = "${pkgs.udp2raw}/bin/udp2raw -s"
-          + lib.optionalString (iN cfg.localAddressAndPort) " -l ${cfg.localAddressAndPort}"
-          + lib.optionalString (iN cfg.remoteAddressAndPort) " -r ${cfg.remoteAddressAndPort}"
-          + lib.optionalString (iN cfg.password) " -k \"${cfg.password}\""
-          + lib.optionalString (iN cfg.rawMode) " --raw-mode ${cfg.rawMode}"
+          + lib.optionalString (isNotNull cfg.localAddressAndPort) " -l ${cfg.localAddressAndPort}"
+          + lib.optionalString (isNotNull cfg.remoteAddressAndPort) " -r ${cfg.remoteAddressAndPort}"
+          + lib.optionalString (isNotNull cfg.password) " -k \"${cfg.password}\""
+          + lib.optionalString (isNotNull cfg.rawMode) " --raw-mode ${cfg.rawMode}"
           + lib.optionalString (cfg.autoAddIpTablesRules) " -a"
-          + lib.optionalString (iN cfg.logLevel) " --log-level ${cfg.logLevel}";
+          + lib.optionalString (isNotNull cfg.logLevel) " --log-level ${cfg.logLevel}";
         Restart = "always";
         RestartSec = 1;
       };
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
     };
-
-    systemd.services.udp2rawserver.enable = true;
   };
 }
