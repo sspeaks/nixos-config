@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 let
   cfg = config.services.udp2rawServer;
-  helpers = import ../lib { inherit lib; };
+  helpers = import ./lib { inherit lib; };
   inherit (helpers) isNotNull;
 in
 {

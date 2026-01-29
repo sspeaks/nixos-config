@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 let
   cfg = config.services.ptunnServer;
-  helpers = import ../lib { inherit lib; };
+  helpers = import ./lib { inherit lib; };
   inherit (helpers) isNotNull;
 in
 {
@@ -29,8 +29,7 @@ in
     systemd.services.ptunnelserver = {
       description = "pTunnel Server";
       serviceConfig = {
-        ExecStart = "${pkgs.ptunn}/bin/ptunnel"
-          + lib.optionalString (isNotNull cfg.interface) " -c ${cfg.interface}"
+        ExecStart = "${pkgs.ptunn}/bin/ptunnel -c ${cfg.interface}"
           + lib.optionalString (isNotNull cfg.logDir) " -f \"${cfg.logDir}\""
           + lib.optionalString (isNotNull cfg.password) " -x \"${cfg.password}\"";
         Restart = "always";
