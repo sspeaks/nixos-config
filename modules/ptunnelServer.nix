@@ -18,7 +18,11 @@ in
     password = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-
+      description = ''
+        Password for ptunnel server authentication.
+        WARNING: This will be visible in the Nix store and process listings.
+        Consider using sops-nix or another secret management solution for production use.
+      '';
     };
   };
   config = lib.mkIf cfg.enable {
