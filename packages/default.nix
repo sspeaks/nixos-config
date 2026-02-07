@@ -5,4 +5,5 @@
   simc = pkgs.callPackage ./simc/default.nix { };
   local-garnet = (pkgs.callPackage ./garnet/default.nix { }).server;
   garnet-image = (pkgs.callPackage ./garnet/default.nix { }).image;
+  myCopilot = pkgs.callPackage ./github-copilot-cli.nix { };
 }

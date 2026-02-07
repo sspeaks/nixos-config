@@ -1,4 +1,4 @@
-{ lib, pkgs, config, ... }:
+{ lib, pkgs, config, outputs, ... }:
 {
   nix = {
     package = lib.mkDefault pkgs.nix;
@@ -15,6 +15,13 @@
     home-manager.enable = true;
     git.enable = true;
   };
+  nixpkgs = {
+    overlays = outputs.overlays;
+    config = {
+      allowUnfree = true;
+    };
+  };
+
   home = {
     username = lib.mkDefault "sspeaks";
     homeDirectory = lib.mkDefault (

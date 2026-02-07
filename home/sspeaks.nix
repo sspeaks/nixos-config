@@ -32,7 +32,7 @@ in
       htop
       shellcheck
       direnv
-      # ghc
+      myCopilot
       # cabal-install
       # haskell-language-server
     ];
