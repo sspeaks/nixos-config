@@ -8,9 +8,10 @@ keys:
     - &nixosWSLwork age1rq8j2df482hyksxcatvmvetcta9lkvuyhwz3h52037d7xele7udq24pe23
     - &nixosWSL age1tu7k447prh3229y00nq2makh6a6a5f9c558djm92amzyahnwvy9qa0jv3r
     - &asahi age1wdfa5rgtmpnf5v40gy0n0fr7sldjeqkqqgn74euqjy5nd4elq9asnfps6n
-    - &nixpi5 age1q9khmexesfhl56c4ste9ur59fdcyfauy728jvmzlay2nhvlz74ssvh784j 
+    - &nixpi5 age1q9khmexesfhl56c4ste9ur59fdcyfauy728jvmzlay2nhvlz74ssvh784j
 creation_rules:
-  - path_regex: secrets.yaml$
+  # Shared secrets: all hosts need these (user password, ssh key, etc.)
+  - path_regex: secrets/common\.yaml$
     key_groups:
       - age:
         - *sspeaks
@@ -20,5 +21,23 @@ creation_rules:
         - *nixosWSLwork
         - *nixosWSL
         - *asahi
+        - *nixpi5
+  # Azure-only secrets (pogbot, wireguard server)
+  - path_regex: secrets/nixos-azure\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
+        - *nixosazure
+  # Nixpi-only secrets (wifi, wireguard client)
+  - path_regex: secrets/nixpi\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
+        - *nixpi
+  # Nixpi5-only secrets (authentik)
+  - path_regex: secrets/nixpi5\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
         - *nixpi5
 

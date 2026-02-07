@@ -11,7 +11,7 @@ in
   ];
   sops.secrets.wireguard-private-key = {
     format = "yaml";
-    sopsFile = ../secrets.yaml;
+    sopsFile = ../../../secrets/nixpi.yaml;
     group = "systemd-network";
     mode = "0440";
     path = "/wireguardKeys/wireguard-private-key";

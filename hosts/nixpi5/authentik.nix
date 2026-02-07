@@ -2,7 +2,7 @@
 let
   sopsFileLocation = {
     format = "yaml";
-    sopsFile = ./secrets.yaml;
+    sopsFile = ../../secrets/nixpi5.yaml;
   };
 in
 {

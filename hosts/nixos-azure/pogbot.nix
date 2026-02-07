@@ -2,7 +2,7 @@
 let
   sopsFileLocation = {
     format = "yaml";
-    sopsFile = ./secrets.yaml;
+    sopsFile = ../../secrets/nixos-azure.yaml;
   };
   rf = filePath: builtins.readFile filePath;
 in

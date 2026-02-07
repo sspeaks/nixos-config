@@ -3,7 +3,7 @@
   sops.secrets = {
     wifi-password = {
       format = "yaml";
-      sopsFile = ../secrets.yaml;
+      sopsFile = ../../../secrets/nixpi.yaml;
     };
   };
   boot.extraModprobeConfig = ''
