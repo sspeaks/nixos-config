@@ -1,4 +1,4 @@
-{ lib, pkgs, config, outputs, options, ... }:
+{ lib, pkgs, config, ... }:
 {
   nix = {
     package = lib.mkDefault pkgs.nix;
@@ -14,12 +14,6 @@
   programs = {
     home-manager.enable = true;
     git.enable = true;
-  };
-  nixpkgs = lib.mkIf (options.nixpkgs ? config) {
-    overlays = outputs.overlays;
-    config = {
-      allowUnfree = true;
-    };
   };
 
   home = {
