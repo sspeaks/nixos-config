@@ -130,7 +130,7 @@
         "sspeaks@NixOS-WSL" = home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor.x86_64-linux;
           extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ home/sspeaks.nix ];
+          modules = [ home/sspeaks.nix home/features/sops ];
         };
         "sspeaks@blog" = home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor.x86_64-linux;
@@ -140,12 +140,12 @@
         "sspeaks@darwin" = home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor.aarch64-darwin;
           extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ home/sspeaks.nix ];
+          modules = [ home/sspeaks.nix home/features/sops ];
         };
         "sspeaks@aarch64-linux" = home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor.aarch64-linux;
           extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ home/sspeaks.nix ];
+          modules = [ home/sspeaks.nix home/features/sops ];
         };
       };
       formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
