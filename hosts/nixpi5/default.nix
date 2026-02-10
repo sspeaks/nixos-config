@@ -11,6 +11,8 @@
     ./authentik.nix
     ./home-assistant.nix
     ./webmailclient.nix
+    inputs.garage-monitor.nixosModules.default
+    ./garage-monitor.nix
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [

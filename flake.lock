@@ -386,6 +386,26 @@
         "type": "github"
       }
     },
+    "garage-monitor": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770716783,
+        "narHash": "sha256-ZY2SCArHWAKovtGjendv7w9m7xhF105DMGwW8DpzTfc=",
+        "ref": "refs/heads/main",
+        "rev": "f23b7c80af447a2d58daf727a7df02304f6399d6",
+        "revCount": 2,
+        "type": "git",
+        "url": "file:///home/sspeaks/garage-monitor"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/sspeaks/garage-monitor"
+      }
+    },
     "git-hooks": {
       "inputs": {
         "flake-compat": [
@@ -856,6 +876,7 @@
         "boggle": "boggle",
         "determinate": "determinate",
         "factorio": "factorio",
+        "garage-monitor": "garage-monitor",
         "home-manager": "home-manager",
         "nixos-apple-silicon": "nixos-apple-silicon",
         "nixos-hardware": "nixos-hardware",
