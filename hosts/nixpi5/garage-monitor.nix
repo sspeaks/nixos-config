@@ -13,7 +13,6 @@ in
     GARAGE_NTFY_TOKEN = sopsFileLocation // {
       owner = "garage-monitor";
     };
-    GARAGE_NFTY_USER_PASSWORD = sopsFileLocation;
   };
 
   services.garage-monitor = {
@@ -24,7 +23,6 @@ in
     ntfyBaseUrl = "https://ntfy.sspeaks.net";
     ntfyTopic = "garage";
     ntfyTokenFile = config.sops.secrets.GARAGE_NTFY_TOKEN.path;
-    ntfyUserPasswordFile = config.sops.secrets.GARAGE_NFTY_USER_PASSWORD.path;
     openFirewall = true;
     pollIntervalSeconds = 60;
     imageRetentionDays = 2;
