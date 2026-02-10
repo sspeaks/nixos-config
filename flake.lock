@@ -393,11 +393,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1770752775,
-        "narHash": "sha256-mtOfDkVcHi80aukaM6iefbTeBlfSz34UURNhNhCwW8k=",
+        "lastModified": 1770753597,
+        "narHash": "sha256-UmCC2fZyiW6cj9RjRMm4kAisw2hclKBKdCBGqg5d934=",
         "ref": "refs/heads/main",
-        "rev": "97db748fa77253993279ef73983a86cf698fb904",
-        "revCount": 6,
+        "rev": "446a671073d3d09eb2d6ded987876012037fcf88",
+        "revCount": 7,
         "type": "git",
         "url": "file:///home/sspeaks/garage-monitor"
       },
