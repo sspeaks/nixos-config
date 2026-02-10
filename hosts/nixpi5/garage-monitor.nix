@@ -17,5 +17,7 @@ in
     rtspUrl = "rtsp://192.168.2.24:554/media/video1";
     rtspUsername = "admin";
     rtspPasswordFile = config.sops.secrets.GARAGE_RTSP_PASSWORD.path;
+    pollIntervalSeconds = 60;
+    imageRetentionDays = 2;
   };
 }
