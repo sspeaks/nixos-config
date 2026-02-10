@@ -10,6 +10,7 @@
     #    ../../modules/postgresql.nix
     ./authentik.nix
     ./home-assistant.nix
+    ./webmailclient.nix
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [
