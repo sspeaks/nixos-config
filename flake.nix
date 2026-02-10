@@ -64,7 +64,7 @@
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver/nixos-25.11";
     };
     garage-monitor = {
-      url = "file:///home/sspeaks/garage-monitor";
+      url = "git+file:///home/sspeaks/garage-monitor";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
