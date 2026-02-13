@@ -67,6 +67,7 @@ in
     (pkgs.askGPT4.override {
       openaikey = config.sops.secrets.open-ai-api-key.path;
     })
+    pkgs.net-tools
   ];
 
   programs.zsh.enable = true;
@@ -74,7 +75,7 @@ in
   users.users.sspeaks = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
     hashedPasswordFile = config.sops.secrets.sspeaks-password.path;
   };
 }

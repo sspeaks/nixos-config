@@ -1,4 +1,7 @@
 { config, pkgs, lib, inputs, ... }:
+let pkgs-unstable = inputs.hyprland.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform
+.system};
+in
 
 {
   imports = [
@@ -11,6 +14,10 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = false;
+
+  home-manager.backupFileExtension = "bk";
+  services.xserver.enable = true;
+  services.displayManager.sddm.enable = true;
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
   networking.wireless.iwd = {
@@ -27,13 +34,19 @@
 
   #hardware.asahi.useExperimentalGPUDriver = true;
 
-  programs.hyprland.enable = true;
+  hardware.graphics = {
+    package = pkgs-unstable.mesa;
+  };
+  hardware.bluetooth.enable = true;
+
+  programs.hyprland = {
+    enable = true;
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+  };
   programs.waybar.enable = true;
   environment.systemPackages = with pkgs; [
-    firefox
-    #kitty
-    foot
-    hyprpaper
+    chromium
+    iwgtk
     vscode
   ];
 
@@ -44,12 +57,21 @@
   services.openssh.enable = false;
   services.openssh.settings.X11Forwarding = false;
 
+  # Docker
+  virtualisation.docker.enable = true;
+
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
+  home-manager.extraSpecialArgs = { inherit inputs; };
   home-manager.users.sspeaks = { ... }:
     {
       imports = [
         ../../home/sspeaks.nix
+        ../../home/features/hyprland
+        ../../home/features/alacritty
+        ../../home/features/dunst
+        ../../home/features/wofi
+        ../../home/features/wlogout
         ./waybar.nix
       ];
     };

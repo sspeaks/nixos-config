@@ -62,6 +62,8 @@
     };
     simple-nixos-mailserver = {
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver/nixos-25.11";
+    hyprland = {
+      url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     };
   };
   outputs = inputs@{ self, nixpkgs, home-manager, systems, nixos-raspberrypi, ... }:
@@ -165,11 +167,13 @@
       "https://nixos-raspberrypi.cachix.org"
       "https://install.determinate.systems"
       "https://nix-community.cachix.org"
+      "https://nixos-apple-silicon.cachix.org"
     ];
     extra-trusted-public-keys = [
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
       "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "nixos-apple-silicon.cachix.org-1:8psDu5SA5dAD7qA0zMy5UT292TxeEPzIz8VVEr2Js20="
     ];
   };
 }
