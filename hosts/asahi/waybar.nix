@@ -134,6 +134,28 @@
         color: #f9e2af;
       }
 
+      #backlight-slider slider {
+        min-height: 0px;
+        min-width: 0px;
+        opacity: 0;
+        background-image: none;
+        border: none;
+        box-shadow: none;
+      }
+
+      #backlight-slider trough {
+        min-height: 8px;
+        min-width: 80px;
+        border-radius: 5px;
+        background-color: rgba(30, 30, 46, 0.6);
+      }
+
+      #backlight-slider highlight {
+        min-height: 8px;
+        border-radius: 5px;
+        background-color: #f9e2af;
+      }
+
       #bluetooth {
         color: #89b4fa;
       }
@@ -204,6 +226,7 @@
       modules-right = [
         "tray"
         "backlight"
+        "backlight/slider"
         "pulseaudio"
         "bluetooth"
         "network"
@@ -341,6 +364,12 @@
         on-click-right = "brightnessctl set 30%";
         on-scroll-up = "brightnessctl set 5%+";
         on-scroll-down = "brightnessctl set 5%-";
+      };
+
+      "backlight/slider" = {
+        min = 0;
+        max = 100;
+        orientation = "horizontal";
       };
 
       bluetooth = {
