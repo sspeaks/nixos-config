@@ -150,6 +150,14 @@
         color: #f38ba8;
       }
 
+      #power-profiles-daemon {
+        padding: 4px 12px;
+        margin: 5px 3px;
+        background: rgba(30, 30, 46, 0.6);
+        border-radius: 10px;
+        color: #94e2d5;
+      }
+
       #tray {
         padding: 4px 8px;
       }
@@ -201,6 +209,7 @@
         "network"
         "cpu"
         "memory"
+        "power-profiles-daemon"
         "battery"
         "custom/power"
       ];
@@ -267,6 +276,18 @@
         tooltip-format = "{timeTo} | {power:.1f}W";
       };
 
+      "power-profiles-daemon" = {
+        format = "{icon}";
+        tooltip-format = "Power profile: {profile}\nDriver: {driver}";
+        tooltip = true;
+        format-icons = {
+          default = "󰗑";
+          performance = "󰓅";
+          balanced = "󰗑";
+          power-saver = "󰌪";
+        };
+      };
+
       cpu = {
         interval = 5;
         format = "  {usage}%";
@@ -316,6 +337,8 @@
         format = "{icon}  {percent}%";
         format-icons = [ "󰃞" "󰃟" "󰃠" ];
         tooltip-format = "Brightness: {percent}%";
+        on-click = "brightnessctl set 100%";
+        on-click-right = "brightnessctl set 30%";
         on-scroll-up = "brightnessctl set 5%+";
         on-scroll-down = "brightnessctl set 5%-";
       };

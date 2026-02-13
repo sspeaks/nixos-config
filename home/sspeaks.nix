@@ -26,6 +26,7 @@ in
     packages = with pkgs; [
       ls-colors
       ripgrep
+      bat
       git
       starship
       xclip

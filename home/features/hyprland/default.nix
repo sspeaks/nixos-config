@@ -1,12 +1,36 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
+  # Catppuccin Mocha GTK theme
+  gtk = {
+    enable = true;
+    theme = {
+      name = "catppuccin-mocha-blue-standard+default";
+      package = pkgs.catppuccin-gtk.override {
+        accents = [ "blue" ];
+        variant = "mocha";
+      };
+    };
+    iconTheme = {
+      name = "Papirus-Dark";
+      package = pkgs.catppuccin-papirus-folders.override {
+        accent = "blue";
+        flavor = "mocha";
+      };
+    };
+  };
+
+  home.pointerCursor = {
+    name = "catppuccin-mocha-blue-cursors";
+    package = pkgs.catppuccin-cursors.mochaBlue;
+    size = 36;
+    gtk.enable = true;
+  };
+
   wayland.windowManager.hyprland = {
     enable = true;
     systemd.enable = true;
     xwayland.enable = true;
-    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-
     settings = {
       # Monitor configuration (adjust for your setup)
       # Use `hyprctl monitors` to see available monitors
@@ -19,9 +43,11 @@
       env = [
         "XCURSOR_SIZE,36"
         "HYPRCURSOR_SIZE,36"
-        "QT_QPA_PLATFORMTHEME,qt5ct"
-        "GDK_SCALE,1.5"
       ];
+
+      xwayland = {
+        force_zero_scaling = true;
+      };
 
       # Input configuration
       input = {
@@ -99,10 +125,12 @@
       "$mainMod" = "SUPER";
       "$terminal" = "alacritty";
       "$menu" = "wofi --show drun";
+      "$browser" = "chromium";
 
       bind = [
         # Core
         "$mainMod, Return, exec, $terminal"
+        "$mainMod, B, exec, $browser"
         "$mainMod, Q, killactive,"
         "$mainMod SHIFT, E, exit,"
         "$mainMod, E, exec, nautilus"
@@ -214,6 +242,8 @@
         "wl-paste --type image --watch cliphist store"
         "swww-daemon"
         "hypridle"
+        "lxqt-policykit-agent"
+        "gnome-keyring-daemon --start --components=secrets"
       ];
     };
 
@@ -322,14 +352,21 @@
     brightnessctl
     playerctl
     pavucontrol
-    networkmanagerapplet
     blueman
 
     # Color picker
     hyprpicker
 
+    # Polkit agent
+    lxqt.lxqt-policykit
+
     # File manager
     nautilus
+
+    # Media
+    zathura      # PDF viewer
+    imv          # image viewer
+    mpv          # video player
   ];
 
   # Create Screenshots directory

@@ -62,8 +62,6 @@
     };
     simple-nixos-mailserver = {
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver/nixos-25.11";
-    hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     };
   };
   outputs = inputs@{ self, nixpkgs, home-manager, systems, nixos-raspberrypi, ... }:

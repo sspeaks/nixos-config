@@ -40,4 +40,10 @@ creation_rules:
       - age:
         - *sspeaks
         - *nixpi5
+  # Asahi-only secrets (wireguard client)
+  - path_regex: secrets/asahi\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
+        - *asahi
 
