@@ -23,6 +23,10 @@
       "${config.home.username}"
     );
     stateVersion = lib.mkDefault "23.05";
+    sessionVariables = {
+      SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+      SSL_CERT_DIR = "${pkgs.cacert}/etc/ssl/certs";
+    };
   };
 
   systemd.user.services.nix-gc-user = {
