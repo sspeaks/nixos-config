@@ -26,6 +26,7 @@ in
     packages = with pkgs; [
       ls-colors
       ripgrep
+      bat
       git
       starship
       xclip
@@ -33,6 +34,7 @@ in
       shellcheck
       direnv
       myCopilot
+      ralph
       # cabal-install
       # haskell-language-server
     ];

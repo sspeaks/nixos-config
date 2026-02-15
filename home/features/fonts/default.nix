@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   home.packages = [
-    (pkgs.nerdfonts.override { fonts = [ "CascadiaCode" ]; })
+    pkgs.nerd-fonts.caskaydia-mono
   ];
 
   fonts.fontconfig.enable = true;
