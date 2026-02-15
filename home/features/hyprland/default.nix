@@ -5,7 +5,7 @@
   gtk = {
     enable = true;
     theme = {
-      name = "catppuccin-mocha-blue-standard+default";
+      name = "catppuccin-mocha-blue-standard";
       package = pkgs.catppuccin-gtk.override {
         accents = [ "blue" ];
         variant = "mocha";
@@ -18,6 +18,22 @@
         flavor = "mocha";
       };
     };
+  };
+
+  # Force dark mode for GTK apps (pavucontrol, blueman, iwgtk, nautilus, etc.)
+  gtk.gtk3.extraConfig.gtk-application-prefer-dark-theme = true;
+  gtk.gtk4.extraConfig.gtk-application-prefer-dark-theme = true;
+
+  dconf.settings."org/gnome/desktop/interface" = {
+    color-scheme = "prefer-dark";
+    gtk-theme = "catppuccin-mocha-blue-standard";
+  };
+
+  # Qt dark mode
+  qt = {
+    enable = true;
+    platformTheme.name = "gtk";
+    style.name = "adwaita-dark";
   };
 
   home.pointerCursor = {
@@ -136,6 +152,7 @@
         "$mainMod, E, exec, nautilus"
         "$mainMod, V, togglefloating,"
         "$mainMod, D, exec, $menu"
+        "$mainMod, SPACE, exec, $menu"
         "$mainMod, P, pseudo,"
         "$mainMod, T, togglesplit,"
         "$mainMod, F, fullscreen,"
@@ -216,15 +233,15 @@
       # Mouse bindings
       bindm = [
         "$mainMod, mouse:272, movewindow"
-        "$mainMod, mouse:273, resizewindow"
+        "$mainMod ALT, mouse:272, resizewindow"
       ];
 
       # Media/function keys
       bindel = [
         ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
         ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
-        ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
-        ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
+        ", XF86MonBrightnessUp, exec, brightnessctl set 5%+ && echo $(( $(brightnessctl -d apple-panel-bl get) * 100 / $(brightnessctl -d apple-panel-bl max) )) > /tmp/auto-brightness-user-pct"
+        ", XF86MonBrightnessDown, exec, brightnessctl set 5%- && echo $(( $(brightnessctl -d apple-panel-bl get) * 100 / $(brightnessctl -d apple-panel-bl max) )) > /tmp/auto-brightness-user-pct"
       ];
 
       bindl = [

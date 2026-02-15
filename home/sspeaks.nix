@@ -34,6 +34,7 @@ in
       shellcheck
       direnv
       myCopilot
+      ralph
       # cabal-install
       # haskell-language-server
     ];

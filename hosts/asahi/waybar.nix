@@ -203,6 +203,14 @@
       #custom-power:hover {
         background: rgba(243, 139, 168, 0.3);
       }
+
+      #custom-wireguard {
+        color: #a6e3a1;
+        padding: 4px 12px;
+        margin: 5px 3px;
+        background: rgba(30, 30, 46, 0.6);
+        border-radius: 10px;
+      }
     '';
 
     settings = [{
@@ -229,6 +237,7 @@
         "backlight/slider"
         "pulseaudio"
         "bluetooth"
+        "custom/wireguard"
         "network"
         "cpu"
         "memory"
@@ -313,14 +322,14 @@
 
       cpu = {
         interval = 5;
-        format = "  {usage}%";
+        format = "󰍛  {usage}%";
         tooltip-format = "CPU: {usage}%\nLoad: {load}";
         on-click = "alacritty -e htop";
       };
 
       memory = {
         interval = 5;
-        format = "  {}%";
+        format = "󰘚  {}%";
         tooltip-format = "RAM: {used:0.1f}GB / {total:0.1f}GB";
         on-click = "alacritty -e htop";
       };
@@ -360,10 +369,10 @@
         format = "{icon}  {percent}%";
         format-icons = [ "󰃞" "󰃟" "󰃠" ];
         tooltip-format = "Brightness: {percent}%";
-        on-click = "brightnessctl set 100%";
-        on-click-right = "brightnessctl set 30%";
-        on-scroll-up = "brightnessctl set 5%+";
-        on-scroll-down = "brightnessctl set 5%-";
+        on-click = "brightnessctl set 100% && echo 100 > /tmp/auto-brightness-user-pct";
+        on-click-right = "brightnessctl set 30% && echo 30 > /tmp/auto-brightness-user-pct";
+        on-scroll-up = "brightnessctl set 5%+ && echo $(( $(brightnessctl -d apple-panel-bl get) * 100 / $(brightnessctl -d apple-panel-bl max) )) > /tmp/auto-brightness-user-pct";
+        on-scroll-down = "brightnessctl set 5%- && echo $(( $(brightnessctl -d apple-panel-bl get) * 100 / $(brightnessctl -d apple-panel-bl max) )) > /tmp/auto-brightness-user-pct";
       };
 
       "backlight/slider" = {
@@ -385,6 +394,24 @@
       tray = {
         icon-size = 16;
         spacing = 8;
+      };
+
+      "custom/wireguard" = {
+        exec = pkgs.writeShellScript "waybar-wireguard" ''
+          if ip link show wg0 &>/dev/null; then
+            fwmark=$(${pkgs.wireguard-tools}/bin/wg show wg0 fwmark 2>/dev/null)
+            if [ -n "$fwmark" ] && ${pkgs.iptables}/bin/iptables -C OUTPUT ! -o wg0 -m mark ! --mark "$fwmark" -m addrtype ! --dst-type LOCAL -j REJECT &>/dev/null; then
+              echo '{"text": "󰌾", "tooltip": "WireGuard active, kill switch on", "class": "connected"}'
+            else
+              echo '{"text": "󰌾", "tooltip": "WireGuard active", "class": "connected"}'
+            fi
+          else
+            echo '{"text": "", "tooltip": "", "class": ""}'
+          fi
+        '';
+        return-type = "json";
+        interval = 5;
+        tooltip = true;
       };
 
       "custom/power" = {

@@ -1,6 +1,6 @@
 { config, pkgs, lib, inputs, ... }:
 let
-  enableWireguard = true;
+  enableWireguard = false;
 in
 
 {
@@ -82,6 +82,7 @@ in
     KERNEL=="uhid", GROUP="input", MODE="0660"
   '';
 
+  programs.dconf.enable = true;
   programs.hyprland.enable = true;
 
   xdg.portal = {
@@ -94,6 +95,7 @@ in
     chromium
     iwgtk
     vscode
+    gnumake
   ] ++ lib.optionals enableWireguard [
     wireguard-tools
   ];
@@ -119,6 +121,7 @@ in
       imports = [
         ../../home/sspeaks.nix
         ../../home/features/hyprland
+        ../../home/features/hyprland/auto-brightness.nix
         ../../home/features/alacritty
         ../../home/features/dunst
         ../../home/features/wofi
