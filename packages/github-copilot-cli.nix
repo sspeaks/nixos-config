@@ -1,4 +1,13 @@
 { pkgs, fetchzip }:
+let
+  isAsahi = pkgs.stdenv.hostPlatform.isAarch64 && pkgs.stdenv.hostPlatform.isLinux;
+  rgPlatform = {
+    "x86_64-linux" = "linux-x64";
+    "aarch64-linux" = "linux-arm64";
+    "x86_64-darwin" = "darwin-x64";
+    "aarch64-darwin" = "darwin-arm64";
+  }.${pkgs.stdenv.hostPlatform.system} or (throw "Unsupported platform for github-copilot-cli");
+in
 pkgs.github-copilot-cli.overrideAttrs (old: rec {
   version = "0.0.410";
   src = fetchzip {
@@ -12,10 +21,12 @@ pkgs.github-copilot-cli.overrideAttrs (old: rec {
     mkdir -p $out/lib/node_modules/@github/copilot
     cp -r . $out/lib/node_modules/@github/copilot
 
-    # Replace bundled rg (statically links jemalloc built for 4K pages) with system ripgrep
-    rm -rf $out/lib/node_modules/@github/copilot/ripgrep/bin
-    mkdir -p $out/lib/node_modules/@github/copilot/ripgrep/bin/linux-arm64
-    ln -s ${pkgs.ripgrep}/bin/rg $out/lib/node_modules/@github/copilot/ripgrep/bin/linux-arm64/rg
+    ${pkgs.lib.optionalString isAsahi ''
+      # Replace bundled rg (statically links jemalloc built for 4K pages) with system ripgrep
+      rm -rf $out/lib/node_modules/@github/copilot/ripgrep/bin
+      mkdir -p $out/lib/node_modules/@github/copilot/ripgrep/bin/${rgPlatform}
+      ln -s ${pkgs.ripgrep}/bin/rg $out/lib/node_modules/@github/copilot/ripgrep/bin/${rgPlatform}/rg
+    ''}
 
     mkdir -p $out/bin
     makeBinaryWrapper ${pkgs.nodejs}/bin/node $out/bin/copilot \
