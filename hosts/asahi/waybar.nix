@@ -3,7 +3,7 @@
 {
   programs.waybar = {
     enable = true;
-    systemd.enable = false;  # Started by Hyprland exec-once
+    systemd.enable = false; # Started by Hyprland exec-once
     style = ''
       * {
         font-family: "JetBrainsMono Nerd Font", "JetBrains Mono Nerd Font", "JetBrains Mono", "Symbols Nerd Font", "Font Awesome 6 Free", monospace;

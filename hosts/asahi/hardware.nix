@@ -11,7 +11,7 @@
       jemalloc = prev.jemalloc.overrideAttrs (old: {
         configureFlags = builtins.filter
           (f: builtins.match ".*--with-lg-page=.*" f == null)
-          (old.configureFlags or []);
+          (old.configureFlags or [ ]);
       });
     })
   ];

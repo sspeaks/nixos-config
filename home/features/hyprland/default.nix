@@ -330,21 +330,21 @@
 
       listener = [
         {
-          timeout = 300;  # 5 minutes
+          timeout = 300; # 5 minutes
           on-timeout = "brightnessctl -s set 30%";
           on-resume = "brightnessctl -r";
         }
         {
-          timeout = 600;  # 10 minutes
+          timeout = 600; # 10 minutes
           on-timeout = "loginctl lock-session";
         }
         {
-          timeout = 900;  # 15 minutes
+          timeout = 900; # 15 minutes
           on-timeout = "hyprctl dispatch dpms off";
           on-resume = "hyprctl dispatch dpms on";
         }
         {
-          timeout = 1800;  # 30 minutes
+          timeout = 1800; # 30 minutes
           on-timeout = "systemctl suspend";
         }
       ];
@@ -381,9 +381,9 @@
     nautilus
 
     # Media
-    zathura      # PDF viewer
-    imv          # image viewer
-    mpv          # video player
+    zathura # PDF viewer
+    imv # image viewer
+    mpv # video player
   ];
 
   # Create Screenshots directory

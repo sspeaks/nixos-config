@@ -14,6 +14,9 @@ in
 
   wsl.enable = true;
   wsl.defaultUser = "sspeaks";
+  wsl.wslConf.boot.initTimeout = 120000; # 2 minutes
+
+  security.sudo.enable = true;
 
   networking = {
     hostName = "NixOS-WSL-work";

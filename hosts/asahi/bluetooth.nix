@@ -6,8 +6,8 @@
     powerOnBoot = true;
     settings = {
       General = {
-        Experimental = true;  # Required for BLE FIDO2/passkey (caBLE hybrid transport)
-        KernelExperimental = true;  # Enable kernel-level BLE experimental features
+        Experimental = true; # Required for BLE FIDO2/passkey (caBLE hybrid transport)
+        KernelExperimental = true; # Enable kernel-level BLE experimental features
       };
     };
   };

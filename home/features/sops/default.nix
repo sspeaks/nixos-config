@@ -6,28 +6,28 @@ let
 in
 {
   home.activation.ensure-age-key = config.lib.dag.entryBefore [ "inject-copilot-token" ] ''
-    if [ ! -f "${ageKeyFile}" ]; then
-      echo ""
-      echo "=========================================="
-      echo "  Age key not found at ${ageKeyFile}"
-      echo "=========================================="
-      echo ""
-      echo "Paste your age key (comments + secret key) and press Enter on an empty line when done:"
-      AGE_KEY=""
-      while IFS= read -r LINE </dev/tty; do
-        [ -z "$LINE" ] && break
-        AGE_KEY="$AGE_KEY$LINE
-"
-      done
-      if echo "$AGE_KEY" | grep -q "^AGE-SECRET-KEY-"; then
-        mkdir -p "$(dirname "${ageKeyFile}")"
-        echo "$AGE_KEY" > "${ageKeyFile}"
-        chmod 600 "${ageKeyFile}"
-        echo "Age key saved to ${ageKeyFile}"
-      else
-        echo "WARNING: Invalid age key format, skipping" >&2
-      fi
-    fi
+        if [ ! -f "${ageKeyFile}" ]; then
+          echo ""
+          echo "=========================================="
+          echo "  Age key not found at ${ageKeyFile}"
+          echo "=========================================="
+          echo ""
+          echo "Paste your age key (comments + secret key) and press Enter on an empty line when done:"
+          AGE_KEY=""
+          while IFS= read -r LINE </dev/tty; do
+            [ -z "$LINE" ] && break
+            AGE_KEY="$AGE_KEY$LINE
+    "
+          done
+          if echo "$AGE_KEY" | grep -q "^AGE-SECRET-KEY-"; then
+            mkdir -p "$(dirname "${ageKeyFile}")"
+            echo "$AGE_KEY" > "${ageKeyFile}"
+            chmod 600 "${ageKeyFile}"
+            echo "Age key saved to ${ageKeyFile}"
+          else
+            echo "WARNING: Invalid age key format, skipping" >&2
+          fi
+        fi
   '';
 
   home.activation.inject-copilot-token = config.lib.dag.entryAfter [ "writeBoundary" ] ''

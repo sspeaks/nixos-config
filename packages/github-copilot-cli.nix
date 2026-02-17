@@ -14,7 +14,7 @@ pkgs.github-copilot-cli.overrideAttrs (old: rec {
     url = "https://registry.npmjs.org/@github/copilot/-/copilot-${version}.tgz";
     hash = "sha256-oJEerl0LHn8EO3KUqt0jz5Fmm8EOX/+3LRF1tf6L2Yk=";
   };
-  nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
+  nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
   installPhase = ''
     runHook preInstall
 
