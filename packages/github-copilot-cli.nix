@@ -9,12 +9,14 @@ let
   }.${pkgs.stdenv.hostPlatform.system} or (throw "Unsupported platform for github-copilot-cli");
 in
 pkgs.github-copilot-cli.overrideAttrs (old: rec {
-  version = "0.0.411";
+  version = "0.0.413-0";
   src = fetchzip {
     url = "https://registry.npmjs.org/@github/copilot/-/copilot-${version}.tgz";
-    hash = "sha256-tZ/gt/C5w3m3m3wqyyIdOcF03BHnM/G/2c0UV0oQzEc=";
+    hash = "sha256-OHk8gpxwddFJp/+MnVO02IdjPNbEfchmeV+F1lfWLP8=";
   };
-  nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+  sourceRoot = "source";
+  nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeBinaryWrapper ];
+  buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libsecret pkgs.glib ];
   installPhase = ''
     runHook preInstall
 
