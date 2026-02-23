@@ -67,7 +67,7 @@
       #cpu,
       #memory,
       #network,
-      #pulseaudio,
+      #custom-volume,
       #backlight,
       #bluetooth,
       #temperature,
@@ -122,11 +122,11 @@
         color: #f38ba8;
       }
 
-      #pulseaudio {
+      #custom-volume {
         color: #f9e2af;
       }
 
-      #pulseaudio.muted {
+      #custom-volume.muted {
         color: #6c7086;
       }
 
@@ -235,7 +235,7 @@
         "tray"
         "backlight"
         "backlight/slider"
-        "pulseaudio"
+        "custom/volume"
         "bluetooth"
         "custom/wireguard"
         "network"
@@ -345,24 +345,45 @@
         on-click = "iwgtk";
       };
 
-      pulseaudio = {
-        format = "{icon}  {volume}%";
-        format-bluetooth = "󰂯  {volume}%";
-        format-bluetooth-muted = "󰂲  muted";
-        format-muted = "󰝟  muted";
-        format-icons = {
-          headphone = "󰋋";
-          hands-free = "󰋎";
-          headset = "󰋎";
-          phone = "";
-          portable = "";
-          car = "󰄋";
-          default = [ "󰕿" "󰖀" "󰕾" ];
-        };
-        tooltip-format = "{desc}\n{volume}%";
+      "custom/volume" = {
+        exec = pkgs.writeShellScript "waybar-volume" ''
+          emit() {
+            output=$(${pkgs.wireplumber}/bin/wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null)
+            vol=$(echo "$output" | ${pkgs.gawk}/bin/awk '{printf "%.0f", $2 * 100}')
+            muted=""
+            if echo "$output" | grep -q MUTED; then
+              muted="muted"
+            fi
+
+            if [ -n "$muted" ]; then
+              icon="󰝟"
+              text="$icon  muted"
+            elif [ "$vol" -le 30 ]; then
+              icon="󰕿"
+              text="$icon  $vol%"
+            elif [ "$vol" -le 70 ]; then
+              icon="󰖀"
+              text="$icon  $vol%"
+            else
+              icon="󰕾"
+              text="$icon  $vol%"
+            fi
+
+            echo "{\"text\": \"$text\", \"tooltip\": \"Volume: $vol%\", \"class\": \"$muted\"}"
+          }
+
+          emit
+          ${pkgs.pulseaudio}/bin/pactl subscribe | while read -r line; do
+            if echo "$line" | grep -q "change.*sink"; then
+              emit
+            fi
+          done
+        '';
+        return-type = "json";
         on-click = "pavucontrol";
-        on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-        scroll-step = 5;
+        on-click-right = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+        on-scroll-up = "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+";
+        on-scroll-down = "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
       };
 
       backlight = {
