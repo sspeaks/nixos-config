@@ -40,6 +40,11 @@ bootstrap_skills() {
 
 bootstrap_skills
 
+# Clean up old Copilot session-state directories (older than 7 days)
+if [ -d "${HOME}/.copilot/session-state" ]; then
+  find "${HOME}/.copilot/session-state" -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} + 2>/dev/null || true
+fi
+
 # Validate environment
 PRD_FILE="./prd.json"
 PROGRESS_FILE="./progress.txt"
