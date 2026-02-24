@@ -1,11 +1,22 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p curl jq nix
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NIX_FILE="$SCRIPT_DIR/../packages/github-copilot-cli.nix"
 
 # Fetch latest version from npm
-latest=$(curl -s https://registry.npmjs.org/@github/copilot | jq -r '.["dist-tags"].prerelease // .["dist-tags"].latest')
+# Prefer stable, but use prerelease if its base version is strictly newer
+data=$(curl -s https://registry.npmjs.org/@github/copilot)
+stable=$(echo "$data" | jq -r '.["dist-tags"].latest')
+prerelease=$(echo "$data" | jq -r '.["dist-tags"].prerelease // empty')
+latest="$stable"
+if [ -n "$prerelease" ]; then
+  pre_base="${prerelease%%-*}"
+  if [ "$pre_base" != "$stable" ] && [ "$(printf '%s\n%s' "$stable" "$pre_base" | sort -V | tail -1)" = "$pre_base" ]; then
+    latest="$prerelease"
+  fi
+fi
 current=$(grep 'version = ' "$NIX_FILE" | sed 's/.*"\(.*\)".*/\1/')
 
 echo "Current: $current"
