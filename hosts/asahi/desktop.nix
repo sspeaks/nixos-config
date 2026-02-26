@@ -2,8 +2,15 @@
 
 {
   services.xserver.enable = true;
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.wayland.enable = true;
+  services.displayManager.sddm = {
+    enable = true;
+    wayland.enable = true;
+    theme = "where_is_my_sddm_theme";
+    extraPackages = with pkgs.kdePackages; [
+      qt5compat
+      qtsvg
+    ];
+  };
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
@@ -26,6 +33,13 @@
     iwgtk
     vscode
     gnumake
+    (where-is-my-sddm-theme.override {
+      themeConfig.General = {
+        background = "/var/lib/bing-wallpaper/wallpaper.jpg";
+        backgroundMode = "fill";
+        quote = "";
+      };
+    })
   ];
 
   home-manager.backupFileExtension = "bk";

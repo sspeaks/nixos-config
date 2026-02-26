@@ -1,6 +1,20 @@
 { config, pkgs, lib, ... }:
 
 {
+  services.hyprpaper = {
+    enable = true;
+    settings = {
+      splash = false;
+      wallpaper = [
+        {
+          monitor = "eDP-1";
+          path = "/var/lib/bing-wallpaper/wallpaper.jpg";
+          fit_mode = "cover";
+        }
+      ];
+    };
+  };
+
   # Catppuccin Mocha GTK theme
   gtk = {
     enable = true;
@@ -257,7 +271,6 @@
         "dunst"
         "wl-paste --type text --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
-        "swww-daemon"
         "hypridle"
         "lxqt-policykit-agent"
         "gnome-keyring-daemon --start --components=secrets"
@@ -363,7 +376,7 @@
     cliphist
 
     # Wallpaper
-    swww
+    hyprpaper
 
     # Utilities
     brightnessctl

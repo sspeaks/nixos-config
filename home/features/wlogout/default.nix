@@ -48,24 +48,25 @@
       }
 
       window {
-        background-color: rgba(30, 30, 46, 0.9);
+        background-color: rgba(30, 30, 46, 0.85);
       }
 
       button {
         color: #cdd6f4;
-        background-color: #313244;
+        background-color: rgba(49, 50, 68, 0.8);
         border-style: solid;
         border-width: 2px;
         border-color: #45475a;
         background-repeat: no-repeat;
         background-position: center;
         background-size: 25%;
-        border-radius: 15px;
+        border-radius: 20px;
         margin: 10px;
+        transition: all 0.3s ease;
       }
 
       button:focus, button:active, button:hover {
-        background-color: #45475a;
+        background-color: rgba(69, 71, 90, 0.9);
         border-color: #89b4fa;
         outline-style: none;
       }
@@ -73,43 +74,25 @@
       #lock {
         background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/lock.png"));
       }
-      #lock:hover {
-        background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/lock-hover.png"));
-      }
 
       #logout {
         background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/logout.png"));
-      }
-      #logout:hover {
-        background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/logout-hover.png"));
       }
 
       #suspend {
         background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/suspend.png"));
       }
-      #suspend:hover {
-        background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/suspend-hover.png"));
-      }
 
       #hibernate {
         background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/hibernate.png"));
-      }
-      #hibernate:hover {
-        background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/hibernate-hover.png"));
       }
 
       #shutdown {
         background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/shutdown.png"));
       }
-      #shutdown:hover {
-        background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/shutdown-hover.png"));
-      }
 
       #reboot {
         background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/reboot.png"));
-      }
-      #reboot:hover {
-        background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/reboot-hover.png"));
       }
     '';
   };

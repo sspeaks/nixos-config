@@ -10,6 +10,7 @@
     ./desktop.nix
     ./bluetooth.nix
     ./services.nix
+    ./bing-wallpaper.nix
   ];
 
   security.sudo.wheelNeedsPassword = false;
