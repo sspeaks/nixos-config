@@ -3,10 +3,13 @@
 {
   imports = [
     ./networking/dnsmasq.nix
+    ./networking/dnscrypt.nix
     ./networking/nftables.nix
     ./networking/hostapd.nix
     ./networking/wlan.nix
     ./networking/networkd.nix
+    ./networking/sqm.nix
+    ./networking/monitoring.nix
   ];
 
   environment.systemPackages = with pkgs; [

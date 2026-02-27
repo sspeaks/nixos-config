@@ -5,7 +5,7 @@
   services.dnsmasq = {
     enable = true;
     settings = {
-      server = [ "8.8.8.8" "1.1.1.1" ];
+      server = [ "127.0.0.1#5353" ];
       domain-needed = true;
       bogus-priv = true;
       no-resolv = true;

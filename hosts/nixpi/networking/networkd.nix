@@ -81,8 +81,6 @@ in
         networkConfig = {
           # start a DHCP Client for IPv4 Addressing/Routing
           DHCP = "ipv4";
-          DNSOverTLS = true;
-          DNSSEC = true;
           IPv6PrivacyExtensions = false;
           IPv4Forwarding = true;
         };
