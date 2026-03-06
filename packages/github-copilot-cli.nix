@@ -9,10 +9,10 @@ let
   }.${pkgs.stdenv.hostPlatform.system} or (throw "Unsupported platform for github-copilot-cli");
 in
 pkgs.github-copilot-cli.overrideAttrs (old: rec {
-  version = "0.0.421-2";
+  version = "1.0.2";
   src = fetchzip {
     url = "https://registry.npmjs.org/@github/copilot/-/copilot-${version}.tgz";
-    hash = "sha256-8jrLJTAryJLXUu0mRzH1rjq8h7fZ27GVAOg4KFzkD9Q=";
+    hash = "sha256-n4B/t0WNwMRb3X+zX3F523OP3Qbn9Yn7PJfw2IIgIjI=";
   };
   sourceRoot = "source";
   nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeBinaryWrapper ];
