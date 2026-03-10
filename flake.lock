@@ -47,11 +47,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1772308481,
-        "narHash": "sha256-HnLfFmyMJpyhnvwfFViPgBkYuvZbWIf8TMyMDf5j/3I=",
+        "lastModified": 1772909021,
+        "narHash": "sha256-hcstQ1Z9aQSJM3AVCLb0/OPTicbME9nhP01GiPrOjZM=",
         "owner": "nix-community",
         "repo": "authentik-nix",
-        "rev": "5818986331de1a562c2505006b39a30aa1b081e6",
+        "rev": "7e4730351fb6df479c46a1bf7e23d46a0b0c5d46",
         "type": "github"
       },
       "original": {
@@ -63,16 +63,16 @@
     "authentik-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1771963976,
-        "narHash": "sha256-pVQ34cZYX3hlk6hF1aZ/n32xMqTF4Jmp0G0VGDU7iXc=",
+        "lastModified": 1772567399,
+        "narHash": "sha256-0Vpf1hj9C8r+rhrCgwoNazpQ+mwgjdjDhuoKCxYQFWw=",
         "owner": "goauthentik",
         "repo": "authentik",
-        "rev": "8af491630b70ff6bd089753e21bef511bfb3f557",
+        "rev": "0dccbd4193c45c581e9fb7cd89df0c1487510f1f",
         "type": "github"
       },
       "original": {
         "owner": "goauthentik",
-        "ref": "version/2026.2.0",
+        "ref": "version/2026.2.1",
         "repo": "authentik",
         "type": "github"
       }
@@ -386,26 +386,6 @@
         "type": "github"
       }
     },
-    "garage-monitor": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1770753734,
-        "narHash": "sha256-c+9yPTgvErw+5WeOUFl3GHWEzneyRxfTiRV+pNjWwWk=",
-        "ref": "refs/heads/main",
-        "rev": "98ff5587248b85d93cdabe52774fc9738a7d6dc0",
-        "revCount": 8,
-        "type": "git",
-        "url": "file:///home/sspeaks/garage-monitor"
-      },
-      "original": {
-        "type": "git",
-        "url": "file:///home/sspeaks/garage-monitor"
-      }
-    },
     "git-hooks": {
       "inputs": {
         "flake-compat": [
@@ -487,11 +467,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772807318,
-        "narHash": "sha256-Qjw6ILt8cb2HQQpCmWNLMZZ63wEo1KjTQt+1BcQBr7k=",
+        "lastModified": 1773179137,
+        "narHash": "sha256-EdW2bwzlfme0vbMOcStnNmKlOAA05Bp6su2O8VLGT0k=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "daa2c221320809f5514edde74d0ad0193ad54ed8",
+        "rev": "3f98e2bbc661ec0aaf558d8a283d6955f05f1d09",
         "type": "github"
       },
       "original": {
@@ -555,11 +535,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772649729,
-        "narHash": "sha256-BAk4UlLaZ5KiDLVpODbOTHSei0KwK5h44T338s132ew=",
+        "lastModified": 1772952158,
+        "narHash": "sha256-RDR+7v1vaojweHI3FdPnuYPy4wRGfTKgeD5GXrXbfT0=",
         "owner": "nix-community",
         "repo": "nixos-apple-silicon",
-        "rev": "f76cf1b902f3ab2bc8cd0fab1c9aa87f740459be",
+        "rev": "55b7c3c03e9b778d96a71f44400bbdda9a4cfda7",
         "type": "github"
       },
       "original": {
@@ -570,11 +550,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1771969195,
-        "narHash": "sha256-qwcDBtrRvJbrrnv1lf/pREQi8t2hWZxVAyeMo7/E9sw=",
+        "lastModified": 1772972630,
+        "narHash": "sha256-mUJxsNOrBMNOUJzN0pfdVJ1r2pxeqm9gI/yIKXzVVbk=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "41c6b421bdc301b2624486e11905c9af7b8ec68e",
+        "rev": "3966ce987e1a9a164205ac8259a5fe8a64528f72",
         "type": "github"
       },
       "original": {
@@ -748,11 +728,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1772624091,
-        "narHash": "sha256-QKyJ0QGWBn6r0invrMAK8dmJoBYWoOWy7lN+UHzW1jc=",
+        "lastModified": 1772963539,
+        "narHash": "sha256-9jVDGZnvCckTGdYT53d/EfznygLskyLQXYwJLKMPsZs=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "80bdc1e5ce51f56b19791b52b2901187931f5353",
+        "rev": "9dcb002ca1690658be4a04645215baea8b95f31d",
         "type": "github"
       },
       "original": {
@@ -876,7 +856,6 @@
         "boggle": "boggle",
         "determinate": "determinate",
         "factorio": "factorio",
-        "garage-monitor": "garage-monitor",
         "home-manager": "home-manager",
         "nixos-apple-silicon": "nixos-apple-silicon",
         "nixos-hardware": "nixos-hardware",
@@ -921,11 +900,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772495394,
-        "narHash": "sha256-hmIvE/slLKEFKNEJz27IZ8BKlAaZDcjIHmkZ7GCEjfw=",
+        "lastModified": 1773096132,
+        "narHash": "sha256-M3zEnq9OElB7zqc+mjgPlByPm1O5t2fbUrH3t/Hm5Ag=",
         "owner": "mic92",
         "repo": "sops-nix",
-        "rev": "1d9b98a29a45abe9c4d3174bd36de9f28755e3ff",
+        "rev": "d1ff3b1034d5bab5d7d8086a7803c5a5968cd784",
         "type": "github"
       },
       "original": {

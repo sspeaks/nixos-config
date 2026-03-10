@@ -63,10 +63,10 @@
     simple-nixos-mailserver = {
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver/nixos-25.11";
     };
-    garage-monitor = {
-      url = "git+file:///home/sspeaks/garage-monitor";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # garage-monitor = {
+    #   url = "git+file:///home/sspeaks/garage-monitor";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
   };
   outputs = inputs@{ self, nixpkgs, home-manager, systems, nixos-raspberrypi, ... }:
     let
