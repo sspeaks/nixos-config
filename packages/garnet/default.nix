@@ -2,7 +2,7 @@
 rec {
   server = pkgs.buildDotnetModule rec {
     pname = "garnet";
-    version = "1.0.86";
+    version = "1.1.0";
 
     src = pkgs.fetchFromGitHub {
       owner = "microsoft";
@@ -17,12 +17,9 @@ rec {
     dotnet-sdk = pkgs.dotnetCorePackages.sdk_9_0;
     dotnet-runtime = pkgs.dotnetCorePackages.runtime_9_0;
     dotnetBuildFlags = "-m:1";
-    # preInstall = ''
-    #   mv bin/Release/net9.0/linux-x64/{*.dll,*.pdb} bin/Release/net9.0/
-    #   mv bin/Release/net8.0/linux-x64/{*.dll,*.pdb} bin/Release/net8.0/
-    #   mv obj/Release/net9.0/linux-x64/{*.dll,*.pdb} bin/Release/net9.0/
-    #   mv obj/Release/net8.0/linux-x64/{*.dll,*.pdb} bin/Release/net8.0/
-    # '';
+    # Garnet multi-targets net8.0;net9.0 — restrict to net9.0 only
+    # since we only provide the .NET 9.0 SDK/runtime.
+    dotnetFlags = [ "-p:TargetFrameworks=net9.0" ];
     dotnetInstallFlags = [ "-f" "net9.0" ];
 
   };
