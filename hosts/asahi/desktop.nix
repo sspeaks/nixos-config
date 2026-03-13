@@ -13,6 +13,7 @@
   };
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
+  environment.sessionVariables.MOZ_GMP_PATH = [ "${pkgs.widevine-cdm-lacros}/gmp-widevinecdm/system-installed" ];
 
   programs.dconf.enable = true;
   programs.hyprland.enable = true;
@@ -30,6 +31,8 @@
 
   environment.systemPackages = with pkgs; [
     chromium
+    firefox
+    vlc
     iwgtk
     vscode
     gnumake
