@@ -13,7 +13,6 @@
     ./bing-wallpaper.nix
   ];
 
-  nixpkgs.overlays = [ inputs.nixos-aarch64-widevine.overlays.default ];
 
   security.sudo.wheelNeedsPassword = false;
 

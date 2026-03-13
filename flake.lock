@@ -787,13 +787,18 @@
         ]
       },
       "locked": {
-        "narHash": "sha256-KdAujfqXXtkB1bMsFLx1/HJfcO7K8/0N7YCX9QTOhPs=",
-        "path": "/home/sspeaks/pogbot",
-        "type": "path"
+        "lastModified": 1773361012,
+        "narHash": "sha256-S6cShyo+M6UkFp0oJaoynfrlWeyGcuEyy3DGzYut16Y=",
+        "owner": "sspeaks",
+        "repo": "clipbot",
+        "rev": "3aff80e12439cd5555b6e85b8ce56aa9f7313bb3",
+        "type": "github"
       },
       "original": {
-        "path": "/home/sspeaks/pogbot",
-        "type": "path"
+        "owner": "sspeaks",
+        "ref": "listenBot",
+        "repo": "clipbot",
+        "type": "github"
       }
     },
     "pyproject-build-systems": {

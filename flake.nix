@@ -54,9 +54,9 @@
       url = "github:sspeaks/boggle-sovler";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixos-aarch64-widevine = {
-      url = "github:epetousis/nixos-aarch64-widevine";
-    };
+    # nixos-aarch64-widevine = {
+    #   url = "github:epetousis/nixos-aarch64-widevine";
+    # };
     nixos-apple-silicon = {
       url = "github:nix-community/nixos-apple-silicon";
       inputs.nixpkgs.follows = "nixpkgs";

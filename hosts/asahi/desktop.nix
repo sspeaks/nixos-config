@@ -13,7 +13,6 @@
   };
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
-  environment.sessionVariables.MOZ_GMP_PATH = [ "${pkgs.widevine-cdm-lacros}/gmp-widevinecdm/system-installed" ];
 
   programs.dconf.enable = true;
   programs.hyprland.enable = true;
@@ -31,7 +30,7 @@
 
   environment.systemPackages = with pkgs; [
     chromium
-    firefox
+    # firefox  # removed: not in aarch64-linux binary cache yet
     vlc
     iwgtk
     vscode
