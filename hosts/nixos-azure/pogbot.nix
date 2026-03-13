@@ -24,5 +24,6 @@ in
     discordTokenFile = config.sops.secrets.DISCORD_TOKEN.path;
     giphyAPIKeyFile = config.sops.secrets.GIPHY_API_KEY.path;
     openAIAPIKeyFile = config.sops.secrets.OPEN_AI_KEY.path;
+    trimmerUrl = "https://mycatsonfire.com/pogbot";
   };
 }

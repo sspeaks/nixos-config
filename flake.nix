@@ -28,11 +28,12 @@
       url = "github:nix-systems/default";
     };
     sops-nix = {
-      url = "github:/mic92/sops-nix";
+      url = "github:mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pogbot = {
-      url = "github:sspeaks/clipbot";
+      url = "github:sspeaks/clipbot/listenBot";
+#      url = "path:/home/sspeaks/pogbot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     spock = {
