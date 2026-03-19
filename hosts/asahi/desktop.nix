@@ -30,7 +30,6 @@
 
   environment.systemPackages = with pkgs; [
     chromium
-    # firefox  # removed: not in aarch64-linux binary cache yet
     vlc
     iwgtk
     vscode

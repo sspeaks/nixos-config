@@ -155,7 +155,7 @@
       "$mainMod" = "SUPER";
       "$terminal" = "alacritty";
       "$menu" = "wofi --show drun";
-      "$browser" = "firefox";
+      "$browser" = "chromium";
 
       bind = [
         # Core
