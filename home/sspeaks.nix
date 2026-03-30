@@ -45,6 +45,7 @@ in
   };
   programs.git.settings.user.name = "Seth Speaks";
   programs.git.settings.user.email = "sspeaks610@gmail.com";
+  programs.git.signing.format = null;
 
   programs.direnv.enable = true;
   programs.direnv.nix-direnv.enable = true;

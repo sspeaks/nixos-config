@@ -20,7 +20,19 @@
     vimAlias = true;
     extraConfigVim = ''
       set mouse=
+      let g:ale_linters = {'haskell': []}
     '';
+
+    diagnostic.settings = {
+      virtual_text = true;
+      underline = true;
+      signs = true;
+    };
+
+    colorschemes.catppuccin = {
+      enable = true;
+      settings.flavour = "mocha";
+    };
 
     globals.mapleader = ",";
 
@@ -53,7 +65,16 @@
         servers = {
           csharp_ls.enable = false;
           nixd.enable = true;
-          hls.enable = false;
+          hls = {
+            enable = true;
+            package = null; # Use HLS from nix-shell/direnv, not a global one
+            installGhc = false; # GHC comes from the project's nix-shell too
+            settings = {
+              haskell = {
+                plugin.semanticTokens.globalOn = true;
+              };
+            };
+          };
           pylsp.enable = false;
         };
         keymaps.lspBuf = {
