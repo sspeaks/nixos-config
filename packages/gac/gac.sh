@@ -14,7 +14,7 @@ fi
 diff_content="$(git diff --cached)"
 msg="$(echo "$diff_content" | copilot -p \
   "Write a concise git commit message (subject line only, no body) for this diff. Output ONLY the message text, nothing else." \
-  --no-alt-screen 2>/dev/null | awk 'NF{last=$0} END{print last}')"
+  2>/dev/null | awk 'NF{last=$0} END{print last}')"
 
 if [ -z "$msg" ]; then
   echo "Failed to generate commit message."
