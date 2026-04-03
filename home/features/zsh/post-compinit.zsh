@@ -25,3 +25,6 @@ bindkey  "^[[3~"  delete-char
 
 autoload bashcompinit
 bashcompinit
+
+# Source machine-local overrides (not managed by nix)
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
