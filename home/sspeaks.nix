@@ -36,6 +36,7 @@ in
       myCopilot
       ralph
       gac
+      comma
       # cabal-install
       # haskell-language-server
     ];
