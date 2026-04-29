@@ -105,6 +105,9 @@
             pkgs.ssh-to-age
             pkgs.nix-output-monitor
           ];
+          shellHook = ''
+            git config core.hooksPath .githooks
+          '';
         };
       });
       nixosConfigurations = {
