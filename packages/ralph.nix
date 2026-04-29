@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, lib ? pkgs.lib }:
 
 pkgs.stdenv.mkDerivation {
   pname = "ralph";
@@ -21,4 +21,10 @@ pkgs.stdenv.mkDerivation {
     wrapProgram $out/bin/ralph-prd \
       --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.curl ]}
   '';
+
+  meta = {
+    description = "CLI helpers for interacting with APIs";
+    license = lib.licenses.unfree;
+    platforms = lib.platforms.unix;
+  };
 }

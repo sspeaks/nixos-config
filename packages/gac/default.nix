@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, lib ? pkgs.lib }:
 
 pkgs.stdenv.mkDerivation {
   pname = "gac";
@@ -15,4 +15,11 @@ pkgs.stdenv.mkDerivation {
     wrapProgram $out/bin/gac \
       --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.git pkgs.myCopilot pkgs.gawk ]}
   '';
+
+  meta = {
+    description = "Git auto-commit helper powered by GitHub Copilot";
+    license = lib.licenses.unfree;
+    mainProgram = "gac";
+    platforms = lib.platforms.unix;
+  };
 }

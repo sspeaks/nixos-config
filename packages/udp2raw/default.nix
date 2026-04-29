@@ -44,6 +44,14 @@ let
       postInstall = ''
         wrapProgram "$out/bin/udp2raw" --prefix PATH : "${lib.makeBinPath [ iptables ]}"
       '';
+
+      meta = {
+        description = "Tunnel UDP traffic through fake TCP/ICMP headers to bypass firewalls";
+        homepage = "https://github.com/wangyu-/udp2raw";
+        license = lib.licenses.mit;
+        mainProgram = "udp2raw";
+        platforms = lib.platforms.linux;
+      };
     };
 in
 pkgs.callPackage udp2raw { }

@@ -44,6 +44,13 @@ let
         libpcap
       ];
 
+      meta = {
+        description = "TCP/UDP tunnel over ICMP (ping) packets";
+        homepage = "https://www.cs.uit.no/~daniels/PingTunnel/";
+        license = lib.licenses.bsd3;
+        mainProgram = "ptunnel";
+        platforms = lib.platforms.unix;
+      };
     });
 in
 pkgs.callPackage pTunnel { }

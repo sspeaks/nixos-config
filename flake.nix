@@ -8,6 +8,7 @@
     };
     authentik-nix = {
       url = "github:nix-community/authentik-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";
@@ -33,7 +34,6 @@
     };
     pogbot = {
       url = "github:sspeaks/clipbot/listenBot";
-#      url = "path:/home/sspeaks/pogbot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     spock = {
@@ -54,9 +54,6 @@
       url = "github:sspeaks/boggle-sovler";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # nixos-aarch64-widevine = {
-    #   url = "github:epetousis/nixos-aarch64-widevine";
-    # };
     nixos-apple-silicon = {
       url = "github:nix-community/nixos-apple-silicon";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -67,12 +64,16 @@
     simple-nixos-mailserver = {
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver/nixos-25.11";
     };
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # garage-monitor = {
     #   url = "git+file:///home/sspeaks/garage-monitor";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
   };
-  outputs = inputs@{ self, nixpkgs, home-manager, systems, nixos-raspberrypi, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, systems, nixos-raspberrypi, treefmt-nix, ... }:
     let
       inherit (self) outputs;
       inherit (nixpkgs) lib;
@@ -85,9 +86,27 @@
           overlays = import ./overlays.nix;
         }
       );
+      treefmtFor = lib.genAttrs (import systems) (system:
+        treefmt-nix.lib.evalModule pkgsFor.${system} ./treefmt.nix
+      );
     in
     {
       packages = forEachSystem (pkgs: import ./packages { inherit pkgs; });
+      formatter = lib.genAttrs (import systems) (system: treefmtFor.${system}.config.build.wrapper);
+      checks = lib.genAttrs (import systems) (system: {
+        formatting = treefmtFor.${system}.config.build.check self;
+      });
+      devShells = forEachSystem (pkgs: {
+        default = pkgs.mkShell {
+          packages = [
+            treefmtFor.${pkgs.system}.config.build.wrapper
+            pkgs.sops
+            pkgs.age
+            pkgs.ssh-to-age
+            pkgs.nix-output-monitor
+          ];
+        };
+      });
       nixosConfigurations = {
         nixpi = lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
@@ -159,7 +178,6 @@
           modules = [ home/sspeaks.nix home/features/sops ];
         };
       };
-      formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       overlays = import ./overlays.nix;
       templates = {
         haskell-template = {

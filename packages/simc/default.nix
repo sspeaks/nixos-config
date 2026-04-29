@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, cmake, curl, pkg-config, qt5Full }:
+{ stdenv, lib, fetchFromGitHub, cmake, curl, pkg-config, qt5Full }:
 stdenv.mkDerivation {
   name = "simc";
   src = fetchFromGitHub {
@@ -11,4 +11,12 @@ stdenv.mkDerivation {
   buildPhase = ''
     cmake ../ -DBUILD_GUI=OFF
   '';
+
+  meta = {
+    description = "SimulationCraft — World of Warcraft combat simulator";
+    homepage = "https://www.simulationcraft.org/";
+    license = lib.licenses.gpl3Only;
+    mainProgram = "simc";
+    platforms = lib.platforms.linux;
+  };
 }

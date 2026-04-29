@@ -22,6 +22,13 @@ rec {
     dotnetFlags = [ "-p:TargetFrameworks=net9.0" ];
     dotnetInstallFlags = [ "-f" "net9.0" ];
 
+    meta = {
+      description = "Microsoft Garnet — remote cache-store from Microsoft Research";
+      homepage = "https://github.com/microsoft/garnet";
+      license = pkgs.lib.licenses.mit;
+      mainProgram = "GarnetServer";
+      platforms = pkgs.lib.platforms.linux;
+    };
   };
   image = pkgs.dockerTools.buildImage {
     name = "garnet-server";

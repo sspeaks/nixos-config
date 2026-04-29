@@ -1,4 +1,4 @@
-{ pkgs, openaikey ? "/dev/null", ... }:
+{ pkgs, lib ? pkgs.lib, openaikey ? "/dev/null", ... }:
 #  
 # Build Example without flakes
 # nix build --impure --expr "let pkgs = import <nixpkgs> {};  in pkgs.callPackage ./packages/askGPT4/default.nix {openaikey = \"/Users/sspeaks/.openapikey\";}"
@@ -34,4 +34,11 @@ pkgs.stdenv.mkDerivation rec {
     wrapProgram $out/bin/aai \
     --set OPEN_AI_KEY ${OPEN_AI_KEY_FILE}
   '';
+
+  meta = {
+    description = "CLI wrapper for OpenAI's GPT API";
+    license = lib.licenses.unfree;
+    mainProgram = "aai";
+    platforms = lib.platforms.unix;
+  };
 }
