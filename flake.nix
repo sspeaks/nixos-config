@@ -99,7 +99,7 @@
       devShells = forEachSystem (pkgs: {
         default = pkgs.mkShell {
           packages = [
-            treefmtFor.${pkgs.system}.config.build.wrapper
+            treefmtFor.${pkgs.stdenv.hostPlatform.system}.config.build.wrapper
             pkgs.sops
             pkgs.age
             pkgs.ssh-to-age

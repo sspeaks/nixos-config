@@ -37,6 +37,7 @@
   # Force dark mode for GTK apps (pavucontrol, blueman, iwgtk, nautilus, etc.)
   gtk.gtk3.extraConfig.gtk-application-prefer-dark-theme = true;
   gtk.gtk4.extraConfig.gtk-application-prefer-dark-theme = true;
+  gtk.gtk4.theme = null;
 
   dconf.settings."org/gnome/desktop/interface" = {
     color-scheme = "prefer-dark";

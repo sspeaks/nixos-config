@@ -26,6 +26,8 @@
     hostName = "nixpi5";
   };
 
+  boot.loader.raspberry-pi.bootloader = "kernel";
+
   environment.systemPackages = [
     pkgs.libraspberrypi
     #    pkgs.docker-compose
@@ -46,6 +48,7 @@
   home-manager.users.sspeaks = { ... }: {
     imports = [ ../../home/sspeaks.nix ];
     programs.starship.settings.hostname.disabled = false;
+    home.enableNixpkgsReleaseCheck = false;
   };
 
   security.sudo.wheelNeedsPassword = false;
