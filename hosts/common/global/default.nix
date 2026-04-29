@@ -10,7 +10,7 @@
     inherit inputs outputs;
   };
   nixpkgs = {
-    overlays = outputs.overlays;
+    overlays = outputs.lib.overlayList;
     config = {
       allowUnfree = true;
     };

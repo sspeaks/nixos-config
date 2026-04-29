@@ -11,8 +11,9 @@
     ./authentik.nix
     ./home-assistant.nix
     ./webmailclient.nix
-    inputs.garage-monitor.nixosModules.default
-    ./garage-monitor.nix
+    # garage-monitor input is currently disabled — uncomment in flake.nix to restore
+    # inputs.garage-monitor.nixosModules.default
+    # ./garage-monitor.nix
   ];
 
   users.users.sspeaks.openssh.authorizedKeys.keys = [

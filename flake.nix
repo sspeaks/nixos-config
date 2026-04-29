@@ -178,7 +178,12 @@
           modules = [ home/sspeaks.nix home/features/sops ];
         };
       };
-      overlays = import ./overlays.nix;
+      overlays = {
+        default = final: prev:
+          let applied = builtins.foldl' (acc: ov: acc // (ov final (prev // acc))) { } (import ./overlays.nix);
+          in applied;
+      };
+      lib.overlayList = import ./overlays.nix;
       templates = {
         haskell-template = {
           path = ./haskell-template;

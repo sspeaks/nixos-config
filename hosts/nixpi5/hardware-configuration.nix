@@ -12,8 +12,6 @@
   # '';
   #boot.extraModulePackages = [ pkgs.linuxPackages_rpi5.v4l2loopback ];
 
-  boot.loader.raspberryPi.bootloader = "kernel";
-
   fileSystems."/" =
     {
       device = "/dev/disk/by-uuid/44444444-4444-4444-8888-888888888888";

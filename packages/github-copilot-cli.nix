@@ -1,9 +1,9 @@
-{
-  lib,
-  stdenv,
-  fetchurl,
-  autoPatchelfHook,
-  makeBinaryWrapper,
+{ lib
+, stdenv
+, fetchurl
+, autoPatchelfHook
+, makeBinaryWrapper
+,
 }:
 
 let

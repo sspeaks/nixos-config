@@ -357,7 +357,7 @@
           on-resume = "hyprctl dispatch dpms on";
         }
         {
-          timeout = 1800;  # 30 minutes
+          timeout = 1800; # 30 minutes
           on-timeout = "grep -q 1 /sys/class/power_supply/*/online 2>/dev/null || systemctl suspend";
         }
       ];
@@ -392,14 +392,14 @@
 
     # File manager
     nautilus
-    kdePackages.breeze-icons  # needed by Papirus-Dark (inherits breeze-dark)
+    kdePackages.breeze-icons # needed by Papirus-Dark (inherits breeze-dark)
 
     # Dolphin wrapper — launch with kde platform theme for proper icon recoloring
     (pkgs.writeShellScriptBin "dolphin" ''
       exec env QT_QPA_PLATFORMTHEME=kde QT_STYLE_OVERRIDE=breeze-dark ${pkgs.kdePackages.dolphin}/bin/dolphin "$@"
     '')
-    kdePackages.kio-extras               # image/JPEG/SVG thumbnails in Dolphin
-    kdePackages.kdegraphics-thumbnailers  # RAW/PDF thumbnails in Dolphin
+    kdePackages.kio-extras # image/JPEG/SVG thumbnails in Dolphin
+    kdePackages.kdegraphics-thumbnailers # RAW/PDF thumbnails in Dolphin
 
     # Media
     zathura # PDF viewer
