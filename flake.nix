@@ -68,6 +68,24 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+    easy-hosts = {
+      url = "github:tgirlcloud/easy-hosts";
+    };
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    devshell = {
+      url = "github:numtide/devshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    flake-root = {
+      url = "github:srid/flake-root";
+    };
     # garage-monitor = {
     #   url = "git+file:///home/sspeaks/garage-monitor";
     #   inputs.nixpkgs.follows = "nixpkgs";
