@@ -91,126 +91,15 @@
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
   };
-  outputs = inputs@{ self, nixpkgs, home-manager, systems, nixos-raspberrypi, treefmt-nix, ... }:
-    let
-      inherit (self) outputs;
-      inherit (nixpkgs) lib;
-      forEachSystem = f: lib.genAttrs (import systems) (system: f pkgsFor.${system});
-      pkgsFor = lib.genAttrs (import systems) (
-        system:
-        import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-          overlays = import ./overlays.nix;
-        }
-      );
-      treefmtFor = lib.genAttrs (import systems) (system:
-        treefmt-nix.lib.evalModule pkgsFor.${system} ./treefmt.nix
-      );
-    in
-    {
-      packages = forEachSystem (pkgs: import ./packages { inherit pkgs; });
-      formatter = lib.genAttrs (import systems) (system: treefmtFor.${system}.config.build.wrapper);
-      checks = lib.genAttrs (import systems) (system: {
-        formatting = treefmtFor.${system}.config.build.check self;
-      });
-      devShells = forEachSystem (pkgs: {
-        default = pkgs.mkShell {
-          packages = [
-            treefmtFor.${pkgs.stdenv.hostPlatform.system}.config.build.wrapper
-            pkgs.sops
-            pkgs.age
-            pkgs.ssh-to-age
-            pkgs.nix-output-monitor
-          ];
-          shellHook = ''
-            git config core.hooksPath .githooks
-          '';
-        };
-      });
-      nixosConfigurations = {
-        nixpi = lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
-          modules = [
-            hosts/nixpi
-          ];
-        };
-        NixOS-WSL = lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
-          modules = [
-            hosts/nixosWSL
-          ];
-        };
-        NixOS-WSL-work = lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
-          modules = [
-            hosts/nixosWSL-work
-          ];
-        };
-        nixos-azure = lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
-          modules = [
-            hosts/nixos-azure
-          ];
-        };
-        vm = lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
-          modules = [
-            hosts/vm
-          ];
-        };
-        asahi = lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
-          modules = [
-            hosts/asahi
-          ];
-        };
-        nixpi5 = nixos-raspberrypi.lib.nixosSystem {
-          specialArgs = { inherit nixos-raspberrypi inputs outputs; };
-          modules = [
-            hosts/nixpi5
-            ({ ... }: {
-              imports = with nixos-raspberrypi.nixosModules; [
-                raspberry-pi-5.base
-              ];
-            })
-          ];
-        };
-      };
-      homeConfigurations = {
-        "sspeaks@NixOS-WSL" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor.x86_64-linux;
-          extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ home/sspeaks.nix home/features/sops ];
-        };
-        "sspeaks@blog" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor.x86_64-linux;
-          extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ home/sspeaks-blog.nix ];
-        };
-        "sspeaks@darwin" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor.aarch64-darwin;
-          extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ home/sspeaks.nix home/features/sops ];
-        };
-        "sspeaks@aarch64-linux" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor.aarch64-linux;
-          extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ home/sspeaks.nix home/features/sops ];
-        };
-      };
-      overlays = {
-        default = final: prev:
-          let applied = builtins.foldl' (acc: ov: acc // (ov final (prev // acc))) { } (import ./overlays.nix);
-          in applied;
-      };
-      lib.overlayList = import ./overlays.nix;
-      templates = {
-        haskell-template = {
-          path = ./haskell-template;
-          description = "Just a few files to help bootstrap a haskell project with nix";
-        };
-      };
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = import inputs.systems;
+      imports = [
+        ./flake-modules/systems.nix
+        ./flake-modules/overlays.nix
+        ./flake-modules/packages.nix
+        ./flake-modules/templates.nix
+      ];
     };
   nixConfig = {
     extra-substituters = [
