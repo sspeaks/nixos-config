@@ -95,10 +95,13 @@
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = import inputs.systems;
       imports = [
+        inputs.treefmt-nix.flakeModule
+        inputs.flake-root.flakeModule
         ./flake-modules/systems.nix
         ./flake-modules/overlays.nix
         ./flake-modules/packages.nix
         ./flake-modules/templates.nix
+        ./flake-modules/treefmt.nix
       ];
     };
   nixConfig = {
