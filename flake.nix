@@ -109,6 +109,7 @@
         ./flake-modules/hosts.nix
         ./flake-modules/home.nix
         ./flake-modules/git-hooks.nix
+        ./flake-modules/modules.nix
       ];
     };
   nixConfig = {
