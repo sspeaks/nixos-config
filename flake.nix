@@ -98,6 +98,7 @@
         inputs.treefmt-nix.flakeModule
         inputs.flake-root.flakeModule
         inputs.devshell.flakeModule
+        inputs.home-manager.flakeModules.home-manager
         ./flake-modules/systems.nix
         ./flake-modules/overlays.nix
         ./flake-modules/packages.nix
@@ -105,6 +106,7 @@
         ./flake-modules/treefmt.nix
         ./flake-modules/devshell.nix
         ./flake-modules/hosts.nix
+        ./flake-modules/home.nix
       ];
     };
   nixConfig = {
