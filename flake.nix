@@ -104,6 +104,7 @@
         ./flake-modules/templates.nix
         ./flake-modules/treefmt.nix
         ./flake-modules/devshell.nix
+        ./flake-modules/hosts.nix
       ];
     };
   nixConfig = {
