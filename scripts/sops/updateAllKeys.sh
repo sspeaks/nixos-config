@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-updateScript=$(find . -type f -name "updateKeys.sh")
-find ./secrets -type f -name "*.yaml" -exec $updateScript {} \;
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+find "$REPO_ROOT/secrets" -type f -name "*.yaml" -exec "$SCRIPT_DIR/updateKeys.sh" {} \;

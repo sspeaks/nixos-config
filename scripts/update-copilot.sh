@@ -1,6 +1,12 @@
-#!/usr/bin/env nix-shell
-#!nix-shell -i bash -p curl jq nix
+#!/usr/bin/env bash
 set -euo pipefail
+
+# Re-exec inside a nix shell with required tools when not already wrapped.
+# Uses the flake registry instead of <nixpkgs>, which is unset on flake-only setups.
+if [ -z "${_UPDATE_COPILOT_WRAPPED:-}" ]; then
+  export _UPDATE_COPILOT_WRAPPED=1
+  exec nix shell nixpkgs#curl nixpkgs#jq nixpkgs#nix --command bash "$0" "$@"
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NIX_FILE="$SCRIPT_DIR/../packages/github-copilot-cli.nix"
