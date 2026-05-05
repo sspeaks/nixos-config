@@ -20,8 +20,9 @@
 
   fileSystems."/boot/firmware" =
     {
-      device = "systemd-1";
-      fsType = "autofs";
+      device = "/dev/disk/by-label/FIRMWARE";
+      fsType = "vfat";
+      options = [ "noatime" "nofail" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=1min" ];
     };
 
   swapDevices = [{ device = "/swapfile"; size = 4096; }];
