@@ -64,9 +64,6 @@ in
     group = "users";
   };
   environment.systemPackages = [
-    (pkgs.askGPT4.override {
-      openaikey = config.sops.secrets.open-ai-api-key.path;
-    })
     pkgs.net-tools
   ];
 

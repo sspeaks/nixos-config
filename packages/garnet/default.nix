@@ -2,7 +2,7 @@
 rec {
   server = pkgs.buildDotnetModule rec {
     pname = "garnet";
-    version = "1.1.0";
+    version = "1.1.6";
 
     src = pkgs.fetchFromGitHub {
       owner = "microsoft";
