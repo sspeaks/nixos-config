@@ -7,7 +7,7 @@ let
     LOGIN=$(cat ${config.sops.secrets.copilot-login.path})
     TOKEN_KEY="$HOST:$LOGIN"
     mkdir -p "$(dirname "${copilotConfigPath}")"
-    if [ -f "${copilotConfigPath}" ]; then
+    if [ -f "${copilotConfigPath}" ] && ${pkgs.jq}/bin/jq empty "${copilotConfigPath}" 2>/dev/null; then
       EXISTING_KEY=$(${pkgs.jq}/bin/jq -r '.copilot_tokens // {} | keys[0] // empty' "${copilotConfigPath}")
       KEY="''${EXISTING_KEY:-$TOKEN_KEY}"
       ${pkgs.jq}/bin/jq --arg token "$TOKEN" --arg key "$KEY" \

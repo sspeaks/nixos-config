@@ -22,7 +22,7 @@
     {
       device = "/dev/disk/by-label/FIRMWARE";
       fsType = "vfat";
-      options = [ "noatime" "nofail" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=1min" ];
+      options = [ "noatime" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=1min" ];
     };
 
   swapDevices = [{ device = "/swapfile"; size = 4096; }];
