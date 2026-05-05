@@ -34,7 +34,6 @@ in
       shellcheck
       direnv
       myCopilot
-      ralph
       gac
       comma
       # cabal-install

@@ -38,7 +38,7 @@ home/
   sspeaks.nix      # Full home profile
   sspeaks-blog.nix # Minimal blog server profile
 modules/           # Custom NixOS service modules (wireguard, minecraft, etc.)
-packages/          # Custom Nix packages (copilot-cli, gac, ralph, etc.)
+packages/          # Custom Nix packages (copilot-cli, gac, etc.)
 secrets/           # SOPS-encrypted secrets (age-encrypted YAML)
 scripts/           # Maintenance scripts (bootstrap, update helpers)
 ```
