@@ -14,6 +14,9 @@
   ];
 
 
+  # Enable x86_64 emulation via QEMU for cross-platform builds
+  boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
+
   security.sudo.wheelNeedsPassword = false;
 
   # Zram swap - compresses RAM, better than disk swap on flash storage

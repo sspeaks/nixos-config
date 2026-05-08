@@ -25,5 +25,9 @@
 
   hardware.graphics.enable = true;
 
+  # Workaround: Asahi uses 16K pages but nixpkgs mis-detects page size (nixos-apple-silicon#449).
+  # The upstream fix (nixpkgs#513687) sets this to 31 for ARM64_16K_PAGES; remove once landed in nixos-unstable.
+  boot.kernel.sysctl."vm.mmap_rnd_bits" = 31;
+
   nixpkgs.hostPlatform = "aarch64-linux";
 }

@@ -11,11 +11,23 @@
       qtsvg
     ];
   };
+  services.displayManager.defaultSession = "hyprland";
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   programs.dconf.enable = true;
   programs.hyprland.enable = true;
+
+  # Remove the uwsm session file — it fails without uwsm units installed
+  services.displayManager.sessionPackages = lib.mkForce [
+    (pkgs.runCommand "hyprland-sessions"
+      {
+        passthru.providedSessions = [ "hyprland" ];
+      } ''
+      mkdir -p $out/share/wayland-sessions
+      cp ${pkgs.hyprland}/share/wayland-sessions/hyprland.desktop $out/share/wayland-sessions/
+    '')
+  ];
 
   xdg.portal = {
     enable = true;

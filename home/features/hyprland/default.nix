@@ -1,19 +1,10 @@
 { config, pkgs, lib, ... }:
 
 {
-  services.hyprpaper = {
-    enable = true;
-    settings = {
-      splash = false;
-      wallpaper = [
-        {
-          monitor = "eDP-1";
-          path = "/var/lib/bing-wallpaper/wallpaper.jpg";
-          fit_mode = "cover";
-        }
-      ];
-    };
-  };
+  # hyprpaper 0.8.3 crashes on Asahi Linux due to null monitor description
+  # (mon->desc() returns null, causing basic_string construction from null).
+  # Using swaybg as a workaround until hyprpaper is fixed upstream.
+  services.hyprpaper.enable = false;
 
   # Catppuccin Mocha GTK theme
   gtk = {
@@ -268,6 +259,7 @@
 
       # Startup applications
       exec-once = [
+        "swaybg -i /var/lib/bing-wallpaper/wallpaper.jpg -m fill"
         "waybar"
         "dunst"
         "wl-paste --type text --watch cliphist store"
@@ -377,7 +369,7 @@
     cliphist
 
     # Wallpaper
-    hyprpaper
+    swaybg
 
     # Utilities
     brightnessctl
