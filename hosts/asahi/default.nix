@@ -1,5 +1,8 @@
 { config, pkgs, lib, inputs, ... }:
 
+let
+  asahiPaths = import ./paths.nix;
+in
 {
   imports = [
     ../common/global
@@ -13,6 +16,9 @@
     ./bing-wallpaper.nix
   ];
 
+  _module.args = {
+    inherit asahiPaths;
+  };
 
   # Enable x86_64 emulation via QEMU for cross-platform builds
   boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
