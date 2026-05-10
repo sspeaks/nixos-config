@@ -1,9 +1,7 @@
 { pkgs, ... }:
 
-let
-  palette = import ../theme/palette.nix;
-in
 {
+  # hyprpaper crashes on Asahi Linux due to a null monitor description; swaybg is used instead.
   services.hyprpaper.enable = false;
 
   gtk = {

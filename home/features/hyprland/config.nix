@@ -85,9 +85,9 @@ in
 
       layerrule = [
         "blur, waybar"
-        "blur, dunst"
+        "blur, notifications"
         "ignorezero, waybar"
-        "ignorezero, dunst"
+        "ignorezero, notifications"
       ];
     };
   };
