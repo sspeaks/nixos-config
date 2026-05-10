@@ -36,6 +36,7 @@ in
 
   networking = {
     hostName = "asahi-mpb";
+    useDHCP = false;
     firewall.enable = true;
     firewall.allowedUDPPorts = [ 5353 ];
   };
