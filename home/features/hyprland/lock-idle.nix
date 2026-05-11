@@ -58,7 +58,7 @@ in
           inner_color = palette.rgb mocha.surface0;
           outer_color = palette.rgb mocha.base;
           outline_thickness = 5;
-          placeholder_text = ''<span foreground="${mocha.text}">Password...</span>'';
+          placeholder_text = "Password...";
           shadow_passes = 2;
         }
       ];

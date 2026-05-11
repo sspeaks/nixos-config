@@ -84,10 +84,8 @@ in
       };
 
       layerrule = [
-        "blur, waybar"
-        "blur, notifications"
-        "ignorezero, waybar"
-        "ignorezero, notifications"
+        "blur on, ignore_alpha 0, match:namespace waybar"
+        "blur on, ignore_alpha 0, match:namespace notifications"
       ];
     };
   };
