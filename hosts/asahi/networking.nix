@@ -1,6 +1,6 @@
 { config, pkgs, lib, ... }:
 let
-  enableWireguard = true;
+  enableWireguard = false;
 in
 
 {
