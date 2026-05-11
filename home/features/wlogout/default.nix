@@ -23,12 +23,6 @@
         keybind = "u";
       }
       {
-        label = "hibernate";
-        action = "systemctl hibernate";
-        text = "Hibernate";
-        keybind = "h";
-      }
-      {
         label = "shutdown";
         action = "systemctl poweroff";
         text = "Shutdown";
@@ -81,10 +75,6 @@
 
       #suspend {
         background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/suspend.png"));
-      }
-
-      #hibernate {
-        background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/hibernate.png"));
       }
 
       #shutdown {
