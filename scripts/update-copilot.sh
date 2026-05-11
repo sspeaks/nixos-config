@@ -11,9 +11,18 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NIX_FILE="$SCRIPT_DIR/../packages/github-copilot-cli.nix"
 
-# Fetch latest release version from GitHub
-latest=$(curl -s https://api.github.com/repos/github/copilot-cli/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+release_json=$(mktemp)
+trap 'rm -f "$release_json"' EXIT
+
+# Fetch latest release metadata from GitHub.
+curl -fsSL https://api.github.com/repos/github/copilot-cli/releases/latest -o "$release_json"
+latest=$(jq -r '.tag_name | sub("^v"; "")' "$release_json")
 current=$(grep 'version = ' "$NIX_FILE" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+
+if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+  echo "ERROR: could not read latest Copilot CLI release version" >&2
+  exit 1
+fi
 
 echo "Current: $current"
 echo "Latest:  $latest"
@@ -33,13 +42,23 @@ declare -A platforms=(
   ["aarch64-darwin"]="copilot-darwin-arm64"
 )
 
-# Prefetch hashes for all platforms
+# Read published GitHub asset digests for all platforms.
 declare -A hashes
 for system in "${!platforms[@]}"; do
   name="${platforms[$system]}"
-  url="https://github.com/github/copilot-cli/releases/download/v${latest}/${name}.tar.gz"
-  echo "Prefetching $name..."
-  hash=$(nix store prefetch-file --json "$url" | jq -r '.hash')
+  asset="${name}.tar.gz"
+  digest=$(jq -r --arg name "$asset" '
+    .assets[]
+    | select(.name == $name)
+    | .digest // empty
+  ' "$release_json")
+
+  if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    echo "ERROR: missing sha256 digest for $asset in GitHub release v$latest" >&2
+    exit 1
+  fi
+
+  hash=$(nix hash convert --hash-algo sha256 --from base16 --to sri "${digest#sha256:}")
   hashes[$system]="$hash"
   echo "  $system: $hash"
 done
