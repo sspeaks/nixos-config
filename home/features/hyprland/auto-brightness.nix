@@ -6,6 +6,7 @@ let
     SCREEN_DEV="apple-panel-bl"
     KBD_DEV="kbd_backlight"
     USER_PCT_FILE="/tmp/auto-brightness-user-pct"
+    DIMMING_SENTINEL="''${XDG_RUNTIME_DIR:-/tmp}/hypridle-dimming"
 
     SCREEN_MAX=$(${pkgs.brightnessctl}/bin/brightnessctl -d "$SCREEN_DEV" max)
     KBD_MAX=$(${pkgs.brightnessctl}/bin/brightnessctl -d "$KBD_DEV" max)
@@ -70,8 +71,8 @@ let
       final=$(( user_pct * modifier / 100 ))
       final=$(clamp "$final" 1 100)
 
-      # Only update screen if ALS modifier changed
-      if [ "$modifier" != "$prev_modifier" ]; then
+      # Only update screen if ALS modifier changed and Hypridle is not dimming.
+      if [ "$modifier" != "$prev_modifier" ] && [ ! -e "$DIMMING_SENTINEL" ]; then
         ${pkgs.brightnessctl}/bin/brightnessctl -d "$SCREEN_DEV" set "''${final}%" -q
         prev_modifier="$modifier"
       fi

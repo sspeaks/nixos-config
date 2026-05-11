@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, asahiPaths, ... }:
 
 {
   services.xserver.enable = true;
@@ -32,8 +32,18 @@
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
+      xdg-desktop-portal-hyprland
       xdg-desktop-portal-gtk
     ];
+    config.common = {
+      default = [
+        "hyprland"
+        "gtk"
+      ];
+      "org.freedesktop.impl.portal.ScreenCast" = [ "hyprland" ];
+      "org.freedesktop.impl.portal.Screenshot" = [ "hyprland" ];
+      "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+    };
   };
 
   fonts.packages = with pkgs; [
@@ -48,15 +58,21 @@
     gnumake
     (where-is-my-sddm-theme.override {
       themeConfig.General = {
-        background = "/var/lib/bing-wallpaper/wallpaper.jpg";
+        background = asahiPaths.wallpaper;
         backgroundMode = "fill";
         quote = "";
+        accentColor = "#89b4fa";
+        font = "JetBrains Mono";
+        fontSize = 14;
       };
     })
   ];
 
   home-manager.backupFileExtension = "bk";
   home-manager.useUserPackages = true;
+  home-manager.extraSpecialArgs = {
+    inherit asahiPaths;
+  };
   home-manager.users.sspeaks = { ... }:
     {
       imports = [

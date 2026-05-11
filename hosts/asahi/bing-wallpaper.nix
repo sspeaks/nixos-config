@@ -1,26 +1,22 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, asahiPaths, ... }:
 
 let
+  wallpaper = lib.escapeShellArg asahiPaths.wallpaper;
+  wallpaperTmp = lib.escapeShellArg "${asahiPaths.wallpaper}.tmp";
   bingWallpaperScript = pkgs.writeShellScript "bing-wallpaper" ''
     set -euo pipefail
 
-    WALLPAPER="/var/lib/bing-wallpaper/wallpaper.jpg"
-    mkdir -p /var/lib/bing-wallpaper
+    wallpaper_dir="$(${pkgs.coreutils}/bin/dirname ${wallpaper})"
+    wallpaper_tmp=${wallpaperTmp}
+    ${pkgs.coreutils}/bin/mkdir -p "$wallpaper_dir"
 
-    # Fetch Bing wallpaper of the day metadata
-    JSON=$(${pkgs.curl}/bin/curl -sf "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US")
-    if [ -z "$JSON" ]; then
-      echo "Failed to fetch Bing metadata"
-      exit 1
-    fi
+    metadata="$(${pkgs.curl}/bin/curl --fail --silent --show-error --location --retry 3 --retry-delay 2 'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US')"
+    url_path="$(printf '%s' "$metadata" | ${pkgs.jq}/bin/jq -r '.images[0].url')"
+    image_url="https://www.bing.com$url_path"
 
-    URL_PATH=$(echo "$JSON" | ${pkgs.jq}/bin/jq -r '.images[0].url')
-    FULL_URL="https://www.bing.com''${URL_PATH}"
-
-    # Download the image
-    ${pkgs.curl}/bin/curl -sf -o "$WALLPAPER" "$FULL_URL"
-    chmod 644 "$WALLPAPER"
-    echo "Downloaded: $FULL_URL"
+    ${pkgs.curl}/bin/curl --fail --silent --show-error --location --retry 3 --retry-delay 2 "$image_url" --output "$wallpaper_tmp"
+    ${pkgs.coreutils}/bin/mv "$wallpaper_tmp" ${wallpaper}
+    ${pkgs.coreutils}/bin/chmod 644 ${wallpaper}
   '';
 in
 {

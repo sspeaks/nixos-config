@@ -8,8 +8,7 @@
     shellAliases = {
       ls = "ls --color=auto -F";
       cat = "${pkgs.bat}/bin/bat";
-      pbpaste = "wslpath -u $(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -command '$f=New-TemporaryFile;(Get-Clipboard -Format image).save($f.FullName);echo $f.FullName') |  tr -d '\\r\\n\'";
-
+      pbpaste = "if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then wslpath -u $(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -command '$f=New-TemporaryFile;(Get-Clipboard -Format image).save($f.FullName);echo $f.FullName') | tr -d '\\r\\n'; else echo 'pbpaste is only available under WSL' >&2; false; fi";
     };
 
     initContent = pkgs.lib.mkMerge [

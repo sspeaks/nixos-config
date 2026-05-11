@@ -36,13 +36,17 @@ in
 
   networking = {
     hostName = "asahi-mpb";
+    useDHCP = false;
     firewall.enable = true;
     firewall.allowedUDPPorts = [ 5353 ];
   };
 
   networking.wireless.iwd = {
     enable = true;
-    settings.General.EnableNetworkConfiguration = true;
+    settings = {
+      General.EnableNetworkConfiguration = true;
+      Network.NameResolvingService = "resolvconf";
+    };
   };
 
   services.avahi = {
