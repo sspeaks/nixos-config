@@ -1,5 +1,9 @@
-{ config, pkgs, lib, ... }:
+{ ... }:
 
+let
+  palette = import ../theme/palette.nix;
+  mocha = palette.mocha;
+in
 {
   services.dunst = {
     enable = true;
@@ -20,26 +24,27 @@
         progress_bar = true;
         progress_bar_height = 10;
         progress_bar_frame_width = 1;
+        progress_bar_corner_radius = 5;
         progress_bar_min_width = 150;
         progress_bar_max_width = 300;
 
         # Notifications
         indicate_hidden = true;
         shrink = false;
-        transparency = 0;
+        transparency = 10;
         notification_limit = 5;
         separator_height = 2;
         padding = 8;
         horizontal_padding = 8;
         text_icon_padding = 0;
         frame_width = 2;
-        frame_color = "#89b4fa";
+        frame_color = mocha.blue;
         gap_size = 5;
         separator_color = "frame";
         sort = true;
 
         # Text
-        font = "JetBrainsMono Nerd Font 10";
+        font = "${palette.fonts.mono} 10";
         line_height = 0;
         markup = "full";
         format = "<b>%s</b>\\n%b";
@@ -76,23 +81,23 @@
       };
 
       urgency_low = {
-        background = "#1e1e2e";
-        foreground = "#cdd6f4";
-        frame_color = "#89b4fa";
+        background = mocha.base;
+        foreground = mocha.text;
+        frame_color = mocha.blue;
         timeout = 5;
       };
 
       urgency_normal = {
-        background = "#1e1e2e";
-        foreground = "#cdd6f4";
-        frame_color = "#89b4fa";
+        background = mocha.base;
+        foreground = mocha.text;
+        frame_color = mocha.blue;
         timeout = 10;
       };
 
       urgency_critical = {
-        background = "#1e1e2e";
-        foreground = "#cdd6f4";
-        frame_color = "#f38ba8";
+        background = mocha.base;
+        foreground = mocha.text;
+        frame_color = mocha.red;
         timeout = 0;
       };
     };
