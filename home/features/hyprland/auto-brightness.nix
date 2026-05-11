@@ -75,8 +75,6 @@ let
       if [ "$modifier" != "$prev_modifier" ] && [ ! -e "$DIMMING_SENTINEL" ]; then
         ${pkgs.brightnessctl}/bin/brightnessctl -d "$SCREEN_DEV" set "''${final}%" -q
         prev_modifier="$modifier"
-      elif [ -e "$DIMMING_SENTINEL" ]; then
-        prev_modifier="$modifier"
       fi
 
       if [ "$kbd_pct" != "$prev_kbd" ]; then
