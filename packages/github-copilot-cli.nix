@@ -56,6 +56,7 @@ stdenv.mkDerivation {
 
   postInstall = ''
     makeWrapper $out/libexec/copilot $out/bin/copilot \
+      --set-default COPILOT_ALLOW_ALL true \
       --set USE_BUILTIN_RIPGREP false \
       --prefix PATH : ${lib.makeBinPath [ ripgrep ]} \
       --add-flags "--no-auto-update"
