@@ -15,7 +15,7 @@ in
     #./factorio.nix
     #    ../../modules/minecraft.nix
     inputs.home-manager.nixosModules.home-manager
-    inputs.vscode-server.nixosModules.default
+    (inputs.vscode-server + "/modules/vscode-server")
     #inputs.spock.nixosModules.default
     (import ../../modules/wireguard/default.nix { inherit sopsFileLocation; })
     inputs.determinate.nixosModules.default

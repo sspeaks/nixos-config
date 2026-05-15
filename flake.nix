@@ -19,7 +19,7 @@
     };
     vscode-server = {
       url = "github:nix-community/nixos-vscode-server";
-      inputs.nixpkgs.follows = "nixpkgs";
+      flake = false;
     };
     nixos-wsl = {
       url = "github:nix-community/NixOS-WSL/main";
@@ -60,6 +60,7 @@
     };
     nixos-raspberrypi = {
       url = "github:nvmd/nixos-raspberrypi/main";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     simple-nixos-mailserver = {
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver/nixos-25.11";
@@ -90,7 +91,7 @@
   };
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = import inputs.systems;
+      systems = builtins.filter (system: system != "x86_64-darwin") (import inputs.systems);
       imports = [
         inputs.treefmt-nix.flakeModule
         inputs.flake-root.flakeModule
