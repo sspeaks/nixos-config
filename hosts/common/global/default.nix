@@ -17,6 +17,7 @@
   };
 
   services.openssh.enable = lib.mkDefault true;
+  services.openssh.settings.PasswordAuthentication = false;
   services.openssh.settings.X11Forwarding = lib.mkDefault false;
 
   hardware.enableRedistributableFirmware = true;
