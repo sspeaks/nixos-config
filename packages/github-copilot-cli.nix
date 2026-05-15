@@ -3,28 +3,29 @@
 , fetchurl
 , autoPatchelfHook
 , makeBinaryWrapper
+, ripgrep
 ,
 }:
 
 let
-  version = "1.0.45";
+  version = "1.0.48";
 
   sources = {
     "x86_64-linux" = {
       name = "copilot-linux-x64";
-      hash = "sha256-+T2HLeFe3VEzpvjeXnLkYTExh8OiPTmW5khiRAo5eKg=";
+      hash = "sha256-8qEnjDwv4iy8vlHA0u4lH3Yh0uoiEf4cezZoqzs2P/0=";
     };
     "aarch64-linux" = {
       name = "copilot-linux-arm64";
-      hash = "sha256-MotPNtvrNDH+iWewOOLcv1WCuUJ8IjmiJKlOjZw3iik=";
+      hash = "sha256-Wle9EaLxdwpDP54EG945xleDj32k97fAWdpXUKZpq3s=";
     };
     "x86_64-darwin" = {
       name = "copilot-darwin-x64";
-      hash = "sha256-hZNGTgxkixLrhUP8tOjwFNAWrxMzR+LoKgcafX2dcvo=";
+      hash = "sha256-kOLkzcMFP9bFF/vqJmkQ8jJZ7omn2CT5i8hnPcWJrB4=";
     };
     "aarch64-darwin" = {
       name = "copilot-darwin-arm64";
-      hash = "sha256-QZ8dgMyW7UGX5+1WK21haXtNW75Bq3+MA4u+hQ4Yrb0=";
+      hash = "sha256-uJJW/f6x76O6P5yISO6ETNNOpIXVNBa/MEtsabGNQ3g=";
     };
   };
 
@@ -55,6 +56,8 @@ stdenv.mkDerivation {
 
   postInstall = ''
     makeWrapper $out/libexec/copilot $out/bin/copilot \
+      --set USE_BUILTIN_RIPGREP false \
+      --prefix PATH : ${lib.makeBinPath [ ripgrep ]} \
       --add-flags "--no-auto-update"
   '';
 
