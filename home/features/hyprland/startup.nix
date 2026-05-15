@@ -6,6 +6,7 @@ in
 {
   wayland.windowManager.hyprland.settings.exec-once = [
     "waybar"
+    "blueman-applet"
     "wl-paste --type text --watch cliphist store"
     "wl-paste --type image --watch cliphist store"
     "lxqt-policykit-agent"
