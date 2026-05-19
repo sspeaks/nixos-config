@@ -14,7 +14,11 @@ let
 in
 {
   flake.homeConfigurations = {
-    "sspeaks@NixOS-WSL" = mkHome "x86_64-linux" [ ../home/sspeaks.nix ../home/features/sops ];
+    "sspeaks@NixOS-WSL" = mkHome "x86_64-linux" [
+      ../home/sspeaks.nix
+      ../home/features/sops
+      ../home/features/wsl-browser
+    ];
     "sspeaks@blog" = mkHome "x86_64-linux" [ ../home/sspeaks-blog.nix ];
     "sspeaks@darwin" = mkHome "aarch64-darwin" [ ../home/sspeaks.nix ../home/features/sops ];
     "sspeaks@aarch64-linux" = mkHome "aarch64-linux" [ ../home/sspeaks.nix ../home/features/sops ];

@@ -27,7 +27,12 @@ in
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
-  home-manager.users.sspeaks = ../../home/sspeaks.nix;
+  home-manager.users.sspeaks = {
+    imports = [
+      ../../home/sspeaks.nix
+      ../../home/features/wsl-browser
+    ];
+  };
 
   security.sudo.wheelNeedsPassword = false;
 
@@ -35,4 +40,3 @@ in
 
   nixpkgs.hostPlatform = "x86_64-linux";
 }
-
