@@ -46,7 +46,7 @@ jobs:
 
       - name: Build host closure (no activation)
         run: |
-          nix build --show-trace --print-build-logs \
+          nix build --show-trace --print-build-logs --accept-flake-config \
             .#nixosConfigurations.nixos-azure.config.system.build.toplevel
 
   build-nixpi5:
@@ -81,5 +81,5 @@ jobs:
 
       - name: Build host closure (no activation)
         run: |
-          nix build --show-trace --print-build-logs \
+          nix build --show-trace --print-build-logs --accept-flake-config \
             .#nixosConfigurations.nixpi5.config.system.build.toplevel

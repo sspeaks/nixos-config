@@ -25,9 +25,11 @@
   nix.settings.trusted-users = [ "root" "@wheel" ];
   nix.settings.extra-substituters = [
     "https://sspeaks-nix.cachix.org"
+    "https://nixos-raspberrypi.cachix.org"
   ];
   nix.settings.extra-trusted-public-keys = [
     "sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o="
+    "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
   ];
 
   nix.gc = {
