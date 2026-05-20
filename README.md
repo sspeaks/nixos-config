@@ -79,6 +79,36 @@ nix fmt
 nix flake check
 ```
 
+## Weekly Host Cache Builds
+
+The workflow [.github/workflows/weekly-host-builds.yml](.github/workflows/weekly-host-builds.yml) builds and caches:
+
+- `nixos-azure` on `x86_64-linux`
+- `nixpi5` on `aarch64-linux`
+
+It runs weekly (Sunday 08:00 UTC) and can also be started manually via `workflow_dispatch`.
+
+Note: the `nixpi5` build job uses the GitHub Actions ARM runner label `ubuntu-24.04-arm`. If ARM hosted runners are unavailable for your repository plan, switch that job to a self-hosted aarch64 runner.
+
+### CI variables/secrets
+
+Set these in GitHub repository settings to push build outputs to Cachix:
+
+- Variable `CACHIX_CACHE_NAME`
+- Secret `CACHIX_AUTH_TOKEN`
+
+If either value is missing, the workflow still builds host closures but skips Cachix push.
+
+### sops-nix safety in CI
+
+This pipeline intentionally performs build-only operations:
+
+- Builds `config.system.build.toplevel`
+- Does not run `nixos-rebuild switch`
+- Does not run activation scripts
+
+That keeps sops-nix decryption on target hosts where age keys already exist (for example `/var/lib/sops-nix/key.txt`) and avoids storing private age keys in CI.
+
 ## Secrets Management
 
 Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix) using age encryption.
