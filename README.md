@@ -92,12 +92,13 @@ Note: the `nixpi5` build job uses the GitHub Actions ARM runner label `ubuntu-24
 
 ### CI variables/secrets
 
-Set these in GitHub repository settings to push build outputs to Cachix:
+Set this in GitHub repository settings to push build outputs to Cachix:
 
-- Variable `CACHIX_CACHE_NAME`
 - Secret `CACHIX_AUTH_TOKEN`
 
-If either value is missing, the workflow still builds host closures but skips Cachix push.
+The workflow is pinned to cache name `sspeaks-nix`.
+
+If the secret is missing, the workflow fails fast before building.
 
 ### sops-nix safety in CI
 
