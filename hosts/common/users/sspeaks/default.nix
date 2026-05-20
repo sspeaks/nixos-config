@@ -1,6 +1,9 @@
 { pkgs, config, lib, ... }:
 let
   copilotConfigPath = "/home/sspeaks/.copilot/config.json";
+  hasMyCopilot =
+    lib.elem pkgs.myCopilot
+      (lib.attrByPath [ "home-manager" "users" "sspeaks" "home" "packages" ] [ ] config);
   copilotActivationScript = pkgs.writeShellScript "inject-copilot-token" ''
     TOKEN=$(cat ${config.sops.secrets.copilot-oauth-token.path})
     HOST=$(cat ${config.sops.secrets.copilot-host.path})
@@ -54,9 +57,9 @@ in
     mode = "0600";
   };
 
-  system.activationScripts.inject-copilot-token = lib.stringAfter [ "setupSecrets" ] ''
+  system.activationScripts.inject-copilot-token = lib.mkIf hasMyCopilot (lib.stringAfter [ "setupSecrets" ] ''
     ${copilotActivationScript}
-  '';
+  '');
 
   sops.secrets.open-ai-api-key = {
     mode = "444";

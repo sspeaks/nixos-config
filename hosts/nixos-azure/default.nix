@@ -15,7 +15,7 @@ in
     #./factorio.nix
     #    ../../modules/minecraft.nix
     inputs.home-manager.nixosModules.home-manager
-    (inputs.vscode-server + "/modules/vscode-server")
+    # (inputs.vscode-server + "/modules/vscode-server")
     #inputs.spock.nixosModules.default
     (import ../../modules/wireguard/default.nix { inherit sopsFileLocation; })
     inputs.determinate.nixosModules.default
@@ -33,11 +33,11 @@ in
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.users.sspeaks = { ... }: {
-    imports = [ ../../home/sspeaks.nix ];
+    imports = [ ../../home/sspeaks-bare.nix ];
     programs.starship.settings.hostname.disabled = false;
   };
 
-  services.vscode-server.enable = true;
+  # services.vscode-server.enable = true;
 
   security.sudo.wheelNeedsPassword = false;
 

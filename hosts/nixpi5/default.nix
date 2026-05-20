@@ -46,7 +46,7 @@
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.users.sspeaks = { ... }: {
-    imports = [ ../../home/sspeaks.nix ];
+    imports = [ ../../home/sspeaks-bare.nix ];
     programs.starship.settings.hostname.disabled = false;
     home.enableNixpkgsReleaseCheck = false;
   };
