@@ -112,12 +112,14 @@
     };
   nixConfig = {
     extra-substituters = [
+      "https://sspeaks-nix.cachix.org"
       "https://nixos-raspberrypi.cachix.org"
       "https://install.determinate.systems"
       "https://nix-community.cachix.org"
       "https://nixos-apple-silicon.cachix.org"
     ];
     extra-trusted-public-keys = [
+      "sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o="
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
       "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="

@@ -23,6 +23,12 @@
   hardware.enableRedistributableFirmware = true;
 
   nix.settings.trusted-users = [ "root" "@wheel" ];
+  nix.settings.extra-substituters = [
+    "https://sspeaks-nix.cachix.org"
+  ];
+  nix.settings.extra-trusted-public-keys = [
+    "sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o="
+  ];
 
   nix.gc = {
     automatic = true;
