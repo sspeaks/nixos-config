@@ -54,7 +54,11 @@
     chromium
     vlc
     iwgtk
-    vscode
+    vscodium
+    (pkgs.runCommand "code-alias" { } ''
+      mkdir -p $out/bin
+      ln -s ${pkgs.vscodium}/bin/codium $out/bin/code
+    '')
     gnumake
     (where-is-my-sddm-theme.override {
       themeConfig.General = {

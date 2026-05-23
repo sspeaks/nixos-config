@@ -6,15 +6,15 @@
   ];
 
   # Let jemalloc auto-detect page size at build time (fixes 16K page Asahi kernels)
-  nixpkgs.overlays = [
-    (final: prev: {
-      jemalloc = prev.jemalloc.overrideAttrs (old: {
-        configureFlags = builtins.filter
-          (f: builtins.match ".*--with-lg-page=.*" f == null)
-          (old.configureFlags or [ ]);
-      });
-    })
-  ];
+  # nixpkgs.overlays = [
+  #   (final: prev: {
+  #     jemalloc = prev.jemalloc.overrideAttrs (old: {
+  #       configureFlags = builtins.filter
+  #         (f: builtins.match ".*--with-lg-page=.*" f == null)
+  #         (old.configureFlags or [ ]);
+  #     });
+  #   })
+  # ];
 
   boot.loader.systemd-boot = {
     enable = true;
