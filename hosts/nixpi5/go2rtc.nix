@@ -77,7 +77,7 @@ in
     isSystemUser = true;
     group = "go2rtc";
   };
-  users.groups.go2rtc = {};
+  users.groups.go2rtc = { };
 
   systemd.services.go2rtc = {
     description = "go2rtc camera streaming proxy";
