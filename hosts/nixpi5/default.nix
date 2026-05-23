@@ -10,6 +10,7 @@
     #    ../../modules/postgresql.nix
     ./authentik.nix
     ./home-assistant.nix
+    ./go2rtc.nix
     ./webmailclient.nix
     # garage-monitor input is currently disabled — uncomment in flake.nix to restore
     # inputs.garage-monitor.nixosModules.default
