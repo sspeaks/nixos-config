@@ -18,7 +18,7 @@
         "$mainMod, D, exec, $menu"
         "$mainMod, SPACE, exec, $menu"
         "$mainMod, P, pseudo,"
-        "$mainMod, T, togglesplit,"
+        "$mainMod, T, layoutmsg, togglesplit"
         "$mainMod, F, fullscreen,"
         "$mainMod SHIFT, L, exec, hyprlock"
         "$mainMod, Escape, exec, wlogout"
