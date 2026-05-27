@@ -18,6 +18,8 @@
     enable = true;
     enableMan = false;
     vimAlias = true;
+    nixpkgs.useGlobalPackages = true;
+    version.enableNixpkgsReleaseCheck = false;
     extraConfigVim = ''
       set mouse=
       let g:ale_linters = {'haskell': []}
