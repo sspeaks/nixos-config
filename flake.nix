@@ -8,7 +8,9 @@
     };
     authentik-nix = {
       url = "github:nix-community/authentik-nix";
+      inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
     };
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";
@@ -42,9 +44,9 @@
     };
     nixvim = {
       url = "github:nix-community/nixvim";
-      # inputs = {
-      #   nixpkgs.follows = "nixpkgs";
-      # };
+      # Preserve nixvim's upstream nixpkgs pin/cache; dedupe only utility inputs.
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.systems.follows = "systems";
     };
     factorio = {
       url = "github:sspeaks/factorio-server-nix/space_age";
@@ -59,6 +61,7 @@
     };
     nixos-raspberrypi = {
       url = "github:nvmd/nixos-raspberrypi/main";
+      # nixpi5 shares root Home Manager modules, so keep system pkgs aligned.
       inputs.nixpkgs.follows = "nixpkgs";
     };
     simple-nixos-mailserver = {
