@@ -18,8 +18,7 @@
 
   (
     (final: prev:
-      import ./packages { pkgs = final; }
+      import ./packages { pkgs = final; system = prev.stdenv.hostPlatform.system; }
     )
   )
 ]
-

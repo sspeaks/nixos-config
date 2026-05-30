@@ -5,7 +5,7 @@ set -euo pipefail
 # Uses the flake registry instead of <nixpkgs>, which is unset on flake-only setups.
 if [ -z "${_UPDATE_COPILOT_WRAPPED:-}" ]; then
   export _UPDATE_COPILOT_WRAPPED=1
-  exec nix shell nixpkgs#curl nixpkgs#jq nixpkgs#nix --command bash "$0" "$@"
+  exec nix shell nixpkgs#bash nixpkgs#curl nixpkgs#jq nixpkgs#nix nixpkgs#perl --command bash "$0" "$@"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -34,18 +34,32 @@ fi
 
 echo "Updating $current → $latest"
 
-# Platform mapping: nix system -> tarball name
-declare -A platforms=(
-  ["x86_64-linux"]="copilot-linux-x64"
-  ["aarch64-linux"]="copilot-linux-arm64"
-  ["x86_64-darwin"]="copilot-darwin-x64"
-  ["aarch64-darwin"]="copilot-darwin-arm64"
+# Platform mapping: "<nix system> <tarball name>"
+platforms=(
+  "x86_64-linux copilot-linux-x64"
+  "aarch64-linux copilot-linux-arm64"
+  "x86_64-darwin copilot-darwin-x64"
+  "aarch64-darwin copilot-darwin-arm64"
 )
 
+replace_file() {
+  local tmp
+  tmp=$(mktemp)
+  if "$@" >"$tmp"; then
+    mv "$tmp" "$NIX_FILE"
+  else
+    rm -f "$tmp"
+    return 1
+  fi
+}
+
+hashes_file=$(mktemp)
+trap 'rm -f "$release_json" "$hashes_file"' EXIT
+
 # Read published GitHub asset digests for all platforms.
-declare -A hashes
-for system in "${!platforms[@]}"; do
-  name="${platforms[$system]}"
+for platform in "${platforms[@]}"; do
+  system="${platform%% *}"
+  name="${platform#* }"
   asset="${name}.tar.gz"
   digest=$(jq -r --arg name "$asset" '
     .assets[]
@@ -59,19 +73,33 @@ for system in "${!platforms[@]}"; do
   fi
 
   hash=$(nix hash convert --hash-algo sha256 --from base16 --to sri "${digest#sha256:}")
-  hashes[$system]="$hash"
+  printf '%s %s %s\n' "$system" "$name" "$hash" >>"$hashes_file"
   echo "  $system: $hash"
 done
 
 # Update the version
-sed -i "s/version = \"$current\"/version = \"$latest\"/" "$NIX_FILE"
+if ! CURRENT="$current" LATEST="$latest" replace_file perl -0pe '
+  BEGIN { $updated = 0 }
+  my $current = quotemeta $ENV{CURRENT};
+  $updated += s/version = "$current"/version = "$ENV{LATEST}"/;
+  END { exit($updated ? 0 : 1) }
+' "$NIX_FILE"; then
+  echo "ERROR: failed to update version in $NIX_FILE" >&2
+  exit 1
+fi
 
 # Update each platform hash
-for system in "${!platforms[@]}"; do
-  name="${platforms[$system]}"
-  new_hash="${hashes[$system]}"
-  # Match the hash line that follows the platform's name line
-  sed -i "/$name/{n;s|hash = \".*\"|hash = \"$new_hash\"|}" "$NIX_FILE"
-done
+while IFS=' ' read -r system name new_hash; do
+  if ! ASSET_NAME="$name" NEW_HASH="$new_hash" replace_file perl -0pe '
+    BEGIN { $updated = 0 }
+    my $name = quotemeta $ENV{ASSET_NAME};
+    my $hash = $ENV{NEW_HASH};
+    $updated += s/(name = "$name";\n\s*hash = ")[^"]+(")/$1$hash$2/;
+    END { exit($updated ? 0 : 1) }
+  ' "$NIX_FILE"; then
+    echo "ERROR: failed to update hash for $system ($name) in $NIX_FILE" >&2
+    exit 1
+  fi
+done <"$hashes_file"
 
 echo "Updated $NIX_FILE to v$latest — rebuild and commit when ready."

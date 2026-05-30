@@ -13,7 +13,7 @@ pkgs.stdenv.mkDerivation {
     cp gac.sh $out/bin/gac
     chmod +x $out/bin/gac
     wrapProgram $out/bin/gac \
-      --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.git pkgs.myCopilot pkgs.gawk ]}
+      --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.coreutils pkgs.git pkgs.myCopilot pkgs.gawk ]}
   '';
 
   meta = {
