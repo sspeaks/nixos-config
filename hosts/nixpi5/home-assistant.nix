@@ -4,7 +4,7 @@
   services.home-assistant = {
     enable = true;
     customComponents = [
-      (config.services.home-assistant.package.python.pkgs.callPackage ./hass-openid.nix { })
+      (config.services.home-assistant.package.python3Packages.callPackage ./hass-openid.nix { })
     ];
     extraComponents = [ "default_config" "onvif" ];
     config = null;
