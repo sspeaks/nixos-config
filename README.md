@@ -79,16 +79,18 @@ nix fmt
 nix flake check
 ```
 
-## Weekly Host Cache Builds
+## Host Cache Builds
 
-The workflow [.github/workflows/weekly-host-builds.yml](.github/workflows/weekly-host-builds.yml) builds and caches:
+The workflow [.github/workflows/host-build-cache.yml](.github/workflows/host-build-cache.yml) builds and caches:
 
 - `nixos-azure` on `x86_64-linux`
+- `nixpi` on `aarch64-linux`
 - `nixpi5` on `aarch64-linux`
+- `asahi` on `aarch64-linux`
 
-It runs weekly (Sunday 08:00 UTC) and can also be started manually via `workflow_dispatch`.
+It runs on pushes to `main` and can also be started manually via `workflow_dispatch`.
 
-Note: the `nixpi5` build job uses the GitHub Actions ARM runner label `ubuntu-24.04-arm`. If ARM hosted runners are unavailable for your repository plan, switch that job to a self-hosted aarch64 runner.
+Note: the aarch64 build jobs use the GitHub Actions ARM runner label `ubuntu-24.04-arm`. If ARM hosted runners are unavailable for your repository plan, switch those jobs to a self-hosted aarch64 runner.
 
 ### CI variables/secrets
 
