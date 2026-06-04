@@ -25,7 +25,7 @@ in
 
   # Needed for waagent
   systemd.tmpfiles.rules = [
-    "d /opt 0666 root root"
+    "d /opt 0755 root root"
   ];
 
   programs.nix-ld.enable = true;

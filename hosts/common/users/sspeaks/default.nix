@@ -62,7 +62,7 @@ in
   '');
 
   sops.secrets.open-ai-api-key = {
-    mode = "444";
+    mode = "400";
     owner = "sspeaks";
     group = "users";
   };
