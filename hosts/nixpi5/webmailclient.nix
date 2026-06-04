@@ -2,6 +2,7 @@
 {
   virtualisation.docker.enable = true;
   virtualisation.oci-containers.backend = "docker";
+  users.users.sspeaks.extraGroups = [ "docker" ];
   systemd.tmpfiles.rules = [
     "d /var/lib/snappymail 0750 root root - -"
   ];

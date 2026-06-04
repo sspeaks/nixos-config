@@ -10,6 +10,7 @@
 
   # Docker
   virtualisation.docker.enable = true;
+  users.users.sspeaks.extraGroups = [ "docker" ];
 
   # Keyring - auto-unlocks at login for Chromium, git, etc.
   services.gnome.gnome-keyring.enable = true;

@@ -75,7 +75,7 @@ in
   users.users.sspeaks = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = [ "wheel" "docker" "input" ];
+    extraGroups = [ "wheel" "input" ];
     hashedPasswordFile = config.sops.secrets.sspeaks-password.path;
   };
 }

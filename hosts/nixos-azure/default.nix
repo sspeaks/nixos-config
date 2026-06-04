@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, lib, ... }:
 let
   sopsFileLocation = {
     format = "yaml";
@@ -22,6 +22,32 @@ in
   ];
 
   nix.settings.lazy-trees = true;
+
+  services.openssh.settings.PermitRootLogin = lib.mkForce "no";
+
+  services.fail2ban = {
+    enable = true;
+    maxretry = 3;
+    bantime = "1h";
+    bantime-increment = {
+      enable = true;
+      maxtime = "168h";
+      overalljails = true;
+    };
+    ignoreIP = [
+      "10.100.0.0/24"
+      "127.0.0.0/8"
+    ];
+  };
+
+  system.autoUpgrade = {
+    enable = true;
+    operation = "boot";
+    flake = "github:sspeaks/nixos-config#nixos-azure";
+    dates = "04:30";
+    randomizedDelaySec = "15min";
+    allowReboot = false;
+  };
 
   # Needed for waagent
   systemd.tmpfiles.rules = [

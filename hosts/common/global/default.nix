@@ -16,13 +16,19 @@
     };
   };
 
-  services.openssh.enable = lib.mkDefault true;
-  services.openssh.settings.PasswordAuthentication = false;
-  services.openssh.settings.X11Forwarding = lib.mkDefault false;
+  services.openssh = {
+    enable = lib.mkDefault true;
+    settings = {
+      PasswordAuthentication = false;
+      PermitRootLogin = lib.mkDefault "no";
+      X11Forwarding = lib.mkDefault false;
+    };
+  };
 
   hardware.enableRedistributableFirmware = true;
 
   nix.settings.trusted-users = [ "root" "@wheel" ];
+  nix.settings.auto-optimise-store = true;
   nix.settings.extra-substituters = [
     "https://sspeaks-nix.cachix.org"
     "https://nixos-raspberrypi.cachix.org"
@@ -39,6 +45,16 @@
     dates = "weekly";
     options = "--delete-older-than 14d";
   };
+
+  services.journald.extraConfig = ''
+    SystemMaxUse=512M
+    SystemKeepFree=256M
+    SystemMaxFileSize=64M
+    MaxRetentionSec=90d
+    Compress=yes
+  '';
+
+  boot.tmp.cleanOnBoot = true;
 
   system.stateVersion = "23.05";
 }

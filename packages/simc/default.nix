@@ -4,8 +4,8 @@ stdenv.mkDerivation {
   src = fetchFromGitHub {
     owner = "simulationcraft";
     repo = "simc";
-    rev = "26f71da0bdc55355b5ba479c6ecebcb987cdbeec";
-    sha256 = "sha256-2aURkencFKA8CuxVN04vmnTURIE63jwUxouM9kOD1g0=";
+    rev = "204b88dcc30f174264531404319e9fe28f946012";
+    sha256 = "sha256-aKKEYxkn/Sxey94vvsKetJeZvSVbpvEJL0x/unRL+WU=";
   };
   nativeBuildInputs = [ cmake pkg-config ];
   buildInputs = [ curl ];
