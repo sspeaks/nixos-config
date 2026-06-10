@@ -28,18 +28,17 @@ echo "Current: $current"
 echo "Latest:  $latest"
 
 if [ "$current" = "$latest" ]; then
-  echo "Already up to date."
-  exit 0
+  echo "Version is up to date; refreshing hashes."
+else
+  echo "Updating $current -> $latest"
 fi
 
-echo "Updating $current → $latest"
-
-# Platform mapping: "<nix system> <tarball name>"
+# Platform mapping: "<nix system> <release asset platform suffix>"
 platforms=(
-  "x86_64-linux copilot-linux-x64"
-  "aarch64-linux copilot-linux-arm64"
-  "x86_64-darwin copilot-darwin-x64"
-  "aarch64-darwin copilot-darwin-arm64"
+  "x86_64-linux linux-x64"
+  "aarch64-linux linux-arm64"
+  "x86_64-darwin darwin-x64"
+  "aarch64-darwin darwin-arm64"
 )
 
 replace_file() {
@@ -59,8 +58,8 @@ trap 'rm -f "$release_json" "$hashes_file"' EXIT
 # Read published GitHub asset digests for all platforms.
 for platform in "${platforms[@]}"; do
   system="${platform%% *}"
-  name="${platform#* }"
-  asset="${name}.tar.gz"
+  suffix="${platform#* }"
+  asset="github-copilot-${latest}-${suffix}.tgz"
   digest=$(jq -r --arg name "$asset" '
     .assets[]
     | select(.name == $name)
@@ -73,31 +72,34 @@ for platform in "${platforms[@]}"; do
   fi
 
   hash=$(nix hash convert --hash-algo sha256 --from base16 --to sri "${digest#sha256:}")
-  printf '%s %s %s\n' "$system" "$name" "$hash" >>"$hashes_file"
+  printf '%s %s %s\n' "$system" "$suffix" "$hash" >>"$hashes_file"
   echo "  $system: $hash"
 done
 
 # Update the version
-if ! CURRENT="$current" LATEST="$latest" replace_file perl -0pe '
-  BEGIN { $updated = 0 }
-  my $current = quotemeta $ENV{CURRENT};
-  $updated += s/version = "$current"/version = "$ENV{LATEST}"/;
-  END { exit($updated ? 0 : 1) }
-' "$NIX_FILE"; then
-  echo "ERROR: failed to update version in $NIX_FILE" >&2
-  exit 1
+if [ "$current" != "$latest" ]; then
+  if ! CURRENT="$current" LATEST="$latest" replace_file perl -0pe '
+    BEGIN { $updated = 0 }
+    my $current = quotemeta $ENV{CURRENT};
+    $updated += s/version = "$current"/version = "$ENV{LATEST}"/;
+    END { exit($updated ? 0 : 1) }
+  ' "$NIX_FILE"; then
+    echo "ERROR: failed to update version in $NIX_FILE" >&2
+    exit 1
+  fi
 fi
 
 # Update each platform hash
-while IFS=' ' read -r system name new_hash; do
-  if ! ASSET_NAME="$name" NEW_HASH="$new_hash" replace_file perl -0pe '
+while IFS=' ' read -r system suffix new_hash; do
+  source_name="github-copilot-\${version}-${suffix}"
+  if ! SOURCE_NAME="$source_name" NEW_HASH="$new_hash" replace_file perl -0pe '
     BEGIN { $updated = 0 }
-    my $name = quotemeta $ENV{ASSET_NAME};
+    my $name = quotemeta $ENV{SOURCE_NAME};
     my $hash = $ENV{NEW_HASH};
     $updated += s/(name = "$name";\n\s*hash = ")[^"]+(")/$1$hash$2/;
     END { exit($updated ? 0 : 1) }
   ' "$NIX_FILE"; then
-    echo "ERROR: failed to update hash for $system ($name) in $NIX_FILE" >&2
+    echo "ERROR: failed to update hash for $system ($source_name) in $NIX_FILE" >&2
     exit 1
   fi
 done <"$hashes_file"
