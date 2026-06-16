@@ -12,24 +12,24 @@
 }:
 
 let
-  version = "1.0.61";
+  version = "1.0.63";
 
   sources = {
     "x86_64-linux" = {
       name = "github-copilot-${version}-linux-x64";
-      hash = "sha256-n2J6KjWHRH56Oua/vOZVNnQYlwyJgBSy24IUlSTBD0g=";
+      hash = "sha256-pRUIWYmC+3ZT06ltpJw5fdMihGo35duYmN8GJEfkjEQ=";
     };
     "aarch64-linux" = {
       name = "github-copilot-${version}-linux-arm64";
-      hash = "sha256-suU9SvFlNzzGpx6Gig//BV9ywy+5mz55OZcN18GSwpY=";
+      hash = "sha256-KpGQBX/8770IpSzUbSTN6i454lnr0Tygryxnno7MT8o=";
     };
     "x86_64-darwin" = {
       name = "github-copilot-${version}-darwin-x64";
-      hash = "sha256-TbUiknDROHsNghD0uXfNwY4y7+j1szDgZ3gl/w2JCpE=";
+      hash = "sha256-4aeVGhO7Md4FKbtQeXWhHSyBLJ7wUCtOGmgHX7aTA7Q=";
     };
     "aarch64-darwin" = {
       name = "github-copilot-${version}-darwin-arm64";
-      hash = "sha256-Lb4xfI2jwHZKSjsBgsMI5P74hV7gtZId6V31hGNYfxo=";
+      hash = "sha256-EwjSh/DhAZiOxk4A/1ZnSWS55a+ASvsLFxPlKEmw/kw=";
     };
   };
 
