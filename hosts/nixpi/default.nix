@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, lib, ... }:
 
 {
   imports = [
@@ -39,5 +39,16 @@
   #  programs.sway.enable = true;
   #  services.xserver.displayManager.gdm.enable = true;
   nixpkgs.hostPlatform = "aarch64-linux";
+
+  # Kernel 6.18+ added PREEMPT_LAZY as a 4th preemption model option.
+  # nixpkgs common-config tries to enable it, conflicting with nixos-hardware's
+  # forced PREEMPT=yes. Explicitly disable PREEMPT_LAZY to resolve the conflict.
+  boot.kernelPatches = [{
+    name = "disable-preempt-lazy";
+    patch = null;
+    extraStructuredConfig = {
+      PREEMPT_LAZY = lib.kernel.no;
+    };
+  }];
 }
 
