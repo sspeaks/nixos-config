@@ -34,7 +34,7 @@
   # set system.boot.loader.kernelFile.  Restore the attribute via an overlay
   # so that evaluation does not fail at module merge time.
   nixpkgs.overlays = [
-    (_final: prev: {
+    (final: prev: {
       stdenv = prev.stdenv // {
         hostPlatform = prev.stdenv.hostPlatform // {
           linux-kernel = (prev.stdenv.hostPlatform.linux-kernel or { }) // {
