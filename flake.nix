@@ -64,7 +64,11 @@
       url = "github:nix-community/nixos-apple-silicon";
     };
     nixos-raspberrypi = {
-      url = "github:nvmd/nixos-raspberrypi/main";
+      # Track `develop`: the `main` branch (06c6e35) predates the fix for the
+      # nixpkgs 26.11 `linux-kernel` platform-attr removal. `develop` carries
+      # f8a380d5/49026e9b/cc92e031 which set
+      # `boot.loader.kernelFile = config.boot.kernelPackages.kernel.target`.
+      url = "github:nvmd/nixos-raspberrypi/develop";
       # nixpi5 shares root Home Manager modules, so keep system pkgs aligned.
       inputs.nixpkgs.follows = "nixpkgs";
     };

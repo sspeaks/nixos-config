@@ -29,11 +29,6 @@
 
   boot.loader.raspberry-pi.bootloader = "kernel";
 
-  # nixos-raspberrypi ≥1.20260517.0 sets this from
-  # pkgs.stdenv.hostPlatform.linux-kernel.target, which is absent on the
-  # plain "aarch64-linux" platform string.  Override it explicitly here.
-  system.boot.loader.kernelFile = lib.mkForce "Image";
-
   environment.systemPackages = [
     pkgs.libraspberrypi
     #    pkgs.docker-compose
