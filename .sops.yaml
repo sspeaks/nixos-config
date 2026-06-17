@@ -46,4 +46,8 @@ creation_rules:
       - age:
         - *sspeaks
         - *asahi
-
+  - path_regex: secrets/nixos-work\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
+        - *nixosWSLwork

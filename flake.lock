@@ -532,11 +532,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781718123,
-        "narHash": "sha256-pFxnPUt/pvPL0MTf3PtT59rBYiam2Igq48bx/e4ag9s=",
+        "lastModified": 1781735893,
+        "narHash": "sha256-84uDUu/rMJ8NgExKTjBOJ3TQRgU8k21iGAU1GTFxrw8=",
         "owner": "sspeaks",
         "repo": "haskell-conjunction",
-        "rev": "93abc897f5ba62716d06d6387186213b10dd0eea",
+        "rev": "5d9a7cd8afc82dac046e49af2a57688128a38020",
         "type": "github"
       },
       "original": {

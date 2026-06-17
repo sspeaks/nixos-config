@@ -10,6 +10,8 @@ in
     ./hardware-config.nix
     inputs.nixos-wsl.nixosModules.default
     inputs.home-manager.nixosModules.home-manager
+    inputs.haskell-conjunction.nixosModules.spacetrack-leo-ingest
+    ./spacetrack-leo-ingest.nix
   ];
 
   wsl.enable = true;
