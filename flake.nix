@@ -57,7 +57,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     haskell-conjunction = {
-      url = "path:/home/sspeaks/haskell-conjunction";
+      url = "github:sspeaks/haskell-conjunction";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-apple-silicon = {
