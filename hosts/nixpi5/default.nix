@@ -29,10 +29,21 @@
 
   boot.loader.raspberry-pi.bootloader = "kernel";
 
-  # nixos-raspberrypi ≥1.20260517.0 sets this from
-  # pkgs.stdenv.hostPlatform.linux-kernel.target, which is absent on the
-  # plain "aarch64-linux" platform string.  Override it explicitly here.
-  system.boot.loader.kernelFile = lib.mkForce "Image";
+  # nixpkgs ≥26.11 removed linux-kernel from lib.systems.elaborate.
+  # nixos-raspberrypi reads pkgs.stdenv.hostPlatform.linux-kernel.target to
+  # set system.boot.loader.kernelFile.  Restore the attribute via an overlay
+  # so that evaluation does not fail at module merge time.
+  nixpkgs.overlays = [
+    (_final: prev: {
+      stdenv = prev.stdenv // {
+        hostPlatform = prev.stdenv.hostPlatform // {
+          linux-kernel = (prev.stdenv.hostPlatform.linux-kernel or { }) // {
+            target = "Image";
+          };
+        };
+      };
+    })
+  ];
 
   environment.systemPackages = [
     pkgs.libraspberrypi

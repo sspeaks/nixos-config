@@ -41,13 +41,17 @@
   nixpkgs.hostPlatform = "aarch64-linux";
 
   # Kernel 6.18+ added PREEMPT_LAZY as a 4th preemption model option.
-  # nixpkgs common-config tries to enable it, conflicting with nixos-hardware's
-  # forced PREEMPT=yes. Explicitly disable PREEMPT_LAZY to resolve the conflict.
+  # nixpkgs common-config enables it for ≥6.18, which conflicts with
+  # nixos-hardware's PREEMPT = lib.mkForce yes (used by the rpi4 vendor
+  # defconfig).  Force PREEMPT_LAZY off so generate-config.pl sees only
+  # one "yes" answer for the preemption-model choice question.
+  # NOTE: the attribute must be "structuredExtraConfig" (not
+  # "extraStructuredConfig") for the kernel build system to pick it up.
   boot.kernelPatches = [{
-    name = "disable-preempt-lazy";
+    name = "fix-preempt-conflict";
     patch = null;
-    extraStructuredConfig = {
-      PREEMPT_LAZY = lib.kernel.no;
+    structuredExtraConfig = {
+      PREEMPT_LAZY = lib.mkForce lib.kernel.no;
     };
   }];
 }
