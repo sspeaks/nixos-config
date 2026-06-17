@@ -56,6 +56,10 @@
       url = "github:sspeaks/boggle-sovler";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    haskell-conjunction = {
+      url = "path:/home/sspeaks/haskell-conjunction";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixos-apple-silicon = {
       url = "github:nix-community/nixos-apple-silicon";
     };

@@ -13,6 +13,8 @@ in
     ./desktop.nix
     ./bluetooth.nix
     ./services.nix
+    inputs.haskell-conjunction.nixosModules.spacetrack-leo-ingest
+    ./spacetrack-leo-ingest.nix
     ./bing-wallpaper.nix
   ];
 
