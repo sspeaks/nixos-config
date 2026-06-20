@@ -2,6 +2,7 @@
 set -euo pipefail
 
 timeout_duration="${GAC_COPILOT_TIMEOUT:-15s}"
+copilot_model="${GAC_COPILOT_MODEL:-claude-haiku-4.5}"
 
 last_non_empty_line() {
   awk 'NF { line = $0 } END { gsub(/^[[:space:]]+|[[:space:]]+$/, "", line); print line }'
@@ -57,7 +58,7 @@ EOF
 echo "Generating commit message with Copilot..."
 copilot_error=$(mktemp)
 if command -v timeout >/dev/null 2>&1; then
-  if copilot_output=$(timeout "$timeout_duration" copilot -p "$prompt" 2>"$copilot_error"); then
+  if copilot_output=$(timeout "$timeout_duration" copilot --model "$copilot_model" -p "$prompt" 2>"$copilot_error"); then
     msg=$(printf '%s\n' "$copilot_output" | last_non_empty_line)
   else
     status=$?
@@ -71,7 +72,7 @@ if command -v timeout >/dev/null 2>&1; then
     fi
   fi
 else
-  if copilot_output=$(copilot -p "$prompt" 2>"$copilot_error"); then
+  if copilot_output=$(copilot --model "$copilot_model" -p "$prompt" 2>"$copilot_error"); then
     msg=$(printf '%s\n' "$copilot_output" | last_non_empty_line)
   else
     status=$?
