@@ -43,14 +43,7 @@ in
     api.openFirewall = true;
 
     notify = {
-      enable = true;
-      observer = {
-        latDeg = 47.46700954557814;
-        lonDeg = -122.21330509315365;
-      };
-      ntfy = {
-        topic = "ntfy.sspeaks.net/garage";
-      };
+      enable = false;
     };
 
     conjunction = {

@@ -1,13 +1,7 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
-  # Single source of truth: the module only creates the spacetrack-ingest
-  # user/group when the service is enabled, so the sops secrets must fall back
-  # to root ownership when it is off (otherwise sops-install-secrets fails to
-  # chown to a non-existent user during activation).
-  ingestEnable = false;
-  secretOwner = if ingestEnable then "spacetrack-ingest" else "root";
-
+  enableService = false;
   spacetrackPgweb = pkgs.writeShellApplication {
     name = "spacetrack-pgweb";
     runtimeInputs = [
@@ -21,33 +15,47 @@ let
   };
 in
 {
-  sops.secrets.spacetrack-username = {
-    sopsFile = ../../secrets/asahi.yaml;
-    owner = secretOwner;
-    group = secretOwner;
-    mode = "0400";
-  };
+  # Only define (and therefore decrypt) the sops secrets when the service is
+  # enabled. With enableService = false this is mkIf false, so the secrets are
+  # never decrypted.
+  sops.secrets = lib.mkIf enableService {
+    spacetrack-username = {
+      sopsFile = ../../secrets/asahi.yaml;
+      owner = "spacetrack-ingest";
+      group = "spacetrack-ingest";
+      mode = "0400";
+    };
 
-  sops.secrets.spacetrack-password = {
-    sopsFile = ../../secrets/asahi.yaml;
-    owner = secretOwner;
-    group = secretOwner;
-    mode = "0400";
+    spacetrack-password = {
+      sopsFile = ../../secrets/asahi.yaml;
+      owner = "spacetrack-ingest";
+      group = "spacetrack-ingest";
+      mode = "0400";
+    };
   };
 
   services.spacetrack-leo-ingest = {
-    enable = ingestEnable;
+    enable = enableService;
 
-    spacetrack.usernameFile = config.sops.secrets.spacetrack-username.path;
-    spacetrack.passwordFile = config.sops.secrets.spacetrack-password.path;
+    # Guarded by mkIf so config.sops.secrets.*.path is never forced when the
+    # service (and thus the secrets above) is disabled.
+    spacetrack.usernameFile = lib.mkIf enableService config.sops.secrets.spacetrack-username.path;
+    spacetrack.passwordFile = lib.mkIf enableService config.sops.secrets.spacetrack-password.path;
 
     database.local = {
-      enable = false;
+      enable = enableService;
       user = "spacetrack-ingest";
     };
 
-    conjunction = {
+    api.enable = enableService;
+    api.openFirewall = enableService;
+
+    notify = {
       enable = false;
+    };
+
+    conjunction = {
+      enable = enableService;
       mode = "optimized";
       # Compacting GC (-c) keeps the per-tile propagation table from doubling at
       # major GC; -N uses all cores. -M16g is a safety ceiling: the tiled screen
