@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-nixos-azure:
-    name: Build nixos-azure closure
+  build-azure-linux:
+    name: Build Azure Linux closures
     runs-on: ubuntu-latest
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
@@ -43,10 +43,15 @@ jobs:
           name: ${{ env.CACHIX_CACHE_NAME }}
           authToken: ${{ env.CACHIX_AUTH_TOKEN }}
 
-      - name: Build host closure (no activation)
+      - name: Build nixos-azure host closure (no activation)
         run: |
           nix build --show-trace --print-build-logs --accept-flake-config \
             .#nixosConfigurations.nixos-azure.config.system.build.toplevel
+
+      - name: Build pogbot host closure (no activation)
+        run: |
+          nix build --show-trace --print-build-logs --accept-flake-config \
+            .#nixosConfigurations.pogbot.config.system.build.toplevel
 
   build-nixpi:
     name: Build nixpi closure

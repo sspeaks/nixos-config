@@ -11,6 +11,7 @@ in
     NixOS-WSL = mkHost ../hosts/nixosWSL [ ];
     NixOS-WSL-work = mkHost ../hosts/nixosWSL-work [ ];
     nixos-azure = mkHost ../hosts/nixos-azure [ ];
+    pogbot = mkHost ../hosts/pogbot [ ];
     vm = mkHost ../hosts/vm [ ];
     asahi = mkHost ../hosts/asahi [ ];
     nixpi5 = inputs.nixos-raspberrypi.lib.nixosSystem {

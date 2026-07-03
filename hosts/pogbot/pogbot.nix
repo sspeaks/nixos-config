@@ -4,7 +4,6 @@ let
     format = "yaml";
     sopsFile = ../../secrets/nixos-azure.yaml;
   };
-  rf = filePath: builtins.readFile filePath;
 in
 {
   imports = [

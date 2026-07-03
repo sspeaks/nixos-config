@@ -10,7 +10,8 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 | `nixpi5` | aarch64-linux | Raspberry Pi 5 — Authentik, Home Assistant, SnappyMail, Garage Monitor |
 | `NixOS-WSL` | x86_64-linux | WSL dev environment |
 | `NixOS-WSL-work` | x86_64-linux | WSL dev environment (work) |
-| `nixos-azure` | x86_64-linux | Azure VM — Pogbot, WireGuard, Boggle, VS Code Server |
+| `nixos-azure` | x86_64-linux | Minimal Azure VM baseline |
+| `pogbot` | x86_64-linux | Azure VM service host — Pogbot, WireGuard, Boggle |
 | `vm` | x86_64-linux | Minimal test/dev VM |
 | `asahi` | aarch64-linux | Apple Silicon Mac — GNOME desktop workstation |
 
@@ -84,6 +85,7 @@ nix flake check
 The workflow [.github/workflows/host-build-cache.yml](.github/workflows/host-build-cache.yml) builds and caches:
 
 - `nixos-azure` on `x86_64-linux`
+- `pogbot` on `x86_64-linux`
 - `nixpi` on `aarch64-linux`
 - `nixpi5` on `aarch64-linux`
 - `asahi` on `aarch64-linux`
