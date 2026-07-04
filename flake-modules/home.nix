@@ -1,9 +1,10 @@
 { inputs, self, ... }:
 let
+  overlays = self.lib.overlayList;
   pkgsFor = system: import inputs.nixpkgs {
     inherit system;
     config.allowUnfree = true;
-    overlays = import ../overlays.nix;
+    inherit overlays;
   };
   mkHome = system: modules:
     inputs.home-manager.lib.homeManagerConfiguration {
