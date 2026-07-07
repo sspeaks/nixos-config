@@ -53,6 +53,12 @@ jobs:
           nix build --show-trace --print-build-logs --accept-flake-config \
             .#nixosConfigurations.pogbot.config.system.build.toplevel
 
+      - name: Build vid-stream host closure (no activation)
+        run: |
+          nix build --show-trace --print-build-logs --accept-flake-config \
+            .#nixosConfigurations.vid-stream.config.system.build.toplevel
+
+
   build-nixpi:
     name: Build nixpi closure
     runs-on: ubuntu-24.04-arm
