@@ -42,6 +42,10 @@
       url = "github:sspeaks/clipbot/listenBot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    large-video-streamer = {
+      url = "github:sspeaks/large-video-streamer";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     spock = {
       url = "github:sspeaks/Spock-clip-trimmer";
       inputs.nixpkgs.follows = "nixpkgs";

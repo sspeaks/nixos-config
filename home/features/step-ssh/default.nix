@@ -3,6 +3,8 @@
 let
   stepCaUrl = "https://sspeaks.net:8443";
   stepFingerprint = "e7f787f0402243aa0dc0327414d05ea3c75d63b1ca55a2869bc6c8261c4d85ce";
+  stepRootPath = "${config.home.homeDirectory}/.step/certs/root_ca.crt";
+  stepSshCaFlags = "--ca-url ${stepCaUrl} --root ${stepRootPath}";
   stepRoot = ''
     -----BEGIN CERTIFICATE-----
     MIIBmDCCAT6gAwIBAgIRAOBK3DPM0vc+llGT4x7SCZQwCgYIKoZIzj0EAwIwKjEP
@@ -36,7 +38,7 @@ in
     text = builtins.toJSON {
       ca-url = stepCaUrl;
       fingerprint = stepFingerprint;
-      root = "${config.home.homeDirectory}/.step/certs/root_ca.crt";
+      root = stepRootPath;
     };
   };
   home.file.".step/ssh/includes" = {
@@ -51,9 +53,9 @@ in
       Host sspeaks.net
           User sspeaks610
 
-      Match exec "step ssh check-host %h"
+      Match exec "step ssh check-host %h ${stepSshCaFlags}"
           UserKnownHostsFile "${config.home.homeDirectory}/.step/ssh/known_hosts"
-          ProxyCommand step ssh proxycommand %r %h %p --provisioner Google
+          ProxyCommand step ssh proxycommand %r %h %p --provisioner Google ${stepSshCaFlags}
     '';
   };
   home.file.".step/ssh/known_hosts" = {
@@ -68,7 +70,7 @@ in
         mkdir -p "$(dirname "$ssh_config")"
         touch "$ssh_config"
         chmod 600 "$ssh_config"
-        if ! grep -Fq '${config.home.homeDirectory}/.step/ssh/includes' "$ssh_config"; then
+        if ! grep -Eq '^[[:space:]]*Include[[:space:]]+"?${config.home.homeDirectory}/\.step/ssh/includes"?[[:space:]]*$' "$ssh_config"; then
           {
             printf '\n'
             cat <<'EOF'

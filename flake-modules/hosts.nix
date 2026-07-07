@@ -14,6 +14,10 @@ in
       inputs.disko.nixosModules.disko
       ../hosts/nixos-azure/disko.nix
     ];
+    vid-stream = mkHost ../hosts/vid-stream [
+      inputs.disko.nixosModules.disko
+      ../hosts/nixos-azure/disko.nix
+    ];
     pogbot = mkHost ../hosts/pogbot [ ];
     vm = mkHost ../hosts/vm [ ];
     asahi = mkHost ../hosts/asahi [ ];
