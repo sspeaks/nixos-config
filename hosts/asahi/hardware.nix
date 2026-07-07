@@ -22,7 +22,17 @@
   };
   boot.loader.efi.canTouchEfiVariables = false;
 
-  hardware.asahi.peripheralFirmwareDirectory = ./firmware;
+  # The apple-silicon-support peripheral-firmware module now expects
+  # peripheralFirmwareDirectory to contain a ready-made firmware.cpio rather than
+  # the installer's all_firmware.tar.gz. Regenerate firmware.cpio from the
+  # committed tarball with asahi-fwextract so we keep shipping the same firmware.
+  hardware.asahi.peripheralFirmwareDirectory =
+    pkgs.runCommand "asahi-peripheral-firmware-cpio"
+      { nativeBuildInputs = [ config.hardware.asahi.pkgs.asahi-fwextract ]; }
+      ''
+        mkdir -p $out
+        asahi-fwextract ${./firmware} $out
+      '';
   hardware.asahi.enable = true;
   hardware.asahi.setupAsahiSound = true;
 
