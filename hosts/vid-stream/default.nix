@@ -34,8 +34,12 @@ in
     };
   };
 
+  users.users.vid-streamer.extraGroups = [ "users" ];
+  systemd.services.vid-streamer.serviceConfig.SupplementaryGroups = [ "users" ];
+
   systemd.tmpfiles.rules = [
     "d /srv/videos 0750 sspeaks users -"
+    "d /var/lib/vid-streamer/hls 0750 vid-streamer vid-streamer -"
   ];
 
   services.vidStreamer = {
