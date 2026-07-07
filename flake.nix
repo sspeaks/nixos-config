@@ -34,6 +34,10 @@
       url = "github:mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     pogbot = {
       url = "github:sspeaks/clipbot/listenBot";
       inputs.nixpkgs.follows = "nixpkgs";

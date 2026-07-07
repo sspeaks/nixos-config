@@ -4,16 +4,9 @@
     "${inputs.nixpkgs}/nixos/modules/virtualisation/azure-common.nix"
   ];
 
-  # These boot and filesystem items use to be included in azure-common and were removed for 25.05
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
-    fsType = "ext4";
-    autoResize = true;
-  };
-  boot.loader.grub.device = "/dev/sda";
-
-  boot.growPartition = true;
-
+  # Disk layout and bootloader are defined per-host, not here (this file is
+  # shared: pogbot imports ../nixos-azure). nixos-azure uses ./disko.nix
+  # (injected via flake-modules/hosts.nix); pogbot uses ../pogbot/disk-boot.nix.
 
   swapDevices = [{ device = "/swapfile"; size = 8192; }];
   networking = {

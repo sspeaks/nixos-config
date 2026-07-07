@@ -10,7 +10,10 @@ in
     nixpi = mkHost ../hosts/nixpi [ ];
     NixOS-WSL = mkHost ../hosts/nixosWSL [ ];
     NixOS-WSL-work = mkHost ../hosts/nixosWSL-work [ ];
-    nixos-azure = mkHost ../hosts/nixos-azure [ ];
+    nixos-azure = mkHost ../hosts/nixos-azure [
+      inputs.disko.nixosModules.disko
+      ../hosts/nixos-azure/disko.nix
+    ];
     pogbot = mkHost ../hosts/pogbot [ ];
     vm = mkHost ../hosts/vm [ ];
     asahi = mkHost ../hosts/asahi [ ];

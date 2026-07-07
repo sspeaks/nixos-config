@@ -8,6 +8,7 @@ in
 {
   imports = [
     ../nixos-azure
+    ./disk-boot.nix
     ../common/global
     ../common/users/sspeaks
     ./pogbot.nix
