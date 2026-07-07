@@ -29,18 +29,15 @@ in
     };
   };
 
-  users.users.vid-streamer.extraGroups = [ "users" ];
-  systemd.services.vid-streamer.serviceConfig.SupplementaryGroups = [ "users" ];
-
   systemd.tmpfiles.rules = [
-    "d /srv/videos 0750 sspeaks users -"
-    "d /var/lib/vid-streamer/hls 0750 vid-streamer vid-streamer -"
+    "z /srv/videos 0750 sspeaks users -"
   ];
 
   services.vidStreamer = {
     enable = true;
     package = inputs.large-video-streamer.packages.${pkgs.stdenv.hostPlatform.system}.default;
     videoDir = "/srv/videos";
+    videoAccessGroup = "users";
     listenAddr = "0.0.0.0:8080";
     openFirewall = true;
     loginUserFile = config.sops.secrets.vid-streamer-login-user.path;

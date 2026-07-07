@@ -588,11 +588,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783459928,
-        "narHash": "sha256-kNovQGxJRA2GrCr1msHAm1kEo0cKhH4dK5jn0GW2r7Y=",
+        "lastModified": 1783460569,
+        "narHash": "sha256-jS5v6waOH+qfrWc/v+X9tqC9hedxc5E2oijVEYWGHe8=",
         "owner": "sspeaks",
         "repo": "large-video-streamer",
-        "rev": "7e2caba3e9b43cd5c07a8dbee63f2caf74528dc0",
+        "rev": "26983a444a1fc2ad000e43221ed4523fff75af33",
         "type": "github"
       },
       "original": {
