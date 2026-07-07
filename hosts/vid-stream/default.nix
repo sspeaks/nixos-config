@@ -27,11 +27,6 @@ in
       group = "users";
       mode = "0400";
     };
-    vid-streamer-cookie-secret = sopsFileLocation // {
-      owner = "vid-streamer";
-      group = "users";
-      mode = "0400";
-    };
   };
 
   users.users.vid-streamer.extraGroups = [ "users" ];
@@ -50,6 +45,5 @@ in
     openFirewall = true;
     loginUserFile = config.sops.secrets.vid-streamer-login-user.path;
     loginPassFile = config.sops.secrets.vid-streamer-login-pass.path;
-    cookieSecretFile = config.sops.secrets.vid-streamer-cookie-secret.path;
   };
 }
