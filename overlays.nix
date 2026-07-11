@@ -1,22 +1,8 @@
+let
+  temporaryFixes = import ./temporary-fixes.nix;
+in
 [
   (final: prev: {
-    # Work around currently failing upstream Python test suites pulled in by the
-    # nixpkgs update so affected host closures keep building in CI.
-    pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
-      (_: python-prev:
-        (prev.lib.optionalAttrs (python-prev ? catppuccin) {
-          catppuccin = python-prev.catppuccin.overridePythonAttrs (_: {
-            doCheck = false;
-          });
-        })
-        // (prev.lib.optionalAttrs (python-prev ? inline-snapshot) {
-          inline-snapshot = python-prev.inline-snapshot.overridePythonAttrs (_: {
-            doCheck = false;
-          });
-        })
-      )
-    ];
-
     waagent = prev.waagent.overrideAttrs (f: p: {
       runtimeDeps = [ prev.which prev.python3 prev.gawk prev.openssl prev.gnupg prev.lsof ];
       fixupPhase = ''
@@ -39,3 +25,4 @@
     )
   )
 ]
+++ (temporaryFixes.overlays or [ ])

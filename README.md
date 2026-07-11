@@ -29,6 +29,7 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 ```
 flake.nix          # Flake entrypoint — hosts, home profiles, packages, checks
 treefmt.nix        # Formatter configuration (nixpkgs-fmt via treefmt-nix)
+temporary-fixes.nix # Temporary upstream/workaround fixes to revisit later
 overlays.nix       # Nixpkgs overlays (waagent fix, custom packages)
 hosts/
   common/          # Shared config: global defaults, sops, user definitions
