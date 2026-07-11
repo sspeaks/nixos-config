@@ -24,5 +24,4 @@ in
       import ./packages { pkgs = final; system = prev.stdenv.hostPlatform.system; }
     )
   )
-]
-++ (temporaryFixes.overlays or [ ])
+] ++ (temporaryFixes.overlays or [ ])
