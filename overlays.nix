@@ -1,3 +1,6 @@
+let
+  temporaryFixes = import ./temporary-fixes.nix;
+in
 [
   (final: prev: {
     waagent = prev.waagent.overrideAttrs (f: p: {
@@ -21,4 +24,4 @@
       import ./packages { pkgs = final; system = prev.stdenv.hostPlatform.system; }
     )
   )
-]
+] ++ (temporaryFixes.overlays or [ ])
