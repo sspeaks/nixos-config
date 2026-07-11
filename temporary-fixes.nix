@@ -17,6 +17,16 @@
           })
         )
       ];
+
+      # Temporary workaround for Python 3.14 argparse incompatibility in
+      # catppuccin-gtk's build script (`type=bool` with
+      # BooleanOptionalAction).
+      catppuccin-gtk = prev.catppuccin-gtk.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          substituteInPlace sources/build/args.py \
+            --replace-fail "type=bool, " ""
+        '';
+      });
     })
   ];
 
