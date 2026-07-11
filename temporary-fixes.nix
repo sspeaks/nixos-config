@@ -23,8 +23,9 @@
   hostModules = {
     asahi = { ... }: {
       # Temporary workaround: Asahi uses 16K pages but nixpkgs still
-      # mis-detects page size here (nixos-apple-silicon#449). Drop this once
-      # nixpkgs#513687 lands in nixos-unstable.
+      # mis-detects page size here (nixos-apple-silicon#449). `31` matches the
+      # upstream ARM64_16K_PAGES fix so ASLR keeps the expected mmap entropy.
+      # Drop this once nixpkgs#513687 lands in nixos-unstable.
       boot.kernel.sysctl."vm.mmap_rnd_bits" = 31;
     };
   };
