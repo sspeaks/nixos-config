@@ -24,7 +24,7 @@
       catppuccin-gtk = prev.catppuccin-gtk.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           substituteInPlace sources/build/args.py \
-            --replace-fail "type=bool, " ""
+            --replace-warn "type=bool, " ""
         '';
       });
     })
