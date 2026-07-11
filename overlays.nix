@@ -1,5 +1,7 @@
 [
   (final: prev: {
+    # Work around currently failing upstream Python test suites pulled in by the
+    # nixpkgs update so affected host closures keep building in CI.
     pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
       (_: python-prev:
         (prev.lib.optionalAttrs (python-prev ? catppuccin) {
