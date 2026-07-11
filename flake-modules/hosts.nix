@@ -22,9 +22,8 @@ in
     ];
     pogbot = mkHost ../hosts/pogbot [ ];
     vm = mkHost ../hosts/vm [ ];
-    asahi = mkHost ../hosts/asahi (inputs.nixpkgs.lib.optionals (temporaryHostModules ? asahi) [
-      temporaryHostModules.asahi
-    ]);
+    asahi = mkHost ../hosts/asahi
+      (inputs.nixpkgs.lib.optional (temporaryHostModules ? asahi) temporaryHostModules.asahi);
     nixpi5 = inputs.nixos-raspberrypi.lib.nixosSystem {
       specialArgs = { inherit inputs; outputs = self; nixos-raspberrypi = inputs.nixos-raspberrypi; };
       modules = [

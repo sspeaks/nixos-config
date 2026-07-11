@@ -21,7 +21,7 @@
   ];
 
   hostModules = {
-    asahi = { ... }: {
+    asahi = _moduleArgs@{ ... }: {
       # Temporary workaround: Asahi uses 16K pages but nixpkgs still
       # mis-detects page size here (nixos-apple-silicon#449). `31` matches the
       # upstream ARM64_16K_PAGES fix so ASLR keeps the expected mmap entropy.
