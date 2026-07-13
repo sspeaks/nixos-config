@@ -5,31 +5,50 @@ let
     lib.elem pkgs.myCopilot
       (lib.attrByPath [ "home-manager" "users" "sspeaks" "home" "packages" ] [ ] config);
   copilotActivationScript = pkgs.writeShellScript "inject-copilot-token" ''
-    TOKEN=$(cat ${config.sops.secrets.copilot-oauth-token.path})
-    HOST=$(cat ${config.sops.secrets.copilot-host.path})
-    LOGIN=$(cat ${config.sops.secrets.copilot-login.path})
-    TOKEN_KEY="$HOST:$LOGIN"
-    mkdir -p "$(dirname "${copilotConfigPath}")"
-    if [ -f "${copilotConfigPath}" ] && ${pkgs.jq}/bin/jq empty "${copilotConfigPath}" 2>/dev/null; then
-      EXISTING_KEY=$(${pkgs.jq}/bin/jq -r '.copilot_tokens // {} | keys[0] // empty' "${copilotConfigPath}")
-      KEY="''${EXISTING_KEY:-$TOKEN_KEY}"
-      ${pkgs.jq}/bin/jq --arg token "$TOKEN" --arg key "$KEY" \
-        --arg host "$HOST" --arg login "$LOGIN" '
-        .copilot_tokens[$key] = $token |
-        .last_logged_in_user //= {"host": $host, "login": $login} |
-        .logged_in_users //= [{"host": $host, "login": $login}]
-      ' "${copilotConfigPath}" > "${copilotConfigPath}.tmp" \
-        && mv "${copilotConfigPath}.tmp" "${copilotConfigPath}"
-    else
-      ${pkgs.jq}/bin/jq -n --arg token "$TOKEN" --arg key "$TOKEN_KEY" \
-        --arg host "$HOST" --arg login "$LOGIN" '{
-        copilot_tokens: {($key): $token},
-        last_logged_in_user: {"host": $host, "login": $login},
-        logged_in_users: [{"host": $host, "login": $login}]
-      }' > "${copilotConfigPath}"
+    copilotConfig="${copilotConfigPath}"
+    # Only bootstrap credentials when Copilot has no authenticated user yet.
+    # If a working login already exists, leave it completely untouched so a
+    # rebuild never replaces the user you are currently signed in as.
+    inject=1
+    cleaned=""
+    if [ -f "$copilotConfig" ]; then
+      # ~/.copilot/config.json is JSONC (leading // comment lines); strip
+      # full-line comments so jq can parse it.
+      cleaned=$(${pkgs.gnused}/bin/sed '/^[[:space:]]*\/\//d' "$copilotConfig")
+      if printf '%s' "$cleaned" | ${pkgs.jq}/bin/jq -e '(.copilotTokens // {}) | length > 0' >/dev/null 2>&1; then
+        inject=0
+        echo "copilot: existing authenticated user found, leaving credentials untouched"
+      elif ! printf '%s' "$cleaned" | ${pkgs.jq}/bin/jq empty >/dev/null 2>&1; then
+        inject=0
+        echo "WARNING: $copilotConfig is not valid JSON, leaving it untouched" >&2
+      fi
     fi
-    chown sspeaks:users "${copilotConfigPath}"
-    chmod 600 "${copilotConfigPath}"
+
+    if [ "$inject" = 1 ]; then
+      TOKEN=$(cat ${config.sops.secrets.copilot-oauth-token.path})
+      HOST=$(cat ${config.sops.secrets.copilot-host.path})
+      LOGIN=$(cat ${config.sops.secrets.copilot-login.path})
+      TOKEN_KEY="$HOST:$LOGIN"
+      mkdir -p "$(dirname "$copilotConfig")"
+      if [ -f "$copilotConfig" ]; then
+        printf '%s' "$cleaned" | ${pkgs.jq}/bin/jq \
+          --arg token "$TOKEN" --arg key "$TOKEN_KEY" --arg host "$HOST" --arg login "$LOGIN" '
+          .copilotTokens[$key] = $token
+          | .lastLoggedInUser //= {host: $host, login: $login}
+          | .loggedInUsers //= [{host: $host, login: $login}]
+        ' > "$copilotConfig.tmp" && mv "$copilotConfig.tmp" "$copilotConfig"
+      else
+        ${pkgs.jq}/bin/jq -n \
+          --arg token "$TOKEN" --arg key "$TOKEN_KEY" --arg host "$HOST" --arg login "$LOGIN" '{
+          copilotTokens: {($key): $token},
+          lastLoggedInUser: {host: $host, login: $login},
+          loggedInUsers: [{host: $host, login: $login}]
+        }' > "$copilotConfig"
+      fi
+      chown sspeaks:users "$copilotConfig"
+      chmod 600 "$copilotConfig"
+      echo "copilot: no existing user, bootstrapped credentials for $LOGIN"
+    fi
   '';
 in
 {
