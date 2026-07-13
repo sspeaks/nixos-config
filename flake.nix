@@ -126,6 +126,7 @@
         ./flake-modules/home.nix
         ./flake-modules/git-hooks.nix
         ./flake-modules/modules.nix
+        ./flake-modules/checks.nix
       ];
     };
   nixConfig = {
