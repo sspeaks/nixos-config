@@ -33,6 +33,10 @@ let
   # Each is a leaf nixpkgs package whose upstream test failure is exactly what
   # its workaround disables; a clean upstream build ⇒ that fix is obsolete.
   pyCatppuccinAttr = "python3Packages.catppuccin";
+  # pogbot's app runs on Python 3.12, and that is the interpreter whose
+  # inline-snapshot test suite fails — so verify against 3.12 explicitly, not the
+  # default python3 (3.14), which passes and hid this regression once already.
+  inlineSnapshotAttr = "python312Packages.inline-snapshot";
 in
 {
   overlays = [
@@ -42,16 +46,17 @@ in
         notice = mkNotice lib;
       in
       {
-        # Temporary upstream test-suite workaround so the affected host closure
-        # keeps building until nixpkgs's catppuccin tests pass under Python 3.14.
-        # Detection is heuristic (whether the disabled tests now pass isn't
-        # knowable at eval time), so we re-flag on version change and hand over a
-        # `verify` command that rebuilds with upstream's test suite for a real
-        # answer. (inline-snapshot's equivalent workaround was dropped once
-        # `check-temporary-fixes` confirmed it builds clean upstream.)
+        # Temporary upstream test-suite workarounds so affected host closures keep
+        # building until nixpkgs's test suites pass. `pythonPackagesExtensions`
+        # applies across ALL interpreters, so these cover every Python version a
+        # host may pull the package in under (catppuccin via python3/3.14 for
+        # catppuccin-gtk on asahi; inline-snapshot via python3.12 for pogbot's
+        # fastapi stack). Detection is heuristic (whether the disabled tests now
+        # pass isn't knowable at eval time), so we re-flag on version change and
+        # hand over a `verify` command that rebuilds with upstream's test suite.
         pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
           (_: python-prev:
-            lib.optionalAttrs (python-prev ? catppuccin) {
+            (lib.optionalAttrs (python-prev ? catppuccin) {
               catppuccin = notice
                 {
                   obsolete = python-prev.catppuccin.version != "2.5.0";
@@ -62,7 +67,19 @@ in
                 (python-prev.catppuccin.overridePythonAttrs (_: {
                   doCheck = false;
                 }));
-            }
+            })
+            // (lib.optionalAttrs (python-prev ? inline-snapshot) {
+              inline-snapshot = notice
+                {
+                  obsolete = python-prev.inline-snapshot.version != "0.32.5";
+                  what = "python inline-snapshot doCheck=false";
+                  evidence = "heuristic: version is now ${python-prev.inline-snapshot.version} (workaround written for 0.32.5)";
+                  verify = verifyBuild inlineSnapshotAttr;
+                }
+                (python-prev.inline-snapshot.overridePythonAttrs (_: {
+                  doCheck = false;
+                }));
+            })
           )
         ];
 
@@ -115,6 +132,7 @@ in
   # now passes; a clean build ⇒ that workaround is obsolete.
   verifyTargets = [
     { what = "python catppuccin doCheck=false"; attr = pyCatppuccinAttr; }
+    { what = "python inline-snapshot doCheck=false"; attr = inlineSnapshotAttr; }
   ];
 
   # Workarounds with no isolated build test; reported for manual follow-up.
