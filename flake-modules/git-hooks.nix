@@ -10,7 +10,7 @@
         nix-flake-check = {
           enable = true;
           name = "nix flake check";
-          entry = "nix flake check";
+          entry = "nix flake check --no-eval-cache";
           language = "system";
           pass_filenames = false;
           always_run = true;
