@@ -29,6 +29,30 @@ in
     };
   };
 
+  services.fail2ban = {
+    enable = true;
+    maxretry = 3;
+    bantime = "1h";
+    bantime-increment = {
+      enable = true;
+      maxtime = "168h";
+      overalljails = true;
+    };
+    ignoreIP = [
+      "127.0.0.0/8"
+    ];
+  };
+
+  system.autoUpgrade = {
+    enable = true;
+    operation = "boot";
+    flake = "github:sspeaks/nixos-config#vid-stream";
+    dates = "04:30";
+    randomizedDelaySec = "15min";
+    allowReboot = true;
+  };
+
+
   systemd.tmpfiles.rules = [
     "z /srv/videos 0750 sspeaks users -"
   ];
