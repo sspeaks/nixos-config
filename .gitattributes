@@ -1,3 +1,10 @@
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.tar.gz filter=lfs diff=lfs merge=lfs -text
 *.mac14g filter=lfs diff=lfs merge=lfs -text
+# Squad: union merge for append-only team state files
+.squad/decisions.md merge=union
+.squad/agents/*/history.md merge=union
+.squad/log/** merge=union
+.squad/orchestration-log/** merge=union
+.squad/rai/audit-trail.md merge=union
+.squad/fact-checker/audit-trail.md merge=union
