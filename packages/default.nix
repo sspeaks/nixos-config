@@ -16,5 +16,6 @@ in
 {
   ptunn = pkgs.callPackage ./ptunn/default.nix { };
   myCopilot = pkgs.callPackage ./github-copilot-cli.nix { };
+  squad-cli = pkgs.callPackage ./squad-cli { };
   gac = pkgs.callPackage ./gac { };
 } // linuxPackages
