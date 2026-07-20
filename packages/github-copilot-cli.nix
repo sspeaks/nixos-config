@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchurl
+, fetchFromGitHub
 , autoPatchelfHook
 , makeBinaryWrapper
 , nodejs
@@ -8,28 +9,47 @@
 , cacert
 , glib
 , libsecret
+, gtk3
+, webkitgtk_4_1
+, cairo
+, gdk-pixbuf
+, libsoup_3
+, wayland
+, dbus
+, xdotool
 , ripgrep
 }:
 
 let
-  version = "1.0.70";
+  version = "1.0.72";
+
+  # Copilot's prebuilt WebView links to libxdo.so.3; nixpkgs xdotool 4 provides libxdo.so.4.
+  xdotool_3 = xdotool.overrideAttrs (_: {
+    version = "3.20211022.1";
+    src = fetchFromGitHub {
+      owner = "jordansissel";
+      repo = "xdotool";
+      rev = "v3.20211022.1";
+      hash = "sha256-XFiaiHHtUSNFw+xhUR29+2RUHOa+Eyj1HHfjCUjwd9k=";
+    };
+  });
 
   sources = {
     "x86_64-linux" = {
       name = "github-copilot-${version}-linux-x64";
-      hash = "sha256-z70Rb+FZviiaut8sK/GKJairCe7KVKCR1AJeHLzaRwk=";
+      hash = "sha256-rYeCRd6uEK5JWpvWtD578oJKhOJX4ce3uj9HdOnW4oA=";
     };
     "aarch64-linux" = {
       name = "github-copilot-${version}-linux-arm64";
-      hash = "sha256-saIHbLOlh+uivG9HjONeU/IKNNDWm0GAdDmzMC3191o=";
+      hash = "sha256-aSGonDOxdHNit6+jd7Nd47+7dLHWokYMIpmF2wGAYjI=";
     };
     "x86_64-darwin" = {
       name = "github-copilot-${version}-darwin-x64";
-      hash = "sha256-biISO2sXX+HWeGo+4vXRu3M9BN839sFBN0McAcPBWNI=";
+      hash = "sha256-O8OZ+lSP9teweaGZBUKFpZJo2lu1XWx6ynZM3nAjUgc=";
     };
     "aarch64-darwin" = {
       name = "github-copilot-${version}-darwin-arm64";
-      hash = "sha256-Tr+isxFUmWQgQX3ivglJ7x9ONa8JQ9ZVFUdNWuPCKxE=";
+      hash = "sha256-EbDVKPffasBxgOnQBjPAH69/MSTu/0eLzeNEYO7I2Do=";
     };
   };
 
@@ -51,6 +71,14 @@ stdenv.mkDerivation {
     stdenv.cc.cc.lib
     glib
     libsecret
+    gtk3
+    webkitgtk_4_1
+    cairo
+    gdk-pixbuf
+    libsoup_3
+    wayland
+    dbus
+    xdotool_3
   ];
 
   sourceRoot = "package";

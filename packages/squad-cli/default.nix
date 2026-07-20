@@ -14,7 +14,7 @@ buildNpmPackage rec {
 
   sourceRoot = "package";
 
-  npmDepsHash = "sha256-2UiyWd9gpCvF+L+ulERoOG3HwZe3KTbe/g74XPxBWVY=";
+  npmDepsHash = "sha256-O96MKiZNWkMtPApBx1JI2tWtm58s5pXuOdEo6YghIOY=";
   npmInstallFlags = [ "--omit=dev" ];
 
   postPatch = ''
