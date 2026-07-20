@@ -34,10 +34,16 @@ let
     attr = "python312Packages.inline-snapshot";
   };
 
+  pahoMqttFix = {
+    what = "python paho-mqtt test_01_unpwd_empty_set disabled";
+    attr = "python314Packages.paho-mqtt";
+  };
+
   # Package values to force during `nix flake check`, so their lazy notices are
   # emitted without building the packages.
   noticeTargets = [
     inlineSnapshotFix
+    pahoMqttFix
   ];
 
   # Isolated upstream builds used by the `check-temporary-fixes` command.
@@ -72,6 +78,18 @@ in
                 }
                 (python-prev.inline-snapshot.overridePythonAttrs (_: {
                   doCheck = false;
+                }));
+            })
+            // (lib.optionalAttrs (python-prev ? paho-mqtt) {
+              paho-mqtt = notice
+                {
+                  obsolete = builtins.elem "test_01_unpwd_empty_set" (python-prev.paho-mqtt.disabledTests or [ ]);
+                  what = pahoMqttFix.what;
+                  evidence = "upstream now disables the flaky test";
+                  precise = true;
+                }
+                (python-prev.paho-mqtt.overridePythonAttrs (old: {
+                  disabledTests = (old.disabledTests or [ ]) ++ [ "test_01_unpwd_empty_set" ];
                 }));
             })
           )
