@@ -21,7 +21,7 @@
 }:
 
 let
-  version = "1.0.72";
+  version = "1.0.73";
 
   # Copilot's prebuilt WebView links to libxdo.so.3; nixpkgs xdotool 4 provides libxdo.so.4.
   xdotool_3 = xdotool.overrideAttrs (_: {
@@ -37,19 +37,19 @@ let
   sources = {
     "x86_64-linux" = {
       name = "github-copilot-${version}-linux-x64";
-      hash = "sha256-rYeCRd6uEK5JWpvWtD578oJKhOJX4ce3uj9HdOnW4oA=";
+      hash = "sha256-Bh2PVfVXYCoLmU7p8FNnAXRiFAXwTfuyqilIaaSw8cE=";
     };
     "aarch64-linux" = {
       name = "github-copilot-${version}-linux-arm64";
-      hash = "sha256-aSGonDOxdHNit6+jd7Nd47+7dLHWokYMIpmF2wGAYjI=";
+      hash = "sha256-EOOiFueqIcAEknmWCtSUiox8Sin862icvr5X6Nmsmbw=";
     };
     "x86_64-darwin" = {
       name = "github-copilot-${version}-darwin-x64";
-      hash = "sha256-O8OZ+lSP9teweaGZBUKFpZJo2lu1XWx6ynZM3nAjUgc=";
+      hash = "sha256-7+jwws7XOSikOHVtnZ4rrjSZdySqNTeAKCLJIaQyGmE=";
     };
     "aarch64-darwin" = {
       name = "github-copilot-${version}-darwin-arm64";
-      hash = "sha256-EbDVKPffasBxgOnQBjPAH69/MSTu/0eLzeNEYO7I2Do=";
+      hash = "sha256-Uua3Zl+Q+Dw64qlU8b9OPlF0dba4Ej1y2fqYRG622gg=";
     };
   };
 
