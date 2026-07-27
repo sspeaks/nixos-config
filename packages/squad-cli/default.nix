@@ -19,6 +19,8 @@ buildNpmPackage rec {
 
   postPatch = ''
     cp ${./package-lock.json} package-lock.json
+    # Replace the ink patcher with a version updated for ink 7.x search patterns
+    cp ${./patch-ink-rendering-fixed.mjs} scripts/patch-ink-rendering.mjs
   '';
 
   buildPhase = ''
