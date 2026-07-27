@@ -42,7 +42,7 @@ function patchInkRendering() {
     join(__dirname, '..', '..', 'ink', 'build', 'ink.js'),
   ];
 
-  const inkJsPath = possiblePaths.find(p => existsSync(p)) ?? null;
+  const inkJsPath = possiblePaths.find(p => existsSync(p));
 
   if (!inkJsPath) {
     // ink not installed yet — exit silently
@@ -56,6 +56,10 @@ function patchInkRendering() {
     // --- Patch 1: Remove trailing newline ---
     // ink 7.x: const outputToRender = isFullscreen ? output : output + '\n';
     // Patched:  const outputToRender = output;
+    //
+    // The search string below is a JS double-quoted string where '\\n' represents
+    // the two-character sequence backslash + n as it appears in the ink.js source
+    // (i.e. the JS string literal '\n' denoting a newline, not an actual newline char).
     const trailingNewlineSearch = "const outputToRender = isFullscreen ? output : output + '\\n';";
     const trailingNewlineReplace = 'const outputToRender = output;';
     if (content.includes(trailingNewlineSearch)) {
