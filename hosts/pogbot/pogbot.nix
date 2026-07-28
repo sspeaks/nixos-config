@@ -1,8 +1,17 @@
-{ inputs, config, ... }:
+{ inputs, config, lib, pkgs, ... }:
 let
   sopsFileLocation = {
     format = "yaml";
     sopsFile = ../../secrets/nixos-azure.yaml;
+  };
+  python312Packages = pkgs.python312Packages // {
+    buildPythonPackage = args:
+      pkgs.python312Packages.buildPythonPackage (args // lib.optionalAttrs (
+        (args.pname or null) == "discord_ext_voice_recv"
+        && (args.version or null) == "0.5.2a179"
+      ) {
+        version = "0.5.2a0";
+      });
   };
 in
 {
@@ -19,6 +28,7 @@ in
 
   services.pogbot = {
     enable = true;
+    package = pkgs.pogbot.override { pkgs = pkgs // { inherit python312Packages; }; };
     assetsPathFile = config.sops.secrets.ASSETS_PATH.path;
     discordTokenFile = config.sops.secrets.DISCORD_TOKEN.path;
     giphyAPIKeyFile = config.sops.secrets.GIPHY_API_KEY.path;
