@@ -7,14 +7,17 @@ let
   patchedPython312Packages = pkgs.python312Packages.overrideScope
     (_: pythonPrev: {
       buildPythonPackage = args:
-        pythonPrev.buildPythonPackage (args // lib.optionalAttrs
-          ((args.pname or null) == "discord_ext_voice_recv")
-          {
-            postPatch = (args.postPatch or "") + ''
-              substituteInPlace discord/ext/voice_recv/__init__.py \
-                --replace-fail "__version__ = '0.5.2a'" "__version__ = '${args.version}'"
-            '';
-          });
+        pythonPrev.buildPythonPackage (
+          if lib.isAttrs args && (args.pname or null) == "discord_ext_voice_recv" then
+            args // {
+              postPatch = (args.postPatch or "") + ''
+                substituteInPlace discord/ext/voice_recv/__init__.py \
+                  --replace-fail "__version__ = '0.5.2a'" "__version__ = '${args.version}'"
+              '';
+            }
+          else
+            args
+        );
     });
   patchedPkgs = pkgs // {
     python312Packages = patchedPython312Packages;
