@@ -10,13 +10,15 @@ in
     ./hardware-config.nix
     inputs.nixos-wsl.nixosModules.default
     inputs.home-manager.nixosModules.home-manager
-    inputs.haskell-conjunction.nixosModules.spacetrack-leo-ingest
-    ./spacetrack-leo-ingest.nix
+    # inputs.haskell-conjunction.nixosModules.spacetrack-leo-ingest
+    # ./spacetrack-leo-ingest.nix
   ];
 
   wsl.enable = true;
   wsl.defaultUser = "sspeaks";
   wsl.wslConf.boot.initTimeout = 120000; # 2 minutes
+
+  services.vscode-server.enable = true;
 
   security.sudo.enable = true;
 

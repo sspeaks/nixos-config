@@ -11,7 +11,7 @@ in
   flake.nixosConfigurations = {
     nixpi = mkHost ../hosts/nixpi [ ];
     NixOS-WSL = mkHost ../hosts/nixosWSL [ ];
-    NixOS-WSL-work = mkHost ../hosts/nixosWSL-work [ ];
+    NixOS-WSL-work = mkHost ../hosts/nixosWSL-work [ inputs.vscode-server.nixosModules.default ];
     nixos-azure = mkHost ../hosts/nixos-azure [
       inputs.disko.nixosModules.disko
       ../hosts/nixos-azure/disko.nix
