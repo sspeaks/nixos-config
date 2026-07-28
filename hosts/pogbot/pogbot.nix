@@ -4,6 +4,7 @@ let
     format = "yaml";
     sopsFile = ../../secrets/nixos-azure.yaml;
   };
+  # Setuptools normalizes the upstream 0.5.2a179 artifact's metadata to 0.5.2a0.
   python312Packages = pkgs.python312Packages // {
     buildPythonPackage = args:
       pkgs.python312Packages.buildPythonPackage (args // lib.optionalAttrs (
