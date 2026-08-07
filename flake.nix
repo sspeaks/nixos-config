@@ -46,6 +46,9 @@
       url = "github:sspeaks/large-video-streamer";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ai-coaching-dashboard = {
+      url = "github:sspeaks/ai-coaching-dashboard";
+    };
     spock = {
       url = "github:sspeaks/Spock-clip-trimmer";
       inputs.nixpkgs.follows = "nixpkgs";

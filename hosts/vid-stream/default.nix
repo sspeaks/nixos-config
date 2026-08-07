@@ -11,7 +11,9 @@ in
     ../common/global
     ../common/users/sspeaks
     inputs.large-video-streamer.nixosModules.vidStreamer
+    inputs.ai-coaching-dashboard.nixosModules.aiCoaching
     inputs.determinate.nixosModules.default
+    ./ai-coaching.nix
   ];
 
   users.users.sspeaks.hashedPassword = lib.mkForce null;
@@ -25,6 +27,41 @@ in
     vid-streamer-login-pass = sopsFileLocation // {
       owner = "vid-streamer";
       group = "users";
+      mode = "0400";
+    };
+    ai-coaching-oidc-client-secret = sopsFileLocation // {
+      owner = "oauth2-proxy";
+      group = "oauth2-proxy";
+      mode = "0400";
+    };
+    ai-coaching-oauth2-proxy-cookie-secret = sopsFileLocation // {
+      owner = "oauth2-proxy";
+      group = "oauth2-proxy";
+      mode = "0400";
+    };
+    ai-coaching-postgresql-evidence-password = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+    ai-coaching-proxy-auth-env = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+    ai-coaching-speakr-env = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+    ai-coaching-evidence-api-env = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+    ai-coaching-evidence-worker-env = sopsFileLocation // {
+      owner = "root";
+      group = "root";
       mode = "0400";
     };
   };
@@ -52,9 +89,13 @@ in
     allowReboot = true;
   };
 
-
   systemd.tmpfiles.rules = [
     "z /srv/videos 0750 sspeaks users -"
+  ];
+
+  networking.firewall.allowedTCPPorts = [
+    8080
+    8081
   ];
 
   services.vidStreamer = {
@@ -62,7 +103,7 @@ in
     package = inputs.large-video-streamer.packages.${pkgs.stdenv.hostPlatform.system}.default;
     videoDir = "/srv/videos";
     videoAccessGroup = "users";
-    listenAddr = "0.0.0.0:8080";
+    listenAddr = "0.0.0.0:8081";
     openFirewall = true;
     loginUserFile = config.sops.secrets.vid-streamer-login-user.path;
     loginPassFile = config.sops.secrets.vid-streamer-login-pass.path;
