@@ -91,6 +91,13 @@ in
     };
   };
 
+  # The aiCoaching module writes a pg_hba rule allowing the container subnet to
+  # reach PostgreSQL, but never opens the host firewall for it, so the packets
+  # are dropped before PostgreSQL ever sees them and the API hangs in
+  # init_schema() until its startup probe times out. podman assigns the bridge
+  # name, so the module cannot infer it; open the port on that interface here.
+  networking.firewall.interfaces."podman1".allowedTCPPorts = [ 5432 ];
+
   services.postgresql.settings = {
     shared_buffers = "128MB";
     effective_cache_size = "2GB";
