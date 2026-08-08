@@ -35,6 +35,13 @@ in
       emailClaim = "email";
       groupsClaim = "groups";
       emailDomains = [ "*" ];
+      # authentik has no email-verification feature and since 2025.10 reports
+      # email_verified = false rather than assert something it cannot prove.
+      # Safe here because accounts are admin-provisioned in authentik and users
+      # cannot self-register or change their own address; if that ever changes,
+      # set this back to false, because the evidence ledger attributes entries
+      # to this email.
+      allowUnverifiedEmail = true;
       adminGroups = [ "quartet-members" ];
       editorGroups = [ ];
     };
