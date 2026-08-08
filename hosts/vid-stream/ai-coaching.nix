@@ -91,6 +91,17 @@ in
       staticRoot = artifacts.web-frontend;
     };
 
+    # Backs the worker's http_json extraction provider. Enabling this makes the
+    # module set EVIDENCE_EXTRACTION_PROVIDER and EVIDENCE_EXTRACTION_ENDPOINT
+    # on the worker; the worker's EVIDENCE_EXTRACTION_API_KEY must equal this
+    # container's EXTRACTION_GATEWAY_INBOUND_API_KEY.
+    extractionGateway = {
+      enable = true;
+      image = "ai-coaching/extraction-gateway:flake";
+      imageFile = artifacts.extraction-gateway-image;
+      environmentFiles = [ config.sops.secrets.ai-coaching-extraction-gateway-env.path ];
+    };
+
     backup = {
       enable = true;
       onCalendar = "*-*-* 03:30:00";

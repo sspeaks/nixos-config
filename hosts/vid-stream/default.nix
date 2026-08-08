@@ -64,6 +64,11 @@ in
       group = "root";
       mode = "0400";
     };
+    ai-coaching-extraction-gateway-env = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
   };
 
   services.fail2ban = {
