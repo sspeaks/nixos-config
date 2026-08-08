@@ -22,7 +22,7 @@ ShellRoot {
         model: Quickshell.screens
 
         delegate: Caption {
-            required property QuickshellScreenInfo modelData
+            required property ShellScreen modelData
             screen: modelData
         }
     }
