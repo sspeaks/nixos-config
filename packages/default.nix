@@ -11,6 +11,7 @@ let
       simc = pkgs.callPackage ./simc/default.nix { };
       local-garnet = (pkgs.callPackage ./garnet/default.nix { }).server;
       garnet-image = (pkgs.callPackage ./garnet/default.nix { }).image;
+      plate-wallpaper = pkgs.callPackage ./plate-wallpaper/default.nix { };
     } else { };
 in
 {

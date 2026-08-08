@@ -119,4 +119,7 @@ in
     radius
     surfaces
     ;
+
+  # Plate XIV semantic token foundation — import for role-based access.
+  plate = import ./plate.nix;
 }

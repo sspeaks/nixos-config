@@ -1,7 +1,7 @@
 { config, pkgs, lib, asahiPaths, ... }:
 
 let
-  palette = import ../../home/features/theme/palette.nix;
+  plate = import ../../home/features/theme/plate.nix;
 in
 {
   services.xserver.enable = true;
@@ -50,7 +50,9 @@ in
   };
 
   fonts.packages = with pkgs; [
-    nerd-fonts.jetbrains-mono
+    nerd-fonts.iosevka
+    nerd-fonts.iosevka-term
+    noto-fonts
   ];
 
   environment.systemPackages = with pkgs; [
@@ -68,8 +70,8 @@ in
         background = asahiPaths.wallpaper;
         backgroundMode = "fill";
         quote = "";
-        accentColor = palette.accent;
-        font = palette.fonts.sddm;
+        accentColor = plate.accent.vermilion;
+        font = plate.type.sddm;
         fontSize = 14;
       };
     })
@@ -93,6 +95,12 @@ in
         ../../home/features/wlogout
         ../../home/features/fonts
         ./waybar.nix
+        # Plate XIV compositor / shell — dormant until Trinity/Switch land the files.
+        # builtins.pathExists avoids evaluation errors while agents run concurrently.
+      ] ++ lib.optionals (builtins.pathExists ../../home/features/niri) [
+        ../../home/features/niri
+      ] ++ lib.optionals (builtins.pathExists ../../home/features/quickshell) [
+        ../../home/features/quickshell
       ];
     };
 }
