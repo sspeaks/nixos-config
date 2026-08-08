@@ -38,7 +38,7 @@ in
         horizontal_padding = 8;
         text_icon_padding = 0;
         frame_width = 2;
-        frame_color = mocha.blue;
+        frame_color = palette.accent;
         gap_size = 5;
         separator_color = "frame";
         sort = true;
@@ -83,14 +83,14 @@ in
       urgency_low = {
         background = mocha.base;
         foreground = mocha.text;
-        frame_color = mocha.blue;
+        frame_color = palette.accent;
         timeout = 5;
       };
 
       urgency_normal = {
         background = mocha.base;
         foreground = mocha.text;
-        frame_color = mocha.blue;
+        frame_color = palette.accent;
         timeout = 10;
       };
 

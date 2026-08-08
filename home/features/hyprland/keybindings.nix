@@ -4,7 +4,7 @@
   wayland.windowManager.hyprland = {
     settings = {
       "$mainMod" = "SUPER";
-      "$terminal" = "alacritty";
+      "$terminal" = "ghostty";
       "$menu" = "wofi --show drun";
       "$browser" = "chromium";
 

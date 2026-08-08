@@ -30,28 +30,36 @@ in
       };
 
       general = {
-        gaps_in = 5;
-        gaps_out = 10;
+        gaps_in = 6;
+        gaps_out = 14;
         border_size = 2;
-        "col.active_border" = "${palette.rgba mocha.blue "ee"} ${palette.rgba mocha.mauve "ee"} 45deg";
+        "col.active_border" = "${palette.rgba palette.accent "ee"} ${palette.rgba palette.accentAlt "ee"} 45deg";
         "col.inactive_border" = palette.rgba mocha.overlay0 "aa";
         layout = "dwindle";
         allow_tearing = false;
       };
 
       decoration = {
-        rounding = 10;
+        rounding = 12;
+        active_opacity = 1.0;
+        inactive_opacity = 0.97;
+        dim_inactive = true;
+        dim_strength = 0.08;
         blur = {
           enabled = true;
-          size = 3;
-          passes = 1;
+          size = 5;
+          passes = 2;
+          new_optimizations = true;
+          ignore_opacity = true;
           vibrancy = 0.1696;
         };
         shadow = {
           enabled = true;
-          range = 4;
+          range = 12;
           render_power = 3;
-          color = "rgba(1a1a1aee)";
+          # Focused windows get a soft accent halo; others a plain dark shadow.
+          color = palette.rgba palette.accent "33";
+          color_inactive = palette.rgba mocha.crust "cc";
         };
       };
 
@@ -63,12 +71,14 @@ in
           "easeInOutCubic, 0.65, 0, 0.35, 1"
         ];
         animation = [
-          "windows, 1, 7, myBezier"
-          "windowsOut, 1, 7, default, popin 80%"
+          "windows, 1, 6, myBezier, slide"
+          "windowsOut, 1, 6, easeOutQuint, popin 80%"
+          "windowsMove, 1, 5, myBezier, slide"
           "border, 1, 10, default"
           "borderangle, 1, 8, default"
           "fade, 1, 7, default"
           "workspaces, 1, 6, easeOutQuint, slide"
+          "specialWorkspace, 1, 6, easeOutQuint, slidevert"
         ];
       };
 

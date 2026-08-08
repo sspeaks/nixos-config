@@ -45,6 +45,16 @@ in
           halign = "center";
           valign = "center";
         }
+        {
+          monitor = "";
+          text = ''cmd[update:60000] date +"%A, %B %d"'';
+          color = palette.rgb mocha.subtext0;
+          font_size = 16;
+          font_family = palette.fonts.mono;
+          position = "0, 175";
+          halign = "center";
+          valign = "center";
+        }
       ];
 
       input-field = [
@@ -56,9 +66,11 @@ in
           fade_on_empty = false;
           font_color = palette.rgb mocha.text;
           inner_color = palette.rgb mocha.surface0;
-          outer_color = palette.rgb mocha.base;
-          outline_thickness = 5;
-          placeholder_text = "Password...";
+          outer_color = palette.rgb palette.accent;
+          check_color = palette.rgb palette.accentAlt;
+          fail_color = palette.rgb mocha.red;
+          outline_thickness = 3;
+          placeholder_text = "Password…";
           shadow_passes = 2;
         }
       ];

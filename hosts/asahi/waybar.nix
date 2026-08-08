@@ -15,60 +15,24 @@ in
         min-height: 0;
       }
 
+      /* Transparent bar strip: each module floats as its own frosted island. */
       window#waybar {
-        background: rgba(21, 22, 30, 0.8);
-        border-bottom: none;
+        background: transparent;
       }
 
       tooltip {
-        background: rgba(21, 22, 30, 0.9);
-        border: 1px solid rgba(100, 114, 125, 0.5);
-        border-radius: 8px;
+        background: ${palette.surfaces.tooltip};
+        border: 1px solid ${palette.surfaces.border};
+        border-radius: ${palette.radius.md};
       }
 
       tooltip label {
-        color: #cdd6f4;
-      }
-
-      #workspaces {
-        margin: 5px;
-        padding: 0 5px;
-        background: rgba(30, 30, 46, 0.6);
-        border-radius: 10px;
-      }
-
-      #workspaces button {
-        padding: 2px 8px;
-        margin: 2px;
-        color: #6c7086;
-        border-radius: 6px;
-        background: transparent;
-        transition: all 0.2s ease;
-      }
-
-      #workspaces button:hover {
-        background: rgba(137, 180, 250, 0.2);
-        color: #89b4fa;
-      }
-
-      #workspaces button.active {
-        background: rgba(137, 180, 250, 0.3);
-        color: #89b4fa;
-      }
-
-      #workspaces button.urgent {
-        background: rgba(243, 139, 168, 0.3);
-        color: #f38ba8;
-      }
-
-      #window {
         color: ${mocha.text};
-        padding: 4px 15px;
-        margin: 5px 3px;
-        background: rgba(30, 30, 46, 0.6);
-        border-radius: 10px;
       }
 
+      /* Shared floating-island styling for every module. */
+      #workspaces,
+      #window,
       #clock,
       #battery,
       #cpu,
@@ -78,67 +42,130 @@ in
       #backlight,
       #bluetooth,
       #temperature,
-      #tray {
-        padding: 4px 12px;
+      #custom-wireguard,
+      #power-profiles-daemon,
+      #tray,
+      #custom-power {
+        background: ${palette.surfaces.island};
+        border: 1px solid ${palette.surfaces.border};
+        border-radius: ${palette.radius.md};
+        box-shadow: 0 2px 6px ${palette.surfaces.shadow};
         margin: 5px 3px;
-        background: rgba(30, 30, 46, 0.6);
-        border-radius: 10px;
-        color: #cdd6f4;
+        padding: 4px 12px;
+        color: ${mocha.text};
+        transition: all 0.2s ease;
+      }
+
+      /* Interactive info pills brighten their border on hover. */
+      #clock:hover,
+      #battery:hover,
+      #cpu:hover,
+      #memory:hover,
+      #network:hover,
+      #custom-volume:hover,
+      #backlight:hover,
+      #bluetooth:hover,
+      #temperature:hover {
+        border-color: ${palette.accent};
+      }
+
+      #workspaces {
+        padding: 2px 6px;
+      }
+
+      #workspaces button {
+        padding: 2px 9px;
+        margin: 2px;
+        min-width: 20px;
+        color: ${mocha.overlay1};
+        border-radius: ${palette.radius.sm};
+        background: transparent;
+        transition: all 0.2s ease;
+      }
+
+      #workspaces button:hover {
+        background: ${palette.surfaces.accentSoft};
+        color: ${palette.accent};
+      }
+
+      #workspaces button.active {
+        background: ${palette.accent};
+        color: ${mocha.crust};
+        box-shadow: 0 0 8px ${palette.surfaces.accentActive};
+      }
+
+      #workspaces button.urgent {
+        background: ${palette.surfaces.urgentSoft};
+        color: ${mocha.red};
+      }
+
+      #window {
+        color: ${mocha.subtext0};
+        font-style: italic;
+        padding: 4px 15px;
+      }
+
+      /* Hide the window pill entirely when no window is focused. */
+      #window.empty {
+        background: transparent;
+        border-color: transparent;
+        box-shadow: none;
       }
 
       #clock {
-        color: #89dceb;
+        color: ${mocha.sky};
+        font-weight: bold;
       }
 
       #battery {
-        color: #a6e3a1;
+        color: ${mocha.green};
       }
 
       #battery.charging {
-        color: #a6e3a1;
+        color: ${mocha.green};
       }
 
       #battery.warning:not(.charging) {
-        color: #fab387;
+        color: ${mocha.peach};
       }
 
       #battery.critical:not(.charging) {
-        color: #f38ba8;
+        color: ${mocha.red};
         animation: blink 0.5s linear infinite alternate;
       }
 
       @keyframes blink {
         to {
-          background: rgba(243, 139, 168, 0.3);
+          background: ${palette.surfaces.urgentSoft};
         }
       }
 
       #cpu {
-        color: #89b4fa;
+        color: ${mocha.blue};
       }
 
       #memory {
-        color: #cba6f7;
+        color: ${mocha.mauve};
       }
 
       #network {
-        color: #94e2d5;
+        color: ${mocha.teal};
       }
 
       #network.disconnected {
-        color: #f38ba8;
+        color: ${mocha.red};
       }
 
       #custom-volume {
-        color: #f9e2af;
+        color: ${mocha.yellow};
       }
 
       #custom-volume.muted {
-        color: #6c7086;
+        color: ${mocha.overlay0};
       }
 
       #backlight {
-        color: #f9e2af;
+        color: ${mocha.yellow};
       }
 
       #backlight-slider slider {
@@ -154,37 +181,33 @@ in
         min-height: 8px;
         min-width: 80px;
         border-radius: 5px;
-        background-color: rgba(30, 30, 46, 0.6);
+        background-color: ${palette.surfaces.panel};
       }
 
       #backlight-slider highlight {
         min-height: 8px;
         border-radius: 5px;
-        background-color: #f9e2af;
+        background-color: ${mocha.yellow};
       }
 
       #bluetooth {
-        color: #89b4fa;
+        color: ${mocha.blue};
       }
 
       #bluetooth.disabled {
-        color: #6c7086;
+        color: ${mocha.overlay0};
       }
 
       #temperature {
-        color: #a6e3a1;
+        color: ${mocha.green};
       }
 
       #temperature.critical {
-        color: #f38ba8;
+        color: ${mocha.red};
       }
 
       #power-profiles-daemon {
-        padding: 4px 12px;
-        margin: 5px 3px;
-        background: rgba(30, 30, 46, 0.6);
-        border-radius: 10px;
-        color: #94e2d5;
+        color: ${mocha.teal};
       }
 
       #tray {
@@ -200,23 +223,16 @@ in
       }
 
       #custom-power {
-        color: #f38ba8;
-        padding: 4px 12px;
-        margin: 5px 3px;
-        background: rgba(30, 30, 46, 0.6);
-        border-radius: 10px;
+        color: ${mocha.red};
       }
 
       #custom-power:hover {
-        background: rgba(243, 139, 168, 0.3);
+        background: ${palette.surfaces.urgentSoft};
+        border-color: ${mocha.red};
       }
 
       #custom-wireguard {
-        color: #a6e3a1;
-        padding: 4px 12px;
-        margin: 5px 3px;
-        background: rgba(30, 30, 46, 0.6);
-        border-radius: 10px;
+        color: ${mocha.green};
       }
     '';
 
@@ -289,11 +305,11 @@ in
             weeks-pos = "right";
             on-scroll = 1;
             format = {
-              months = "<span color='#f9e2af'><b>{}</b></span>";
-              days = "<span color='#cdd6f4'><b>{}</b></span>";
-              weeks = "<span color='#94e2d5'><b>W{}</b></span>";
-              weekdays = "<span color='#fab387'><b>{}</b></span>";
-              today = "<span color='#a6e3a1'><b><u>{}</u></b></span>";
+              months = "<span color='${mocha.yellow}'><b>{}</b></span>";
+              days = "<span color='${mocha.text}'><b>{}</b></span>";
+              weeks = "<span color='${mocha.teal}'><b>W{}</b></span>";
+              weekdays = "<span color='${mocha.peach}'><b>{}</b></span>";
+              today = "<span color='${mocha.green}'><b><u>{}</u></b></span>";
             };
           };
           actions = {
@@ -332,14 +348,14 @@ in
           interval = 5;
           format = "󰍛  {usage}%";
           tooltip-format = "CPU: {usage}%\nLoad: {load}";
-          on-click = "alacritty -e htop";
+          on-click = "ghostty -e htop";
         };
 
         memory = {
           interval = 5;
           format = "󰘚  {}%";
           tooltip-format = "RAM: {used:0.1f}GB / {total:0.1f}GB";
-          on-click = "alacritty -e htop";
+          on-click = "ghostty -e htop";
         };
 
         network = {

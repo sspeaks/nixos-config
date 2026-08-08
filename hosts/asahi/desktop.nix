@@ -1,5 +1,8 @@
 { config, pkgs, lib, asahiPaths, ... }:
 
+let
+  palette = import ../../home/features/theme/palette.nix;
+in
 {
   services.xserver.enable = true;
   services.displayManager.sddm = {
@@ -65,8 +68,8 @@
         background = asahiPaths.wallpaper;
         backgroundMode = "fill";
         quote = "";
-        accentColor = "#89b4fa";
-        font = "JetBrains Mono";
+        accentColor = palette.accent;
+        font = palette.fonts.sddm;
         fontSize = 14;
       };
     })
@@ -84,6 +87,7 @@
         ../../home/features/hyprland
         ../../home/features/hyprland/auto-brightness.nix
         ../../home/features/alacritty
+        ../../home/features/ghostty
         ../../home/features/dunst
         ../../home/features/wofi
         ../../home/features/wlogout

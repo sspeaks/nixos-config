@@ -6,14 +6,16 @@ How to decide who handles what.
 
 | Work Type | Route To | Examples |
 |-----------|----------|----------|
-| {domain 1} | {Name} | {example tasks} |
-| {domain 2} | {Name} | {example tasks} |
-| {domain 3} | {Name} | {example tasks} |
-| Code review | {Name} | Review PRs, check quality, suggest improvements |
-| Testing | {Name} | Write tests, find edge cases, verify fixes |
-| Scope & priorities | {Name} | What to build next, trade-offs, decisions |
+| Design direction & cohesion | Morpheus | Set the look/mood, arbitrate taste, cross-app consistency, aesthetic review |
+| Compositor & motion | Trinity | Hyprland/Wayland config, animations, layouts, blur/shadow/rounding, window rules, keybinds |
+| Bars, widgets & menus | Switch | waybar/eww/ags, wofi/rofi launchers, dunst/mako notifications, wlogout/hyprlock styling |
+| Color & theming | Mouse | Palette/colorscheme, semantic tokens, GTK/Qt/icon/cursor themes, contrast/legibility |
+| Typography, terminal & Nix | Tank | Nerd fonts, ghostty/alacritty, starship prompt, wallpaper, home-manager/flake module structure |
+| Aesthetic / design review | Morpheus | Judge whether work is cohesive and on-direction; approve/reject |
+| Verification & devil's advocate | Fact Checker | Verify claims (packages/options exist), challenge design assumptions, pre-mortem |
+| Scope & priorities | Morpheus | What to rice next, trade-offs, direction |
 | Session logging | Scribe | Automatic — never needs routing |
-| RAI review | Rai | Content safety, bias checks, credential detection, ethical review |
+| RAI review | Rai | Content safety, credential detection, ethical review |
 
 ## Issue Routing
 

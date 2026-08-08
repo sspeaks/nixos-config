@@ -1,18 +1,22 @@
 { config, pkgs, lib, ... }:
 
+let
+  palette = import ../theme/palette.nix;
+  mocha = palette.mocha;
+in
 {
   programs.wofi = {
     enable = true;
     settings = {
       show = "drun";
-      width = 500;
-      height = 400;
+      width = 640;
+      height = 480;
       always_parse_args = true;
       show_all = false;
       print_command = true;
       insensitive = true;
-      prompt = "Search...";
-      image_size = 32;
+      prompt = "Search…";
+      image_size = 36;
       columns = 1;
       allow_images = true;
       hide_scroll = true;
@@ -22,34 +26,34 @@
     style = ''
       window {
         margin: 0px;
-        border: 2px solid #89b4fa;
-        border-radius: 15px;
-        background-color: #1e1e2e;
-        font-family: "JetBrainsMono Nerd Font";
+        border: 2px solid ${palette.accent};
+        border-radius: ${palette.radius.lg};
+        background-color: ${palette.cssRgba mocha.base "0.96"};
+        font-family: ${palette.fonts.mono};
         font-size: 14px;
       }
 
       #input {
-        padding: 10px;
-        margin: 10px;
-        border: none;
-        border-radius: 10px;
-        color: #cdd6f4;
-        background-color: #313244;
+        padding: 12px;
+        margin: 14px;
+        border: 1px solid ${palette.surfaces.border};
+        border-radius: ${palette.radius.md};
+        color: ${mocha.text};
+        background-color: ${mocha.surface0};
       }
 
       #input:focus {
-        border: 2px solid #89b4fa;
+        border: 2px solid ${palette.accent};
       }
 
       #inner-box {
-        margin: 5px;
+        margin: 6px;
         border: none;
         background-color: transparent;
       }
 
       #outer-box {
-        margin: 5px;
+        margin: 8px;
         border: none;
         background-color: transparent;
       }
@@ -60,23 +64,29 @@
       }
 
       #text {
-        margin: 5px;
+        margin: 6px;
         border: none;
-        color: #cdd6f4;
+        color: ${mocha.text};
+      }
+
+      #img {
+        margin-right: 8px;
       }
 
       #entry {
-        border-radius: 10px;
-        padding: 5px;
+        border-radius: ${palette.radius.md};
+        padding: 8px;
+        margin: 2px 6px;
       }
 
       #entry:selected {
-        background-color: #313244;
-        border: 2px solid #89b4fa;
+        background-color: ${palette.surfaces.accentSoft};
+        border-left: 3px solid ${palette.accent};
       }
 
       #entry:selected #text {
-        color: #89b4fa;
+        color: ${palette.accent};
+        font-weight: bold;
       }
     '';
   };

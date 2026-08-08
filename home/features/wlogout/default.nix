@@ -1,5 +1,9 @@
 { config, pkgs, lib, ... }:
 
+let
+  palette = import ../theme/palette.nix;
+  mocha = palette.mocha;
+in
 {
   programs.wlogout = {
     enable = true;
@@ -38,30 +42,30 @@
     style = ''
       * {
         background-image: none;
-        font-family: "JetBrainsMono Nerd Font";
+        font-family: ${palette.fonts.mono};
       }
 
       window {
-        background-color: rgba(30, 30, 46, 0.85);
+        background-color: ${palette.cssRgba mocha.base "0.85"};
       }
 
       button {
-        color: #cdd6f4;
-        background-color: rgba(49, 50, 68, 0.8);
+        color: ${mocha.text};
+        background-color: ${palette.cssRgba mocha.surface0 "0.8"};
         border-style: solid;
         border-width: 2px;
-        border-color: #45475a;
+        border-color: ${mocha.surface1};
         background-repeat: no-repeat;
         background-position: center;
         background-size: 25%;
-        border-radius: 20px;
+        border-radius: ${palette.radius.xl};
         margin: 10px;
         transition: all 0.3s ease;
       }
 
       button:focus, button:active, button:hover {
-        background-color: rgba(69, 71, 90, 0.9);
-        border-color: #89b4fa;
+        background-color: ${palette.cssRgba mocha.surface1 "0.9"};
+        border-color: ${palette.accent};
         outline-style: none;
       }
 

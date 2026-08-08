@@ -1,3 +1,39 @@
 {
-  "agents": {}
+  "agents": {
+    "lead-aesthetic-director": {
+      "persistent_name": "Morpheus",
+      "universe": "The Matrix",
+      "created_at": "2026-08-07T18:23:40-07:00",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "compositor-motion": {
+      "persistent_name": "Trinity",
+      "universe": "The Matrix",
+      "created_at": "2026-08-07T18:23:40-07:00",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "bars-widgets-menus": {
+      "persistent_name": "Switch",
+      "universe": "The Matrix",
+      "created_at": "2026-08-07T18:23:40-07:00",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "color-theming": {
+      "persistent_name": "Mouse",
+      "universe": "The Matrix",
+      "created_at": "2026-08-07T18:23:40-07:00",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "typography-terminal-nix": {
+      "persistent_name": "Tank",
+      "universe": "The Matrix",
+      "created_at": "2026-08-07T18:23:40-07:00",
+      "legacy_named": false,
+      "status": "active"
+    }
+  }
 }
