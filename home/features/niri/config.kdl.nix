@@ -7,16 +7,32 @@
 # options itself.
 #
 # Verified against niri v26.04 (github.com/niri-wm/niri/tree/v26.04)
-# using resources/default-config.kdl as the authoritative action reference.
+# using resources/default-config.kdl as the authoritative action reference
+# (fetched from the locked nixpkgs niri.src, `nix build --no-link
+# nixpkgs#niri.src`, at /nix/store/.../resources/default-config.kdl) plus
+# `niri msg action --help` / `niri msg --help` run against the built
+# nixpkgs#niri 26.04 binary (D20/D24 empirical verification).
+#
+# Launcher / Control Center IPC binds (D10/D22/D23) were verified against
+# the locally-built nixpkgs#quickshell 0.3.0 `qs`/`quickshell` binary's
+# `--help` output. The D10 draft order (`qs ipc call -c <name> ...`) is
+# WRONG: `-c` is an option of the `ipc` subcommand, not of `call` —
+# confirmed empirically:
+#   `qs ipc call -c plate-xiv launcher toggle` -> CLI11 rejects `-c`
+#   ("The following argument was not expected: -c")
+#   `qs ipc -c plate-xiv call launcher toggle` -> parses correctly,
+#   reaches instance lookup ("No running instances for ...").
+# The corrected order (`qs ipc -c plate-xiv call <target> toggle`) is used
+# below for both the "launcher" and "controlCenter" IPC targets; see the
+# trinity-niri-batch2-* inbox note for the D10 correction record.
 #
 # Token API: home/features/theme/plate.nix (D1/D4 corrected contract).
 # Wallpaper path: asahiPaths.wallpaper — immutable store path (D6).
 #
-# Activation path:
-#   In home/features/niri/default.nix, set
-#     wayland.windowManager.niri.extraConfig =
-#       (import ./config.kdl.nix) { inherit plate wallpaper; };
-#   and flip wayland.windowManager.niri.enable = true; when ready.
+# Activation: home/features/niri/default.nix sets
+#   wayland.windowManager.niri.extraConfig =
+#     (import ./config.kdl.nix) { inherit plate wallpaper; };
+# with enable = true (D20 — landed).
 
 { plate, wallpaper }:
 
@@ -142,6 +158,44 @@ in
 
     Mod+Q       { close-window; }
     Mod+Return  { spawn "ghostty"; }
+
+    // ── Hardware controls — shared Plate helpers ────────────────────────────
+    // Keep niri and Hyprland behavior identical by routing every hardware
+    // key through the Plate wrappers installed on the session PATH.
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "plate-volume-step" "up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "plate-volume-step" "down"; }
+    XF86AudioMute allow-when-locked=true { spawn "plate-volume-toggle-mute"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "plate-brightness-step" "up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "plate-brightness-step" "down"; }
+
+    // ── Launcher / lock / logout — D22/D24 wrapper contracts ────────────────
+    // Launcher: Quickshell's IpcHandler (target "launcher", function
+    // "toggle") per D10/D22. Argument order verified empirically against
+    // the built nixpkgs#quickshell 0.3.0 `qs` binary (`-c` belongs to the
+    // `ipc` subcommand, not to `call` — see file header). Mirrors
+    // Hyprland's Mod+Space -> $menu ergonomics (keybindings.nix).
+    Mod+Space { spawn "qs" "ipc" "-c" "plate-xiv" "call" "launcher" "toggle"; }
+
+    // Control Center: same Quickshell IPC-toggle family as the launcher
+    // above (target "controlCenter", function "toggle" — D23/Switch's
+    // ControlCenter.qml). Mod+Shift+Space chosen as the least-collision,
+    // most-consistent unused chord: it pairs with Mod+Space (both are
+    // Quickshell IPC toggles, Shift marking the companion surface) and
+    // does not clash with the Mod+Ctrl (move) or directional
+    // Mod+Shift+H/J/K/L (reserved for focus-monitor, v26.04 default
+    // config) chord families already established in this file. No other
+    // binding in this file uses Space or Shift+Space.
+    Mod+Shift+Space { spawn "qs" "ipc" "-c" "plate-xiv" "call" "controlCenter" "toggle"; }
+
+    // Lock: hyprlock is compositor-agnostic (ext-session-lock-v1, D24) and
+    // reused as-is under niri — same bind as Hyprland's Mod+Shift+L.
+    Mod+Shift+L { spawn "hyprlock"; }
+
+    // Logout: opens the wlogout menu, matching Hyprland's Mod+Escape bind.
+    // wlogout's own button actions call Tank's compositor-detection
+    // wrappers (plate-dpms-on/off, plate-logout) internally (D24) — niri's
+    // bind only needs to launch the menu, not branch on compositor itself.
+    Mod+Escape { spawn "wlogout"; }
 
     Mod+Shift+E { quit; }
   }

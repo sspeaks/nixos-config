@@ -5,7 +5,7 @@ let
     ALS_PATH="/sys/bus/iio/devices/iio:device0/in_angl_raw"
     SCREEN_DEV="apple-panel-bl"
     KBD_DEV="kbd_backlight"
-    USER_PCT_FILE="/tmp/auto-brightness-user-pct"
+    USER_PCT_FILE="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is not set}/plate-brightness-user-pct"
     DIMMING_SENTINEL="''${XDG_RUNTIME_DIR:-/tmp}/hypridle-dimming"
 
     SCREEN_MAX=$(${pkgs.brightnessctl}/bin/brightnessctl -d "$SCREEN_DEV" max)

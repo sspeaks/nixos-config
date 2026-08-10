@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "id": "29063fbb-d8e6-4d98-9b52-99c40b6677c3",
+    "class": "DECISION",
+    "loadGuidance": "ALWAYS",
+    "title": "Add system controls to Plate XIV plan",
+    "path": ".squad/decisions/inbox/seth-speaks-via-squad-coordinator-add-system-controls-to-plate-xiv-plan-29063fbb.md",
+    "status": "active",
+    "createdAt": "2026-08-08T05:44:17.309Z",
+    "updatedAt": "2026-08-08T05:44:17.309Z"
+  },
+  {
+    "id": "12684376-f506-4716-8722-4e31dc991b82",
+    "class": "LOCAL",
+    "loadGuidance": "ON-DEMAND",
+    "title": "Launcher: DesktopEntries available in QS 0.3.0",
+    "path": ".squad/memory/local/switch-launcher-desktopentries-available-in-qs-0-3-0-12684376.md",
+    "status": "active",
+    "createdAt": "2026-08-08T05:52:00.740Z",
+    "updatedAt": "2026-08-08T05:52:00.740Z"
+  },
+  {
+    "id": "2ddb6733-4be0-4743-b6b4-b4f2f9c35e02",
+    "class": "DECISION",
+    "loadGuidance": "ALWAYS",
+    "title": "Plate XIV Batch 3 — 6 CLI/API Corrections from Empirical Verification",
+    "path": ".squad/decisions/inbox/fact-checker-plate-xiv-batch-3-6-cli-api-corrections-from-empirical-verificat-2ddb6733.md",
+    "status": "active",
+    "createdAt": "2026-08-08T18:11:33.280Z",
+    "updatedAt": "2026-08-08T18:11:33.280Z"
+  },
+  {
+    "id": "5ab89df3-c324-4a21-bd87-f5df3552c913",
+    "class": "LOCAL",
+    "loadGuidance": "ON-DEMAND",
+    "title": "Morpheus D31 wallpaper visual review — REJECTED",
+    "path": ".squad/memory/local/morpheus-morpheus-d31-wallpaper-visual-review-rejected-5ab89df3.md",
+    "status": "active",
+    "createdAt": "2026-08-08T18:24:28.381Z",
+    "updatedAt": "2026-08-08T18:24:28.381Z"
+  },
+  {
+    "id": "09eaf3b6-3f11-42f7-99e8-0127561c12dd",
+    "class": "DECISION",
+    "loadGuidance": "ALWAYS",
+    "title": "Plate XIV Batch 3 Re-Review — REJECTED: Wi-Fi row missing visible guard",
+    "path": ".squad/decisions/inbox/fact-checker-plate-xiv-batch-3-re-review-rejected-wi-fi-row-missing-visible-g-09eaf3b6.md",
+    "status": "active",
+    "createdAt": "2026-08-08T18:25:44.156Z",
+    "updatedAt": "2026-08-08T18:25:44.156Z"
+  },
+  {
+    "id": "97b8eac3-a9cd-48e7-84c1-c3477155e8bf",
+    "class": "LOCAL",
+    "loadGuidance": "ON-DEMAND",
+    "title": "Morpheus D31 wallpaper R6 re-review — APPROVED",
+    "path": ".squad/memory/local/morpheus-morpheus-d31-wallpaper-r6-re-review-approved-97b8eac3.md",
+    "status": "active",
+    "createdAt": "2026-08-08T18:40:47.198Z",
+    "updatedAt": "2026-08-08T18:40:47.198Z"
+  }
+]

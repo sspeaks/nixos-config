@@ -87,6 +87,7 @@ in
     warn = "#a0a0a0"; # warning / modified state
     ok = "#6e6e6e"; # success / ok state
     inactive = "#333333"; # inactive / disabled element
+    fail = "#e03c28"; # failure / error state (= vermilion, D25 — no new hue)
   };
 
   # Layout geometry — string values per D1 (CSS-compatible units)

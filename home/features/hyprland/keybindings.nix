@@ -76,14 +76,14 @@
       ];
 
       bindel = [
-        ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
-        ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
-        ", XF86MonBrightnessUp, exec, brightnessctl -d apple-panel-bl set 5%+ && echo $(( $(brightnessctl -d apple-panel-bl get) * 100 / $(brightnessctl -d apple-panel-bl max) )) > /tmp/auto-brightness-user-pct"
-        ", XF86MonBrightnessDown, exec, brightnessctl -d apple-panel-bl set 5%- && echo $(( $(brightnessctl -d apple-panel-bl get) * 100 / $(brightnessctl -d apple-panel-bl max) )) > /tmp/auto-brightness-user-pct"
+        ", XF86AudioRaiseVolume, exec, plate-volume-step up"
+        ", XF86AudioLowerVolume, exec, plate-volume-step down"
+        ", XF86MonBrightnessUp, exec, plate-brightness-step up"
+        ", XF86MonBrightnessDown, exec, plate-brightness-step down"
       ];
 
       bindl = [
-        ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+        ", XF86AudioMute, exec, plate-volume-toggle-mute"
         ", XF86AudioPlay, exec, playerctl play-pause"
         ", XF86AudioPrev, exec, playerctl previous"
         ", XF86AudioNext, exec, playerctl next"

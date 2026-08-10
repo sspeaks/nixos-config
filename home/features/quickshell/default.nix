@@ -45,12 +45,20 @@ let
         readonly property color fgMuted:     "${plate.fg.muted}"
 
         // Structural lines
-        readonly property color lineRule: "${plate.line.rule}"
-        readonly property color lineEdge: "${plate.line.edge}"
+        readonly property color lineHairline: "${plate.line.hairline}"
+        readonly property color lineRule:     "${plate.line.rule}"
+        readonly property color lineEdge:     "${plate.line.edge}"
 
         // Accent / state
         readonly property color accentPrimary: "${plate.accent.vermilion}"
         readonly property color accentOn:      "${plate.accent.on}"
+        // D25/D26 — failure/error state, consumed by NotificationCard's
+        // critical-urgency border. Reuses vermilion; no new hue (D1/D25).
+        readonly property color stateFail:     "${plate.state.fail}"
+        // D32 — active/focus state for control sliders + toggle fill.
+        // Reuses state.focus (= vermilion); exposed as a distinct role name
+        // so Switch's control code reads as semantic intent, not hex.
+        readonly property color stateFocus:    "${plate.state.focus}"
 
         // Geometry — numeric (px-stripped).  All QML size bindings use these.
         // captionHeight is fixed by D9 (exclusive-zone contract: 28 logical px).

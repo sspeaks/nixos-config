@@ -1,43 +1,47 @@
-# Plate XIV niri module — configured but dormant.
+# Plate XIV niri module — ACTIVE default session (Batch 2/D20, D33).
 #
-# ACTIVATION PATH:
-#   To switch the live session to niri:
-#     1. Flip `enable` to true below.
-#     2. Set `package` to a non-null niri package (Tank adds it to packages.nix).
-#     3. Remove/adjust portalPackage if a different portal is preferred.
-#     4. Rebuild and switch session in SDDM/greeter.
+# niri is registered as the default session (D33): `hosts/asahi/desktop.nix`
+# sets `defaultSession = "niri"` and lists both `pkgs.niri` and the
+# hand-rolled hyprland-sessions derivation in `sessionPackages` (D33 requires
+# Hyprland remain selectable as a safe fallback — SDDM shows both entries).
+# Hyprland files, config, and packages are all preserved; only the greeter
+# default changes.
 #
-# While disabled this module is evaluated for syntax coverage but installs
-# no session entry, no package, and no portal.  Hyprland remains the active
-# compositor.
+# `pkgs.niri` ships `niri.desktop` natively (`providedSessions = ["niri"]`,
+# `Exec=niri-session`) — no Exec-path patching needed (D19).
 #
-# Do NOT set systemd.enable = true until the session package is present —
-# the assertion in the HM niri module requires a non-null package.
+# portalPackage stays null here: xdg-desktop-portal-gnome / per-desktop
+# portal routing is Tank's D21 (hosts/asahi/desktop.nix), landed
+# separately. Do not set portalPackage until D21 lands, to avoid two
+# owners racing the same portal wiring.
 
-{ asahiPaths, ... }:
+{ asahiPaths, pkgs, ... }:
 
 let
   plate = import ../theme/plate.nix;
 in
 {
   wayland.windowManager.niri = {
-    # ── DORMANT — flip to true when activating the niri session ──────────────
-    enable = false;
+    enable = true;
 
-    # Supply the niri package through Tank's packages.nix when activating.
-    # Setting null here prevents any binary being added to PATH and satisfies
-    # the HM assertion that systemd.enable requires a non-null package.
-    package = null;
+    # Direct nixpkgs package, no pin/patch — the previous "Tank's
+    # packages.nix" plan was stale/over-engineered per Tank's own review;
+    # niri 26.04 builds and runs as-is on this host (verified via
+    # `nix build nixpkgs#niri`, D20).
+    package = pkgs.niri;
 
-    # Disable systemd units while dormant; they require a non-null package.
-    systemd.enable = false;
+    # Installs niri's systemd units (used by niri-session) now that a
+    # non-null package is present.
+    systemd.enable = true;
 
-    # No portal during dormancy — do not activate xdg-desktop-portal-gnome
-    # until niri is the live session.
+    # D21 landed in hosts/asahi/desktop.nix (per-desktop portal routing,
+    # xdg-desktop-portal-gnome for niri). Leave null here — portal wiring
+    # is owned by desktop.nix, not this HM module, to avoid dual ownership.
     portalPackage = null;
 
-    # Config validation requires a non-null package; skip while dormant.
-    checkConfig = false;
+    # Non-null package present — validate the generated config.kdl at
+    # build time via `niri validate` (HM module's checkPhase, D20/D30).
+    checkConfig = true;
 
     # KDL configuration generated from Plate XIV tokens and the immutable
     # wallpaper store path (D5/D6).  wallpaper is asahiPaths.wallpaper,
