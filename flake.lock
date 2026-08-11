@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1786393330,
-        "narHash": "sha256-aOkBV1h7iQoezlCf4C0cOQLLIh2dROzEt8KThVq/7ks=",
+        "lastModified": 1786413213,
+        "narHash": "sha256-Ow7mBvTXgb8RmOaVdGsO9D1EeO0chu9Zg12JFCaoXqg=",
         "owner": "sspeaks",
         "repo": "ai-coaching-dashboard",
-        "rev": "7f63138340565fe1b25e11d860d2a4763713f96c",
+        "rev": "dfb3dad4d7f5889defd90aa237ceb220e3816838",
         "type": "github"
       },
       "original": {
