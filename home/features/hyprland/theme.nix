@@ -1,5 +1,7 @@
 { pkgs, ... }:
 
+# D16: GTK/icons/cursor migrated to neutral Plate XIV packages (aarch64 verified).
+# adw-gtk3 dark, Papirus-Dark, Bibata-Modern-Classic size 36.
 {
   # hyprpaper crashes on Asahi Linux due to a null monitor description; swaybg is used instead.
   services.hyprpaper.enable = false;
@@ -7,18 +9,12 @@
   gtk = {
     enable = true;
     theme = {
-      name = "catppuccin-mocha-blue-standard";
-      package = pkgs.catppuccin-gtk.override {
-        accents = [ "blue" ];
-        variant = "mocha";
-      };
+      name = "adw-gtk3-dark";
+      package = pkgs.adw-gtk3;
     };
     iconTheme = {
       name = "Papirus-Dark";
-      package = pkgs.catppuccin-papirus-folders.override {
-        accent = "blue";
-        flavor = "mocha";
-      };
+      package = pkgs.papirus-icon-theme;
     };
   };
 
@@ -28,7 +24,7 @@
 
   dconf.settings."org/gnome/desktop/interface" = {
     color-scheme = "prefer-dark";
-    gtk-theme = "catppuccin-mocha-blue-standard";
+    gtk-theme = "adw-gtk3-dark";
   };
 
   qt = {
@@ -38,8 +34,9 @@
   };
 
   home.pointerCursor = {
-    name = "catppuccin-mocha-blue-cursors";
-    package = pkgs.catppuccin-cursors.mochaBlue;
+    enable = true;
+    name = "Bibata-Modern-Classic";
+    package = pkgs.bibata-cursors;
     size = 36;
     gtk.enable = true;
   };

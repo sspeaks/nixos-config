@@ -1,7 +1,7 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  asahiPaths = import ./paths.nix;
+  asahiPaths = import ./paths.nix { inherit pkgs; };
 in
 {
   imports = [
@@ -15,7 +15,6 @@ in
     ./services.nix
     inputs.haskell-conjunction.nixosModules.spacetrack-leo-ingest
     ./spacetrack-leo-ingest.nix
-    ./bing-wallpaper.nix
   ];
 
   _module.args = {
