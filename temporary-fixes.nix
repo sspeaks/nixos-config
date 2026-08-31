@@ -60,22 +60,22 @@ in
         # fastapi stack). Detection is heuristic (whether the disabled tests now
         # pass isn't knowable at eval time), so we re-flag on version change and
         # hand over a `verify` command that rebuilds with upstream's test suite.
-        pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
-          (_: python-prev:
-            (lib.optionalAttrs (python-prev ? inline-snapshot) {
-              inline-snapshot = notice
-                {
-                  obsolete = python-prev.inline-snapshot.version != "0.32.5";
-                  what = inlineSnapshotFix.what;
-                  evidence = "heuristic: version is now ${python-prev.inline-snapshot.version} (workaround written for 0.32.5)";
-                  verify = verifyBuild inlineSnapshotFix.attr;
-                }
-                (python-prev.inline-snapshot.overridePythonAttrs (_: {
-                  doCheck = false;
-                }));
-            })
-          )
-        ];
+        # pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
+        #   (_: python-prev:
+        #     (lib.optionalAttrs (python-prev ? inline-snapshot) {
+        #       inline-snapshot = notice
+        #         {
+        #           obsolete = python-prev.inline-snapshot.version != "0.32.5";
+        #           what = inlineSnapshotFix.what;
+        #           evidence = "heuristic: version is now ${python-prev.inline-snapshot.version} (workaround written for 0.32.5)";
+        #           verify = verifyBuild inlineSnapshotFix.attr;
+        #         }
+        #         (python-prev.inline-snapshot.overridePythonAttrs (_: {
+        #           doCheck = false;
+        #         }));
+        #     })
+        #   )
+        # ];
       })
   ];
 
