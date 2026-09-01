@@ -38,6 +38,15 @@
   #   enable = true;
   #   settings.General.EnableNetworkConfiguration = true;
   # };
+  system.autoUpgrade = {
+    enable = true;
+    operation = "boot";
+    flake = "github:sspeaks/nixos-config#nixpi5";
+    dates = "04:30";
+    randomizedDelaySec = "15min";
+    allowReboot = true;
+  };
+
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;

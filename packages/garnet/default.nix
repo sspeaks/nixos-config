@@ -2,25 +2,25 @@
 rec {
   server = pkgs.buildDotnetModule rec {
     pname = "garnet";
-    version = "1.1.10";
+    version = "2.1.3";
 
     src = pkgs.fetchFromGitHub {
       owner = "microsoft";
       repo = "garnet";
       rev = "v${version}";
-      hash = "sha256-EmwDc6kbOL++g1Xq4LoV3JuxYWSifOmv8vvWKsU3CE4=";
+      hash = "sha256-2hFxb0lZj6jUgOVlYQj5z/RZDAqaa1MRvGwWsRsHnDQ=";
     };
     executables = [ "GarnetServer" ];
     projectFile = "main/GarnetServer/GarnetServer.csproj";
     nugetDeps = ./deps.json;
 
-    dotnet-sdk = pkgs.dotnetCorePackages.sdk_9_0;
-    dotnet-runtime = pkgs.dotnetCorePackages.runtime_9_0;
+    dotnet-sdk = pkgs.dotnetCorePackages.sdk_10_0;
+    dotnet-runtime = pkgs.dotnetCorePackages.runtime_10_0;
     dotnetBuildFlags = "-m:1";
     # Garnet multi-targets net8.0;net9.0 — restrict to net9.0 only
     # since we only provide the .NET 9.0 SDK/runtime.
-    dotnetFlags = [ "-p:TargetFrameworks=net9.0" ];
-    dotnetInstallFlags = [ "-f" "net9.0" ];
+    dotnetFlags = [ "-p:TargetFrameworks=net10.0" ];
+    dotnetInstallFlags = [ "-f" "net10.0" ];
 
     meta = {
       description = "Microsoft Garnet — remote cache-store from Microsoft Research";

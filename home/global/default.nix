@@ -33,17 +33,30 @@
     };
   };
 
-  systemd.user.services.nix-gc-user = {
-    Unit.Description = "Nix user profile garbage collection";
+  # Trim old generations of the per-user profiles only. Reclaiming the store
+  # itself is the system GC's job (nix.gc in hosts/common/global); doing it here
+  # too just deadlocks on the GC lock and frees nothing. Running daily keeps
+  # these roots released well before the weekly system GC runs.
+  systemd.user.services.nix-user-profile-trim = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+    Unit.Description = "Trim old Nix user profile generations";
     Service = {
       Type = "oneshot";
-      ExecStart = "${pkgs.nix}/bin/nix-collect-garbage --delete-older-than 14d";
+      ExecStart =
+        let
+          profiles = [
+            "%h/.local/state/nix/profiles/home-manager"
+            "%h/.local/state/nix/profiles/profile"
+          ];
+          trim = p: "${config.nix.package}/bin/nix-env --profile ${p} --delete-generations 14d";
+        in
+        map (p: "-${trim p}") profiles;
     };
   };
-  systemd.user.timers.nix-gc-user = {
-    Unit.Description = "Nix user profile garbage collection timer";
+  systemd.user.timers.nix-user-profile-trim = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+    Unit.Description = "Trim old Nix user profile generations";
     Timer = {
-      OnCalendar = "weekly";
+      OnCalendar = "daily";
+      RandomizedDelaySec = "1h";
       Persistent = true;
     };
     Install.WantedBy = [ "timers.target" ];
