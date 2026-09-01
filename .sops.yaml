@@ -3,6 +3,9 @@ keys:
     - &sspeaks age1ngm5476nk6y7vqqj0anwqsf3vr4yw6ppr0wn20prrp6zv96g4fuswqzrlv
   hosts:
     - &mbp age1m02wz3xqkg6z0fflpdhvph0psw0vavhdusz9lzg3daa5aammc5xsxtwzds
+    # Also covers the `nixpi4-bare` configuration: it runs on the same Pi 4 and
+    # the same SD card, so it presents the same /etc/ssh/ssh_host_ed25519_key
+    # and therefore the same age identity.
     - &nixpi age1nfquhf85wlt2ez7c4me0y8yqpcrnyn68vy7lkfu5tec873rad5gsmg2n3x
     - &nixosazure age1kw6rmz7v2v3p88tazheyv3a80ls55e2x8jy33svewu58q7w7gqzs2nuagp
     - &nixosWSLwork age1rq8j2df482hyksxcatvmvetcta9lkvuyhwz3h52037d7xele7udq24pe23

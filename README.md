@@ -6,7 +6,8 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 
 | Host | Arch | Description |
 |------|------|-------------|
-| `nixpi` | aarch64-linux | Raspberry Pi — minimal headless server |
+| `nixpi` | aarch64-linux | Raspberry Pi 4 — travel router (hostapd AP, dnsmasq, nftables NAT, WireGuard) |
+| `nixpi4-bare` | aarch64-linux | Same Pi 4 as `nixpi`, minus the router — plain headless SSH box |
 | `nixpi5` | aarch64-linux | Raspberry Pi 5 — Authentik, Home Assistant, SnappyMail, Garage Monitor |
 | `NixOS-WSL` | x86_64-linux | WSL dev environment |
 | `NixOS-WSL-work` | x86_64-linux | WSL dev environment (work) |
@@ -87,7 +88,7 @@ The workflow [.github/workflows/host-build-cache.yml](.github/workflows/host-bui
 
 - `nixos-azure` on `x86_64-linux`
 - `pogbot` on `x86_64-linux`
-- `nixpi` on `aarch64-linux`
+- `nixpi` and `nixpi4-bare` on `aarch64-linux`
 - `nixpi5` on `aarch64-linux`
 - `asahi` on `aarch64-linux`
 

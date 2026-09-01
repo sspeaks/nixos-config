@@ -60,7 +60,7 @@ jobs:
 
 
   build-nixpi:
-    name: Build nixpi closure
+    name: Build nixpi closures
     runs-on: ubuntu-24.04-arm
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
@@ -89,10 +89,17 @@ jobs:
           name: ${{ env.CACHIX_CACHE_NAME }}
           authToken: ${{ env.CACHIX_AUTH_TOKEN }}
 
-      - name: Build host closure (no activation)
+      - name: Build nixpi host closure (no activation)
         run: |
           nix build --show-trace --print-build-logs --accept-flake-config \
             .#nixosConfigurations.nixpi.config.system.build.toplevel
+
+      # Same Pi 4 hardware/kernel as nixpi, so this reuses the warm store of the
+      # step above instead of paying for a second ARM runner.
+      - name: Build nixpi4-bare host closure (no activation)
+        run: |
+          nix build --show-trace --print-build-logs --accept-flake-config \
+            .#nixosConfigurations.nixpi4-bare.config.system.build.toplevel
 
   build-nixpi5:
     name: Build nixpi5 closure

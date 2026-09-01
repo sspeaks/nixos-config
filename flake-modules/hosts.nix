@@ -10,6 +10,8 @@ in
 {
   flake.nixosConfigurations = {
     nixpi = mkHost ../hosts/nixpi [ ];
+    # Same Pi 4 as `nixpi`, minus the travel-router stack.
+    nixpi4-bare = mkHost ../hosts/nixpi4-bare [ ];
     NixOS-WSL = mkHost ../hosts/nixosWSL [ ];
     NixOS-WSL-work = mkHost ../hosts/nixosWSL-work [ inputs.vscode-server.nixosModules.default ];
     nixos-azure = mkHost ../hosts/nixos-azure [
