@@ -4,8 +4,20 @@ let
     format = "yaml";
     sopsFile = ../../secrets/nixos-azure.yaml;
   };
-  patchedPython312Packages = pkgs.python312Packages.overrideScope
-    (_: pythonPrev: {
+  pythonOverrides = _: pythonPrev:
+    {
+      inline-snapshot = pythonPrev.inline-snapshot.overridePythonAttrs (
+        old:
+        lib.optionalAttrs (old.version == "0.34.2") {
+          # Upstream's generated-doc snapshots track older Black/Rich output.
+          # Keep the functional test suite enabled while excluding those docs.
+          disabledTestPaths = (old.disabledTestPaths or [ ]) ++ [
+            "tests/test_docs.py"
+          ];
+        }
+      );
+    }
+    // {
       buildPythonPackage = args:
         pythonPrev.buildPythonPackage (
           if lib.isAttrs args && (args.pname or null) == "discord_ext_voice_recv" then
@@ -18,8 +30,13 @@ let
           else
             args
         );
-    });
+    };
+  patchedPython312 = pkgs.python312.override {
+    packageOverrides = pythonOverrides;
+  };
+  patchedPython312Packages = patchedPython312.pkgs;
   patchedPkgs = pkgs // {
+    python312 = patchedPython312;
     python312Packages = patchedPython312Packages;
   };
 in
