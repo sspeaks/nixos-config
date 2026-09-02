@@ -37,14 +37,22 @@
     config.allowUnfree = lib.mkDefault true;
   };
 
-  # sd-image-aarch64.nix imports profiles/base.nix, which turns on ZFS support.
-  # That drags the ZFS kernel modules into the image and they fail to build
-  # against the Raspberry Pi 6.18 kernel, taking `modules-shrunk` and therefore
-  # the whole SD image down with them.
+  # sd-image-aarch64.nix imports profiles/base.nix, which turns on ZFS support
+  # and `hardware.enableAllHardware`. Both break the build on this Pi:
   #
-  # This appliance has one ext4 USB disk and an ext4 SD card. ZFS is not merely
-  # unnecessary here, it is the direct cause of the build failure.
+  #   * ZFS drags its kernel modules into the image and they fail to build
+  #     against the Raspberry Pi 6.18 kernel.
+  #   * enableAllHardware requests a broad module list intended for generic
+  #     install media, including `dw-hdmi`, which the Pi kernel does not build:
+  #       modprobe: FATAL: Module dw-hdmi not found
+  #     That fails `modules-shrunk` and takes the whole SD image with it.
+  #
+  # Neither is wanted here. This is a single-purpose appliance on known
+  # hardware with one ext4 USB disk and one ext4 SD card -- not install media
+  # that has to boot on an unknown machine. The Pi-specific modules it does
+  # need come from ../nixpi/hardware-config.nix (nixos-hardware raspberry-pi-4).
   boot.supportedFilesystems.zfs = lib.mkForce false;
+  hardware.enableAllHardware = lib.mkForce false;
 
   networking = {
     hostName = "raspberrypi"; # continuity decision 1 -- see header
