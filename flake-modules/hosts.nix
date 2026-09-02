@@ -23,6 +23,19 @@ in
       ../hosts/nixos-azure/disko.nix
     ];
     pogbot = mkHost ../hosts/pogbot [ ];
+    # P2.1 replacement Azure edge: aarch64, Gen2 UEFI, specialized VHD.
+    proxy = mkHost ../hosts/proxy [
+      inputs.nixpkgs.nixosModules.notDetected
+      "${inputs.nixpkgs}/nixos/modules/virtualisation/azure-image.nix"
+    ];
+    # P2.2 `.106` Time Machine appliance. Note the attribute name differs from
+    # the host's own networking.hostName (`raspberrypi`) on purpose -- see the
+    # continuity notes in hosts/raspberrytimemachine/default.nix.
+    # sd-image-aarch64 is what provides config.system.build.sdImage; without it
+    # there is no bootable SD artifact, only a toplevel closure.
+    raspberrytimemachine = mkHost ../hosts/raspberrytimemachine [
+      "${inputs.nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
+    ];
     vm = mkHost ../hosts/vm [ ];
     asahi = mkHost ../hosts/asahi
       (inputs.nixpkgs.lib.optional (temporaryHostModules ? asahi) temporaryHostModules.asahi);

@@ -34,11 +34,18 @@ in
     };
 
     passwordHashFile = lib.mkOption {
-      type = lib.types.path;
+      type = lib.types.nullOr lib.types.path;
+      default = null;
       description = ''
         Path to a file containing the rescue account's password hash. Must be
         available before users are created, so the corresponding sops secret
         needs `neededForUsers = true`.
+
+        May be null, which creates the account LOCKED. That is the correct
+        state for a freshly built specialized image: the host's SSH key does
+        not exist until it first boots, so sops cannot yet decrypt anything for
+        it. The account is created locked in the image and the real hash is
+        deployed once the host key is known and added to `.sops.yaml`.
       '';
     };
 
@@ -73,8 +80,14 @@ in
     users.users.${cfg.rescueUser} = {
       isNormalUser = true;
       extraGroups = [ "wheel" ];
-      hashedPasswordFile = cfg.passwordHashFile;
-    };
+    } // (
+      if cfg.passwordHashFile != null
+      then { hashedPassword = lib.mkForce null; hashedPasswordFile = cfg.passwordHashFile; }
+      # "!" is an invalid hash, so password auth always fails: the account
+      # exists and is ready, but cannot be logged into until a real hash is
+      # deployed. This is deliberate for an image that has no sops identity yet.
+      else { hashedPassword = "!"; }
+    );
 
     # Keep a few generations selectable from the boot menu. A boot-time failure
     # is outside any running timer's reach, so the previous generation in the
