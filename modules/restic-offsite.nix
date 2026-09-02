@@ -111,9 +111,17 @@ in
           # set -euo pipefail matters: without it a failed pg_dump would be
           # ignored and the previous good .dump would be re-uploaded as though
           # it were current.
+          #
+          # The staging ROOT is 0711, not 0700. pg_dump runs as `postgres` via
+          # runuser and must traverse this directory to reach its own 0700
+          # subdirectory; a 0700 root-owned parent denies that traversal and the
+          # dump fails with EACCES. 0711 grants traverse without list, so the
+          # directory's contents stay unenumerable while the child directories
+          # keep their own 0700 ownership boundaries.
           backupPrepareCommand = ''
             set -euo pipefail
-            ${pkgs.coreutils}/bin/install -d -m 0700 ${cfg.stagingDir}
+            ${pkgs.coreutils}/bin/install -d -m 0711 ${builtins.dirOf cfg.stagingDir}
+            ${pkgs.coreutils}/bin/install -d -m 0711 ${cfg.stagingDir}
             ${pkgs.coreutils}/bin/install -d -m 0700 ${cfg.stagingDir}/sqlite
             ${pkgs.coreutils}/bin/install -d -o postgres -g postgres -m 0700 ${cfg.stagingDir}/postgres
             ${rmNew}
