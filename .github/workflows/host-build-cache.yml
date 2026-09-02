@@ -221,3 +221,83 @@ jobs:
           # is for. Upstream paths come from cache.nixos.org at fetch time,
           # signature-verified against the official key.
           xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
+
+  build-images:
+    name: Build proxy VHD and Pi SD image
+    runs-on: ubuntu-24.04-arm
+    env:
+      CACHIX_CACHE_NAME: sspeaks-nix
+      CACHIX_PUBLIC_KEY: sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o=
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+
+      - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
+        with:
+          use-flakehub: disabled
+          use-gha-cache: enabled
+
+      - name: Configure Cachix (read-only substituter)
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
+        with:
+          name: ${{ env.CACHIX_CACHE_NAME }}
+          skipPush: true
+
+      # P2.1: these are the REAL artifacts. A toplevel closure is neither an
+      # Azure VHD nor a bootable SD card, and G-ARM-REPLACEMENT may not pass
+      # until both have been produced, inspected and checksummed here --
+      # BEFORE nixos-aarch64-linux (the only known ARM builder) is deleted.
+      - name: Build proxy VHD and Pi SD image
+        run: |
+          set -euo pipefail
+          : > closures.txt
+          nix build --show-trace --print-build-logs --accept-flake-config \
+            --no-link --print-out-paths \
+            .#packages.aarch64-linux.proxyAzureImage >> closures.txt
+          nix build --show-trace --print-build-logs --accept-flake-config \
+            --no-link --print-out-paths \
+            .#packages.aarch64-linux.raspberrytimemachineImage >> closures.txt
+          nix build --show-trace --print-build-logs --accept-flake-config \
+            --no-link .#nixosConfigurations.proxy.config.system.build.toplevel
+          cat closures.txt
+
+      - name: Inspect and checksum artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          PROXY_IMAGE="$(sed -n 1p closures.txt)"
+          PI_IMAGE="$(sed -n 2p closures.txt)"
+
+          VHD="$(find "$PROXY_IMAGE" -name '*.vhd' | head -1)"
+          test -s "$VHD"
+          nix run nixpkgs#qemu-utils -- qemu-img info "$VHD" | tee artifacts/proxy-vhd-info.txt
+          # Azure requires a FIXED vhd; a dynamic one is rejected at
+          # disk-create time, so assert it rather than eyeballing the log.
+          grep -qi 'file format: vpc' artifacts/proxy-vhd-info.txt
+          nix run nixpkgs#util-linux -- fdisk -l "$VHD" | tee artifacts/proxy-vhd-fdisk.txt
+          grep -qi 'EFI System' artifacts/proxy-vhd-fdisk.txt
+          sha256sum "$VHD" | tee artifacts/proxy-vhd.sha256
+          wc -c < "$VHD" | tee artifacts/proxy-vhd-bytes.txt
+
+          IMAGE_ZST="$(find "$PI_IMAGE" -name '*.img.zst' | head -1)"
+          test -s "$IMAGE_ZST"
+          nix run nixpkgs#zstd -- -t "$IMAGE_ZST"
+          sha256sum "$IMAGE_ZST" | tee artifacts/raspberrytimemachine-image.sha256
+          nix run nixpkgs#zstd -- -dc "$IMAGE_ZST" > artifacts/rtm.img
+          nix run nixpkgs#util-linux -- fdisk -l artifacts/rtm.img | tee artifacts/pi-image-fdisk.txt
+          rm -f artifacts/rtm.img
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: p2-1-image-evidence
+          path: artifacts/
+          retention-days: 30
+
+      - name: Publish to Cachix
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -s closures.txt
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
