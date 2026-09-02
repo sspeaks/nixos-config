@@ -223,7 +223,7 @@ jobs:
           xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-images:
-    name: Build proxy VHD and Pi SD image
+    name: Build Pi SD image and Arm64 closures
     runs-on: ubuntu-24.04-arm
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
@@ -231,20 +231,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      # make-disk-image.nix builds inside a VM and therefore requires the
-      # `kvm` system feature. The Nix installer does not advertise it by
-      # default, so declare it here -- and prove /dev/kvm actually exists
-      # before the build, since a missing feature fails late and cryptically.
-      - name: Verify KVM is available
-        run: |
-          set -euo pipefail
-          ls -l /dev/kvm
-          echo "kvm present"
-
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
-        with:
-          extra-conf: |
-            system-features = nixos-test benchmark big-parallel uid-range kvm
 
       - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
         with:
@@ -261,44 +248,48 @@ jobs:
       # Azure VHD nor a bootable SD card, and G-ARM-REPLACEMENT may not pass
       # until both have been produced, inspected and checksummed here --
       # BEFORE nixos-aarch64-linux (the only known ARM builder) is deleted.
-      - name: Build proxy VHD and Pi SD image
+      # NOTE: the Azure VHD is deliberately NOT built here.
+      #
+      # `make-disk-image.nix` runs inside a VM and requires the `kvm` system
+      # feature. GitHub-hosted ubuntu-24.04-arm runners have no /dev/kvm
+      # (verified 2026-09-02: "ls: cannot access '/dev/kvm'"), so the VHD
+      # cannot be produced on this runner at all -- advertising the feature
+      # only moves the failure later.
+      #
+      # The VHD is instead built on nixpi5, which is real aarch64 hardware
+      # WITH /dev/kvm and 78 GB free. That is strictly better than the
+      # migration plan's assumption of "native Arm64 CI" for this artifact:
+      # it costs nothing, is always available, and -- the point of Checkpoint
+      # 2 -- it removes the dependency on the Azure ARM build VM entirely.
+      #
+      # Everything below needs no VM and is genuinely faster here.
+      - name: Build Pi SD image and proxy closure
         run: |
           set -euo pipefail
           : > closures.txt
           nix build --show-trace --print-build-logs --accept-flake-config \
             --no-link --print-out-paths \
-            .#packages.aarch64-linux.proxyAzureImage >> closures.txt
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            --no-link --print-out-paths \
             .#packages.aarch64-linux.raspberrytimemachineImage >> closures.txt
           nix build --show-trace --print-build-logs --accept-flake-config \
-            --no-link .#nixosConfigurations.proxy.config.system.build.toplevel
+            --no-link --print-out-paths \
+            .#nixosConfigurations.proxy.config.system.build.toplevel >> closures.txt
           cat closures.txt
 
-      - name: Inspect and checksum artifacts
+      - name: Inspect and checksum the SD image
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          PROXY_IMAGE="$(sed -n 1p closures.txt)"
-          PI_IMAGE="$(sed -n 2p closures.txt)"
-
-          VHD="$(find "$PROXY_IMAGE" -name '*.vhd' | head -1)"
-          test -s "$VHD"
-          nix run nixpkgs#qemu-utils -- qemu-img info "$VHD" | tee artifacts/proxy-vhd-info.txt
-          # Azure requires a FIXED vhd; a dynamic one is rejected at
-          # disk-create time, so assert it rather than eyeballing the log.
-          grep -qi 'file format: vpc' artifacts/proxy-vhd-info.txt
-          nix run nixpkgs#util-linux -- fdisk -l "$VHD" | tee artifacts/proxy-vhd-fdisk.txt
-          grep -qi 'EFI System' artifacts/proxy-vhd-fdisk.txt
-          sha256sum "$VHD" | tee artifacts/proxy-vhd.sha256
-          wc -c < "$VHD" | tee artifacts/proxy-vhd-bytes.txt
-
+          PI_IMAGE="$(sed -n 1p closures.txt)"
           IMAGE_ZST="$(find "$PI_IMAGE" -name '*.img.zst' | head -1)"
           test -s "$IMAGE_ZST"
           nix run nixpkgs#zstd -- -t "$IMAGE_ZST"
           sha256sum "$IMAGE_ZST" | tee artifacts/raspberrytimemachine-image.sha256
           nix run nixpkgs#zstd -- -dc "$IMAGE_ZST" > artifacts/rtm.img
           nix run nixpkgs#util-linux -- fdisk -l artifacts/rtm.img | tee artifacts/pi-image-fdisk.txt
+          # A Pi image must be MBR/DOS with a FAT firmware partition; a GPT
+          # layout here would not boot on a Pi 4 at all.
+          grep -qiE 'Disklabel type: dos' artifacts/pi-image-fdisk.txt
+          grep -qiE 'FAT' artifacts/pi-image-fdisk.txt
           rm -f artifacts/rtm.img
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
