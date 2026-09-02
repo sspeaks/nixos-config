@@ -37,6 +37,15 @@
     config.allowUnfree = lib.mkDefault true;
   };
 
+  # sd-image-aarch64.nix imports profiles/base.nix, which turns on ZFS support.
+  # That drags the ZFS kernel modules into the image and they fail to build
+  # against the Raspberry Pi 6.18 kernel, taking `modules-shrunk` and therefore
+  # the whole SD image down with them.
+  #
+  # This appliance has one ext4 USB disk and an ext4 SD card. ZFS is not merely
+  # unnecessary here, it is the direct cause of the build failure.
+  boot.supportedFilesystems.zfs = lib.mkForce false;
+
   networking = {
     hostName = "raspberrypi"; # continuity decision 1 -- see header
     useDHCP = lib.mkDefault true;
