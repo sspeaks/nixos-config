@@ -14,10 +14,22 @@ in
     inputs.ai-coaching-dashboard.nixosModules.aiCoaching
     inputs.determinate.nixosModules.default
     ../../modules/restic-offsite.nix
+    ../../modules/azure-serial-console.nix
     ./ai-coaching.nix
   ];
 
   users.users.sspeaks.hashedPassword = lib.mkForce null;
+
+  # P1.3 Azure lockout guard. neededForUsers is required because the hash must
+  # exist before user creation runs.
+  sops.secrets.serial-rescue-password-hash = sopsFileLocation // {
+    neededForUsers = true;
+  };
+
+  services.azureSerialConsole = {
+    enable = true;
+    passwordHashFile = config.sops.secrets.serial-rescue-password-hash.path;
+  };
 
   sops.secrets = {
     vid-streamer-login-user = sopsFileLocation // {

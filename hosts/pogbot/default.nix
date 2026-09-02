@@ -1,4 +1,4 @@
-{ inputs, lib, ... }:
+{ inputs, lib, config, ... }:
 let
   sopsFileLocation = {
     format = "yaml";
@@ -14,10 +14,24 @@ in
     ./pogbot.nix
     inputs.boggle.nixosModules.default
     (import ../../modules/wireguard/default.nix { inherit sopsFileLocation; })
+    ../../modules/azure-serial-console.nix
     inputs.determinate.nixosModules.default
   ];
 
   users.users.sspeaks.hashedPassword = lib.mkForce null;
+
+  # P1.3 Azure lockout guard. Azure offers no physical console and no
+  # link-local rescue, so the serial console is the only way back in after a
+  # bad sshd/firewall/network change. neededForUsers is required because the
+  # hash must exist before user creation runs.
+  sops.secrets.serial-rescue-password-hash = sopsFileLocation // {
+    neededForUsers = true;
+  };
+
+  services.azureSerialConsole = {
+    enable = true;
+    passwordHashFile = config.sops.secrets.serial-rescue-password-hash.path;
+  };
 
   myWireguard.enable = true;
 
