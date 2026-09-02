@@ -13,6 +13,7 @@ in
     inputs.large-video-streamer.nixosModules.vidStreamer
     inputs.ai-coaching-dashboard.nixosModules.aiCoaching
     inputs.determinate.nixosModules.default
+    ../../modules/restic-offsite.nix
     ./ai-coaching.nix
   ];
 
@@ -68,6 +69,44 @@ in
       owner = "root";
       group = "root";
       mode = "0400";
+    };
+    restic-password = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+    restic-azure-environment = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+  };
+
+  # P1.2 offsite backup. The mandatory data gate is /srv/videos (32 GB of
+  # irreplaceable source recordings) plus /var/lib/ai-coaching (8.4 GB of
+  # application state, not disposable derived output).
+  #
+  # /var/lib/vid-streamer/hls is deliberately EXCLUDED: it is 35 GB of derived
+  # HLS segments regenerable from the source recordings. Backing it up would
+  # nearly double the repository and add 35 GB to every restore test for no
+  # recovery value.
+  services.resticOffsite = {
+    enable = true;
+    container = "vid-stream";
+    paths = [
+      "/srv/videos"
+      "/var/lib/ai-coaching"
+      "/var/lib/vid-streamer"
+    ];
+    exclude = [
+      "/var/lib/vid-streamer/hls"
+    ];
+    postgresDatabases = [ "evidence" ];
+    sqliteDatabases = {
+      # WAL-mode databases: `.backup` gives a consistent snapshot; a plain file
+      # copy would miss the -wal contents and could restore torn state.
+      vid-streamer-app = "/var/lib/vid-streamer/app.db";
+      speakr-transcriptions = "/var/lib/ai-coaching/speakr/instance/transcriptions.db";
     };
   };
 
