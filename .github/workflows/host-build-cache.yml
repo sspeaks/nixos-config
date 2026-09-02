@@ -46,7 +46,7 @@ jobs:
       # Read-only substituter setup. No authToken: builds must not hold a
       # cache-write credential.
       - name: Configure Cachix (read-only substituter)
-        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
+        uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
@@ -88,7 +88,7 @@ jobs:
           use-gha-cache: enabled
 
       - name: Configure Cachix (read-only substituter)
-        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
+        uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
@@ -131,7 +131,7 @@ jobs:
           use-gha-cache: enabled
 
       - name: Configure Cachix (read-only substituter)
-        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
+        uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
@@ -171,7 +171,7 @@ jobs:
           use-gha-cache: enabled
 
       - name: Configure Cachix (read-only substituter)
-        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
+        uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
