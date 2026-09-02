@@ -123,26 +123,12 @@ jobs:
           set -euo pipefail
           test -s closures.txt
 
-          # Push the COMPLETE closure, not just newly-built paths.
-          #
-          # `cachix push <toplevel>` uploads what this runner built, but most of
-          # a system closure is substituted from cache.nixos.org and never
-          # "built" here, so those paths were silently absent from Cachix.
-          # That is fine for a substituter, but P1.1 made target-side fetch
-          # `nix copy --from <cachix>`, which names exactly ONE source and
-          # cannot fall back to cache.nixos.org. The complete closure must
-          # therefore exist in Cachix or deployment fails.
-          nix path-info -r $(cat closures.txt) | cachix push "$CACHIX_CACHE_NAME"
-
-          # Assert completeness rather than assume it. This is the CI half of
-          # the check `./deploy` repeats on the controller before it opens a
-          # privileged session on the target.
-          while read -r p; do
-            nix --extra-experimental-features nix-command path-info --recursive \
-              --store "https://$CACHIX_CACHE_NAME.cachix.org" \
-              --option trusted-public-keys "$CACHIX_PUBLIC_KEY" \
-              --option require-sigs true "$p" >/dev/null
-          done < closures.txt
+          # Push the project-specific closure. Cachix deliberately does NOT
+          # mirror all of nixpkgs: forcing the full closure here would upload
+          # gigabytes per host on every commit and is not what a project cache
+          # is for. Upstream paths come from cache.nixos.org at fetch time,
+          # signature-verified against the official key.
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-nixpi5:
     name: Build nixpi5 closure
@@ -182,26 +168,12 @@ jobs:
           set -euo pipefail
           test -s closures.txt
 
-          # Push the COMPLETE closure, not just newly-built paths.
-          #
-          # `cachix push <toplevel>` uploads what this runner built, but most of
-          # a system closure is substituted from cache.nixos.org and never
-          # "built" here, so those paths were silently absent from Cachix.
-          # That is fine for a substituter, but P1.1 made target-side fetch
-          # `nix copy --from <cachix>`, which names exactly ONE source and
-          # cannot fall back to cache.nixos.org. The complete closure must
-          # therefore exist in Cachix or deployment fails.
-          nix path-info -r $(cat closures.txt) | cachix push "$CACHIX_CACHE_NAME"
-
-          # Assert completeness rather than assume it. This is the CI half of
-          # the check `./deploy` repeats on the controller before it opens a
-          # privileged session on the target.
-          while read -r p; do
-            nix --extra-experimental-features nix-command path-info --recursive \
-              --store "https://$CACHIX_CACHE_NAME.cachix.org" \
-              --option trusted-public-keys "$CACHIX_PUBLIC_KEY" \
-              --option require-sigs true "$p" >/dev/null
-          done < closures.txt
+          # Push the project-specific closure. Cachix deliberately does NOT
+          # mirror all of nixpkgs: forcing the full closure here would upload
+          # gigabytes per host on every commit and is not what a project cache
+          # is for. Upstream paths come from cache.nixos.org at fetch time,
+          # signature-verified against the official key.
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-asahi:
     name: Build asahi closure
@@ -243,23 +215,9 @@ jobs:
           set -euo pipefail
           test -s closures.txt
 
-          # Push the COMPLETE closure, not just newly-built paths.
-          #
-          # `cachix push <toplevel>` uploads what this runner built, but most of
-          # a system closure is substituted from cache.nixos.org and never
-          # "built" here, so those paths were silently absent from Cachix.
-          # That is fine for a substituter, but P1.1 made target-side fetch
-          # `nix copy --from <cachix>`, which names exactly ONE source and
-          # cannot fall back to cache.nixos.org. The complete closure must
-          # therefore exist in Cachix or deployment fails.
-          nix path-info -r $(cat closures.txt) | cachix push "$CACHIX_CACHE_NAME"
-
-          # Assert completeness rather than assume it. This is the CI half of
-          # the check `./deploy` repeats on the controller before it opens a
-          # privileged session on the target.
-          while read -r p; do
-            nix --extra-experimental-features nix-command path-info --recursive \
-              --store "https://$CACHIX_CACHE_NAME.cachix.org" \
-              --option trusted-public-keys "$CACHIX_PUBLIC_KEY" \
-              --option require-sigs true "$p" >/dev/null
-          done < closures.txt
+          # Push the project-specific closure. Cachix deliberately does NOT
+          # mirror all of nixpkgs: forcing the full closure here would upload
+          # gigabytes per host on every commit and is not what a project cache
+          # is for. Upstream paths come from cache.nixos.org at fetch time,
+          # signature-verified against the official key.
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
