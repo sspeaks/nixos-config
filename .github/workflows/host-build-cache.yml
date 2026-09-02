@@ -231,7 +231,20 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      # make-disk-image.nix builds inside a VM and therefore requires the
+      # `kvm` system feature. The Nix installer does not advertise it by
+      # default, so declare it here -- and prove /dev/kvm actually exists
+      # before the build, since a missing feature fails late and cryptically.
+      - name: Verify KVM is available
+        run: |
+          set -euo pipefail
+          ls -l /dev/kvm
+          echo "kvm present"
+
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+        with:
+          extra-conf: |
+            system-features = nixos-test benchmark big-parallel uid-range kvm
 
       - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
         with:
