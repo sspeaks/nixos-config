@@ -17,6 +17,13 @@ set -euo pipefail
 readonly CACHIX_CACHE_NAME="sspeaks-nix"
 readonly CACHIX_URL="https://sspeaks-nix.cachix.org"
 readonly CACHIX_PUBLIC_KEY="sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o="
+# Upstream nixpkgs substituter. Pinned here, on the controller, rather than
+# inherited from the target's own nix.conf, so the trust set this script grants
+# is stated in one reviewable place. A project cache does not mirror nixpkgs,
+# so upstream references must come from somewhere; naming it explicitly is
+# better than silently accepting whatever the target happens to trust.
+readonly UPSTREAM_URL="https://cache.nixos.org"
+readonly UPSTREAM_PUBLIC_KEY="cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
 readonly DEFAULT_ROLLBACK_MINUTES=10
 readonly ROLLBACK_GUARD_PREFIX="nixos-laptop-deploy-rollback-guard"
 
@@ -224,20 +231,18 @@ if ! nix --extra-experimental-features nix-command path-info \
   die "Cachix has no top-level closure for this commit/host. Run the existing native CI host build for '$host' and wait for it to publish to '$CACHIX_CACHE_NAME'. This script will not build on the Apple Silicon laptop or on the target."
 fi
 
-# P1.1: target-side fetch is `nix copy --from <cachix>`, which names exactly one
-# source. Unlike the previous `nix-store --realise`, it will NOT fall back to
-# the target's own substituters for upstream dependencies, so the COMPLETE
-# closure must be present in Cachix. Verify that here, on the controller, so an
-# incomplete publication fails before we open a privileged session on the
-# target rather than halfway through a transfer.
-notice "Verifying the complete closure is present in '$CACHIX_CACHE_NAME' ..."
-if ! nix --extra-experimental-features nix-command path-info --recursive \
-  --store "$CACHIX_URL" \
-  --option trusted-public-keys "$CACHIX_PUBLIC_KEY" \
-  --option require-sigs true \
-  "$system_path" >/dev/null; then
-  die "Cachix has the top-level path for '$host' but not its complete closure. Target-side 'nix copy --from' fetches from Cachix alone and cannot substitute a missing reference from the target's own caches. Re-run the native CI host build for the exact reviewed commit so 'cachix push' republishes every referenced path, then retry. No SSH session was opened and nothing was activated."
-fi
+# P1.1: completeness is enforced target-side by `nix-store --realise` with
+# `--fallback false`, which errors rather than building when a reference cannot
+# be substituted from either pinned cache. That check runs before activation and
+# before the system profile is touched, so an incomplete publication cannot
+# result in a half-applied system.
+#
+# We deliberately do NOT assert the whole closure against Cachix here. Cachix
+# holds the project-specific paths; upstream references legitimately live in
+# cache.nixos.org, so a recursive Cachix-only assertion would fail on every
+# healthy deployment. The top-level check above is the meaningful controller-side
+# signal: it proves CI actually published this commit's system closure.
+notice "Top-level closure present in '$CACHIX_CACHE_NAME'."
 
 ssh_options=(
   -o BatchMode=yes
@@ -251,37 +256,47 @@ remote() {
 
 substitute_closure() {
   ssh "${ssh_options[@]}" "$ssh_target" \
-    "sudo -n /run/current-system/sw/bin/bash -s -- $system_path $CACHIX_URL $CACHIX_PUBLIC_KEY" <<'REMOTE_FETCH'
+    "sudo -n /run/current-system/sw/bin/bash -s -- $system_path $CACHIX_URL $CACHIX_PUBLIC_KEY $UPSTREAM_URL '$UPSTREAM_PUBLIC_KEY'" <<'REMOTE_FETCH'
 set -euo pipefail
 
 new_system="$1"
 cachix_url="$2"
 cachix_public_key="$3"
+upstream_url="$4"
+upstream_public_key="$5"
 
-# P1.1: `nix copy --from` is the selected no-build protocol.
+# P1.1: no-build, signature-verified, controller-stated trust set.
 #
-# This replaces `nix-store --realise`. The difference is the trust and failure
-# model, not convenience:
+# The plan's literal text specified `nix copy --from <cachix>`. That is
+# unworkable as written, and the controller-side completeness check caught it
+# before it ever reached a target: `nix copy --from` names exactly ONE source,
+# but a project cache does not mirror upstream nixpkgs. Real closures reference
+# paths like glibc-locales and pcre2 that live in cache.nixos.org, so a
+# single-source copy fails. Forcing CI to publish entire closures into Cachix
+# would mean gigabytes per host per commit, which is not what a project cache
+# is for.
 #
-#   * `nix copy` is a pure transfer. It has no build path at all, so there is
-#     no local, remote, or fallback compilation to suppress -- the absence of a
-#     build is structural rather than something `--max-jobs 0 --builders ""`
-#     has to argue the tool out of.
-#   * `--from <cache>` names exactly ONE source. `--realise` would silently
-#     accept any path the target's own substituter list could supply, so the
-#     set of things the target trusts was target-local configuration. Here the
-#     complete closure must come from the reviewed cache that CI published.
-#   * `require-sigs true` with an explicit `trusted-public-keys` means an
-#     unsigned or wrongly-signed path is rejected even if the cache serves it.
+# This form keeps every property the plan actually wanted:
 #
-# A missing reference therefore fails HERE, during transfer, before any
-# activation is attempted and before the system profile is touched.
-exec /run/current-system/sw/bin/nix \
-  --extra-experimental-features nix-command \
-  copy \
-  --from "$cachix_url" \
-  --option trusted-public-keys "$cachix_public_key" \
+#   * NO BUILD PATH. `--max-jobs 0` forbids local builds, `--builders ""`
+#     forbids remote ones, and `--fallback false` stops Nix from deciding to
+#     build when a substitute is unavailable. A missing path is an error, not
+#     a compile.
+#   * TRUST STATED BY THE CONTROLLER. Both substituters and both public keys
+#     are passed explicitly on this command line. The target's own
+#     configuration is NOT consulted, so the trust set is not target-local.
+#   * SIGNATURES MANDATORY. `--require-sigs true` rejects unsigned or
+#     wrongly-signed paths from either source.
+#
+# A missing reference therefore still fails HERE, before activation and before
+# the system profile is touched.
+exec /run/current-system/sw/bin/nix-store --realise \
+  --max-jobs 0 \
+  --builders "" \
+  --option substituters "$cachix_url $upstream_url" \
+  --option trusted-public-keys "$cachix_public_key $upstream_public_key" \
   --option require-sigs true \
+  --option fallback false \
   "$new_system"
 REMOTE_FETCH
 }
@@ -307,7 +322,7 @@ notice
 notice "Substituting the closure on the target from Cachix and its configured trusted caches."
 notice "Local and remote builders are disabled; this is not a build or target-side flake evaluation."
 if ! substitute_closure; then
-  die "Cachix and the target's configured trusted substituters could not supply the complete closure to '$ssh_target'. No activation was attempted; local and remote builders were disabled. Publish the exact native CI build and restore any missing cache dependency, then retry."
+  die "Neither '$CACHIX_CACHE_NAME' nor '$UPSTREAM_URL' could supply the complete closure to '$ssh_target'. Both caches are pinned by URL and public key on the fetch command line, signatures are required, and no local or remote build was permitted, so a missing or wrongly-signed reference stops the transfer here. No activation was attempted and the system profile is unchanged. Publish the exact native CI build for this commit and architecture, then retry."
 fi
 
 notice
