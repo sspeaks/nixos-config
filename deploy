@@ -1,0 +1,497 @@
+#!/usr/bin/env bash
+#
+# Deploy a pre-built NixOS closure from the public Cachix cache. This script
+# evaluates the flake on the controller only; the target never evaluates it.
+# This is deliberately not plain `nixos-rebuild --target-host`: that command's
+# default build phase can realize a foreign closure on the Mac. Here, only the
+# target performs no-build cache realization, so an aarch64-darwin controller
+# works for both aarch64-linux and x86_64-linux cache hits without a local
+# Linux builder.
+#
+# Install this file in the nixos-config checkout (for example as ./deploy).
+
+set -euo pipefail
+
+# Verified from nixos-config's host-build-cache.yml and flake.nix at
+# 6f9de162e47fa3e2c94000cf2fb48523683b2d67.
+readonly CACHIX_CACHE_NAME="sspeaks-nix"
+readonly CACHIX_URL="https://sspeaks-nix.cachix.org"
+readonly CACHIX_PUBLIC_KEY="sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o="
+readonly DEFAULT_ROLLBACK_MINUTES=10
+readonly ROLLBACK_GUARD_PREFIX="nixos-laptop-deploy-rollback-guard"
+
+die() {
+  printf 'ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+notice() {
+  printf '%s\n' "$*"
+}
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  ./deploy [options] <nixosConfiguration>
+
+Options:
+  --dry-run                    Fetch the signed cached closure and show its
+                               diff, but do not activate it. It may populate
+                               the target Nix store; it never changes the
+                               running or booted configuration.
+  --test                       Activate with switch-to-configuration test
+                               (default). The target reboots to its current
+                               boot default if the rollback guard fires.
+  --switch                     Activate permanently after an explicit
+                               confirmation. Use only after a successful test.
+  --rollback-minutes MINUTES   Dead-man guard duration, from 1 through 60
+                               (default: 10).
+  --flake-dir PATH             Clean nixos-config checkout to evaluate
+                               (default: current directory).
+  --ssh-target TARGET          OpenSSH host/host alias to deploy to
+                               (default: <nixosConfiguration>).
+  -h, --help                   Show this help.
+
+The host argument names a flake output, for example:
+  ./deploy nixpi5
+
+The SSH target defaults to the same name, so configure a safe OpenSSH alias
+for each host. If the NixOS configuration and SSH alias differ:
+  ./deploy --ssh-target proxy nixpi5
+
+This script deliberately contains no `nix build` command. A missing Cachix
+closure is an error: build and publish the exact reviewed commit in CI first.
+USAGE
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 ||
+    die "Required command '$1' is not available."
+}
+
+valid_nixos_configuration() {
+  [[ "$1" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]
+}
+
+valid_rollback_minutes() {
+  [[ "$1" =~ ^[1-9][0-9]*$ ]] && (( "$1" <= 60 ))
+}
+
+activation_mode="test"
+activation_mode_explicit=false
+dry_run=false
+rollback_minutes="$DEFAULT_ROLLBACK_MINUTES"
+flake_dir="$PWD"
+ssh_target=""
+host=""
+
+set_activation_mode() {
+  local requested_mode="$1"
+  if [[ "$activation_mode_explicit" == true && "$activation_mode" != "$requested_mode" ]]; then
+    die "Choose only one activation mode: --test or --switch."
+  fi
+  activation_mode="$requested_mode"
+  activation_mode_explicit=true
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --dry-run)
+      dry_run=true
+      ;;
+    --test)
+      set_activation_mode "test"
+      ;;
+    --switch)
+      set_activation_mode "switch"
+      ;;
+    --rollback-minutes)
+      (( $# >= 2 )) || die "--rollback-minutes requires a value."
+      rollback_minutes="$2"
+      shift
+      ;;
+    --flake-dir)
+      (( $# >= 2 )) || die "--flake-dir requires a path."
+      flake_dir="$2"
+      shift
+      ;;
+    --ssh-target)
+      (( $# >= 2 )) || die "--ssh-target requires an OpenSSH target."
+      ssh_target="$2"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      (( $# == 1 )) || die "Expected exactly one NixOS configuration after --."
+      host="$1"
+      ;;
+    -*)
+      die "Unknown option: $1"
+      ;;
+    *)
+      if [[ -n "$host" ]]; then
+        die "Expected one NixOS configuration, received both '$host' and '$1'."
+      fi
+      host="$1"
+      ;;
+  esac
+  shift
+done
+
+[[ -n "$host" ]] || {
+  usage >&2
+  exit 2
+}
+valid_nixos_configuration "$host" ||
+  die "Invalid NixOS configuration '$host'. Use only letters, digits, '_' and '-'."
+valid_rollback_minutes "$rollback_minutes" ||
+  die "--rollback-minutes must be an integer from 1 through 60."
+
+if [[ -z "$ssh_target" ]]; then
+  ssh_target="$host"
+fi
+[[ "$ssh_target" != -* ]] ||
+  die "--ssh-target must be an OpenSSH destination, not an SSH option."
+
+for required_command in git nix ssh; do
+  require_command "$required_command"
+done
+
+flake_dir="$(cd "$flake_dir" && pwd -P)" ||
+  die "Cannot enter flake directory '$flake_dir'."
+[[ -f "$flake_dir/flake.nix" ]] ||
+  die "'$flake_dir' does not contain flake.nix. Set --flake-dir to nixos-config."
+
+git -C "$flake_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
+  die "'$flake_dir' is not a Git checkout. Deploy an immutable reviewed checkout."
+if [[ -n "$(git -C "$flake_dir" status --porcelain)" ]]; then
+  die "Refusing a dirty checkout (including untracked files). Commit/stash changes, then deploy the reviewed commit."
+fi
+
+commit="$(git -C "$flake_dir" rev-parse --verify HEAD^{commit})" ||
+  die "Could not resolve the current checkout to a commit."
+if ! git -C "$flake_dir" fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'; then
+  die "Could not refresh origin/main. Refusing deployment because the reviewed-commit check cannot be made."
+fi
+if ! git -C "$flake_dir" merge-base --is-ancestor "$commit" refs/remotes/origin/main; then
+  die "Refusing to deploy '$commit': it is not reachable from origin/main. Merge/review it first."
+fi
+
+cd "$flake_dir"
+
+nix_eval() {
+  nix --extra-experimental-features "nix-command flakes" \
+    eval --raw --read-only --accept-flake-config --no-write-lock-file "$1"
+}
+
+if ! system_path="$(nix_eval ".#nixosConfigurations.$host.config.system.build.toplevel")"; then
+  die "Local flake evaluation failed for nixosConfigurations.$host. The target was not contacted."
+fi
+case "$system_path" in
+  /nix/store/*-nixos-system-*)
+    ;;
+  *)
+    die "The '$host' toplevel did not evaluate to a NixOS system closure: '$system_path'."
+    ;;
+esac
+
+if ! expected_system="$(nix_eval ".#nixosConfigurations.$host.pkgs.stdenv.hostPlatform.system")"; then
+  die "Could not evaluate the target platform for '$host'. The target was not contacted."
+fi
+case "$expected_system" in
+  aarch64-linux|x86_64-linux)
+    ;;
+  *)
+    die "Unsupported target platform '$expected_system' for '$host'. Add an explicit deployment path first."
+    ;;
+esac
+
+notice "Reviewed commit: $commit"
+notice "NixOS configuration: $host ($expected_system)"
+notice "SSH target: $ssh_target"
+notice "Cached system closure: $system_path"
+notice "Checking public Cachix cache '$CACHIX_CACHE_NAME' ..."
+
+if ! nix --extra-experimental-features nix-command path-info \
+  --store "$CACHIX_URL" \
+  --option trusted-public-keys "$CACHIX_PUBLIC_KEY" \
+  --option require-sigs true \
+  "$system_path" >/dev/null; then
+  die "Cachix has no top-level closure for this commit/host. Run the existing native CI host build for '$host' and wait for it to publish to '$CACHIX_CACHE_NAME'. This script will not build on the Apple Silicon laptop or on the target."
+fi
+
+# P1.1: target-side fetch is `nix copy --from <cachix>`, which names exactly one
+# source. Unlike the previous `nix-store --realise`, it will NOT fall back to
+# the target's own substituters for upstream dependencies, so the COMPLETE
+# closure must be present in Cachix. Verify that here, on the controller, so an
+# incomplete publication fails before we open a privileged session on the
+# target rather than halfway through a transfer.
+notice "Verifying the complete closure is present in '$CACHIX_CACHE_NAME' ..."
+if ! nix --extra-experimental-features nix-command path-info --recursive \
+  --store "$CACHIX_URL" \
+  --option trusted-public-keys "$CACHIX_PUBLIC_KEY" \
+  --option require-sigs true \
+  "$system_path" >/dev/null; then
+  die "Cachix has the top-level path for '$host' but not its complete closure. Target-side 'nix copy --from' fetches from Cachix alone and cannot substitute a missing reference from the target's own caches. Re-run the native CI host build for the exact reviewed commit so 'cachix push' republishes every referenced path, then retry. No SSH session was opened and nothing was activated."
+fi
+
+ssh_options=(
+  -o BatchMode=yes
+  -o ConnectTimeout=15
+  -o StrictHostKeyChecking=yes
+)
+
+remote() {
+  ssh "${ssh_options[@]}" "$ssh_target" "$@"
+}
+
+substitute_closure() {
+  ssh "${ssh_options[@]}" "$ssh_target" \
+    "sudo -n /run/current-system/sw/bin/bash -s -- $system_path $CACHIX_URL $CACHIX_PUBLIC_KEY" <<'REMOTE_FETCH'
+set -euo pipefail
+
+new_system="$1"
+cachix_url="$2"
+cachix_public_key="$3"
+
+# P1.1: `nix copy --from` is the selected no-build protocol.
+#
+# This replaces `nix-store --realise`. The difference is the trust and failure
+# model, not convenience:
+#
+#   * `nix copy` is a pure transfer. It has no build path at all, so there is
+#     no local, remote, or fallback compilation to suppress -- the absence of a
+#     build is structural rather than something `--max-jobs 0 --builders ""`
+#     has to argue the tool out of.
+#   * `--from <cache>` names exactly ONE source. `--realise` would silently
+#     accept any path the target's own substituter list could supply, so the
+#     set of things the target trusts was target-local configuration. Here the
+#     complete closure must come from the reviewed cache that CI published.
+#   * `require-sigs true` with an explicit `trusted-public-keys` means an
+#     unsigned or wrongly-signed path is rejected even if the cache serves it.
+#
+# A missing reference therefore fails HERE, during transfer, before any
+# activation is attempted and before the system profile is touched.
+exec /run/current-system/sw/bin/nix \
+  --extra-experimental-features nix-command \
+  copy \
+  --from "$cachix_url" \
+  --option trusted-public-keys "$cachix_public_key" \
+  --option require-sigs true \
+  "$new_system"
+REMOTE_FETCH
+}
+
+if ! remote_arch="$(remote uname -m)"; then
+  die "Cannot establish a new SSH connection to '$ssh_target'. Check its OpenSSH alias, host key, and normal unprivileged SSH access."
+fi
+case "$remote_arch" in
+  aarch64|arm64)
+    remote_system="aarch64-linux"
+    ;;
+  x86_64|amd64)
+    remote_system="x86_64-linux"
+    ;;
+  *)
+    die "Unsupported target machine architecture '$remote_arch' reported by '$ssh_target'."
+    ;;
+esac
+[[ "$remote_system" == "$expected_system" ]] ||
+  die "Architecture mismatch: '$host' evaluates to '$expected_system', but '$ssh_target' reports '$remote_system'. No closure was copied or activated."
+
+notice
+notice "Substituting the closure on the target from Cachix and its configured trusted caches."
+notice "Local and remote builders are disabled; this is not a build or target-side flake evaluation."
+if ! substitute_closure; then
+  die "Cachix and the target's configured trusted substituters could not supply the complete closure to '$ssh_target'. No activation was attempted; local and remote builders were disabled. Publish the exact native CI build and restore any missing cache dependency, then retry."
+fi
+
+notice
+notice "== Closure diff: current system -> $system_path =="
+if ! remote sudo -n /run/current-system/sw/bin/nix \
+  --extra-experimental-features nix-command \
+  store diff-closures /run/current-system "$system_path"; then
+  die "Could not calculate the remote closure diff. The closure was substituted, but no activation was attempted."
+fi
+
+if [[ "$dry_run" == true ]]; then
+  notice
+  notice "Dry run complete: no running configuration, profile, boot default, or service state changed."
+  notice "The target Nix store may now contain the signed closure solely so the exact diff could be shown."
+  exit 0
+fi
+
+[[ -t 0 && -t 1 ]] ||
+  die "Refusing non-interactive activation. Re-run from a terminal so confirmation is meaningful."
+
+notice
+notice "No configuration has been activated yet."
+if ! read -r -p "Type '$host' to arm the $rollback_minutes-minute rollback guard and run '$activation_mode': " confirmation; then
+  die "No confirmation received. No activation was attempted."
+fi
+[[ "$confirmation" == "$host" ]] || {
+  notice "Confirmation did not match. No activation was attempted."
+  exit 1
+}
+
+rollback_seconds=$(( rollback_minutes * 60 ))
+rollback_guard_unit="$ROLLBACK_GUARD_PREFIX-$$"
+rollback_guard_marker="/run/$ROLLBACK_GUARD_PREFIX.armed"
+notice
+notice "Arming target-side rollback guard '$rollback_guard_unit' before activation."
+if ! ssh "${ssh_options[@]}" "$ssh_target" \
+  "sudo -n /run/current-system/sw/bin/bash -s -- $system_path $activation_mode $rollback_seconds $rollback_guard_unit $rollback_guard_marker" <<'REMOTE_SCRIPT'
+set -euo pipefail
+
+new_system="$1"
+mode="$2"
+rollback_seconds="$3"
+guard_unit="$4"
+guard_marker="$5"
+
+die() {
+  printf 'REMOTE ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+case "$mode" in
+  test|switch)
+    ;;
+  *)
+    die "unsupported activation mode '$mode'"
+    ;;
+esac
+case "$new_system" in
+  /nix/store/*-nixos-system-*)
+    ;;
+  *)
+    die "refusing unexpected system closure '$new_system'"
+    ;;
+esac
+[[ -x "$new_system/bin/switch-to-configuration" ]] ||
+  die "the imported closure has no switch-to-configuration executable"
+
+[[ "$guard_marker" == "/run/nixos-laptop-deploy-rollback-guard.armed" ]] ||
+  die "refusing an unexpected rollback marker path"
+[[ ! -e "$guard_marker" ]] ||
+  die "another laptop rollback guard is already armed; do not overlap deployments"
+if systemctl is-active --quiet nixos-upgrade.service; then
+  die "nixos-upgrade.service is currently active; wait for it to finish before deploying"
+fi
+
+# Use the persisted boot default rather than /run/current-system. That keeps a
+# prior `test` activation recoverable when this invocation later uses `switch`.
+persistent_system="$(readlink -f /nix/var/nix/profiles/system)"
+[[ -x "$persistent_system/sw/bin/nix-env" ]] ||
+  die "the persisted system has no nix-env for profile rollback"
+[[ -x "$persistent_system/sw/bin/bash" ]] ||
+  die "the persisted system has no Bash for profile rollback"
+
+printf '%s\n' "$guard_unit" > "$guard_marker"
+if [[ "$mode" == "test" ]]; then
+  if ! systemd-run --quiet \
+    --unit="$guard_unit" \
+    --on-active="${rollback_seconds}s" \
+    --timer-property=AccuracySec=1s \
+    --service-type=oneshot \
+    "$persistent_system/sw/bin/bash" -c '
+      set -euo pipefail
+      marker="$1"
+      old_system="$2"
+      exec "$old_system/sw/bin/systemctl" reboot
+    ' laptop-test-rollback "$guard_marker" "$persistent_system"; then
+    rm -f "$guard_marker"
+    die "could not arm the test reboot guard"
+  fi
+else
+  if ! systemd-run --quiet \
+    --unit="$guard_unit" \
+    --on-active="${rollback_seconds}s" \
+    --timer-property=AccuracySec=1s \
+    --service-type=oneshot \
+    "$persistent_system/sw/bin/bash" -c '
+      set -euo pipefail
+      marker="$1"
+      old_system="$2"
+      "$old_system/sw/bin/nix-env" \
+        --profile /nix/var/nix/profiles/system \
+        --set "$old_system"
+      "$old_system/bin/switch-to-configuration" switch
+      rm -f "$marker"
+    ' laptop-deploy-rollback "$guard_marker" "$persistent_system"; then
+    rm -f "$guard_marker"
+    die "could not arm the switch rollback guard"
+  fi
+fi
+
+if ! systemctl is-active --quiet "$guard_unit.timer"; then
+  rm -f "$guard_marker"
+  die "systemd did not leave the rollback timer active"
+fi
+
+printf 'Rollback guard is armed for %ss. Activating %s with %s.\n' \
+  "$rollback_seconds" "$new_system" "$mode"
+if [[ "$mode" == "switch" ]]; then
+  "$persistent_system/sw/bin/nix-env" \
+    --profile /nix/var/nix/profiles/system \
+    --set "$new_system"
+fi
+"$new_system/bin/switch-to-configuration" "$mode"
+REMOTE_SCRIPT
+then
+  die "Activation returned an error. The target-side guard was intentionally left armed; do not retry blindly. It will recover the prior configuration when its timer expires."
+fi
+
+wait_for_fresh_ssh() {
+  local attempt
+  for (( attempt = 1; attempt <= 12; attempt++ )); do
+    if remote sudo -n /run/current-system/sw/bin/systemctl \
+      is-active --quiet "$rollback_guard_unit.timer" >/dev/null 2>&1; then
+      return 0
+    fi
+    printf 'Waiting for a fresh SSH connection after activation (%d/12) ...\n' "$attempt" >&2
+    sleep 5
+  done
+  return 1
+}
+
+notice
+notice "Checking a new SSH connection (the activation connection is not evidence of reachability)."
+if ! wait_for_fresh_ssh; then
+  die "A fresh SSH connection with an active rollback guard did not succeed. Do not retry; use the documented console/physical path if the host does not recover."
+fi
+
+notice "Fresh SSH succeeded. Independently verify the tunnel/management path and the affected service before disarming the guard."
+if ! read -r -p "After those checks, type '$host' to disarm rollback: " final_confirmation; then
+  die "No confirmation received. The rollback guard remains armed."
+fi
+if [[ "$final_confirmation" != "$host" ]]; then
+  notice "Confirmation did not match. The rollback guard remains armed."
+  exit 1
+fi
+
+if ! ssh "${ssh_options[@]}" "$ssh_target" \
+  "sudo -n /run/current-system/sw/bin/bash -s -- $rollback_guard_unit $rollback_guard_marker" <<'DISARM_SCRIPT'
+set -euo pipefail
+
+guard_unit="$1"
+guard_marker="$2"
+systemctl is-active --quiet "$guard_unit.timer"
+systemctl stop "$guard_unit.timer"
+rm -f "$guard_marker"
+DISARM_SCRIPT
+then
+  die "Could not disarm the rollback timer. Treat the host as pending rollback and investigate from an independent console."
+fi
+
+notice
+if [[ "$activation_mode" == "test" ]]; then
+  notice "Test activation confirmed. It remains live until reboot; the boot default is still the previous switched generation."
+  notice "After validating it, rerun with --switch to make this exact cached closure persistent."
+else
+  notice "Switch activation confirmed and rollback guard disarmed."
+fi

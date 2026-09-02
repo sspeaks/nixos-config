@@ -1,0 +1,41 @@
+# Code owners for sspeaks/nixos-config
+#
+# Anything matched here requires @sspeaks review. The supply-chain-sensitive
+# paths are enumerated explicitly rather than relying on the catch-all, so that
+# a future rule which narrows the catch-all cannot silently un-protect them.
+#
+# Ordering matters: the LAST matching pattern wins, so the catch-all is first
+# and the sensitive paths follow it.
+
+# Catch-all.
+*                               @sspeaks
+
+# This file protects itself. Removing or weakening ownership requires review.
+/.github/CODEOWNERS             @sspeaks
+
+# CI is root-equivalent: it holds the Cachix write credential, and a signed
+# closure published from here is activated as root on every target.
+/.github/                       @sspeaks
+/.github/workflows/             @sspeaks
+/.github/dependabot.yml         @sspeaks
+
+# Flake inputs and overlays determine what every host builds.
+/flake.nix                      @sspeaks
+/flake.lock                     @sspeaks
+/flake-modules/                 @sspeaks
+/overlays.nix                   @sspeaks
+/temporary-fixes.nix            @sspeaks
+
+# Host and module definitions are the activation surface.
+/hosts/                         @sspeaks
+/modules/                       @sspeaks
+/home/                          @sspeaks
+/packages/                      @sspeaks
+
+# Local scripts and the deployment tool run with operator privilege.
+/scripts/                       @sspeaks
+/deploy                         @sspeaks
+
+# Encrypted secrets material and sops policy.
+/secrets/                       @sspeaks
+/.sops.yaml                     @sspeaks

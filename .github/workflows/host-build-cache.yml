@@ -12,163 +12,183 @@ concurrency:
   group: host-build-cache
   cancel-in-progress: false
 
+# Supply-chain boundary (P1.1).
+#
+# A trusted cache writer is root-equivalent: anything holding CACHIX_AUTH_TOKEN
+# can publish a signed closure that a target will activate as root. Every build
+# step below evaluates Nix code from the repository, so no build step may ever
+# see that token.
+#
+# Therefore CACHIX_AUTH_TOKEN appears exactly once per job, in the `env:` of the
+# final "Publish to Cachix" step, and NOTHING runs after that step. The
+# cachix-action configure step deliberately passes no authToken -- it only adds
+# the public cache as a signature-verified substituter for reads.
+#
+# Do not reintroduce a job-level `env: CACHIX_AUTH_TOKEN`, and do not add a step
+# after a publish step.
+
 jobs:
   build-azure-linux:
     name: Build Azure Linux closures
     runs-on: ubuntu-latest
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
         with:
           use-flakehub: disabled
           use-gha-cache: enabled
 
-      - name: Validate Cachix configuration
-        run: |
-          if [ -z "$CACHIX_AUTH_TOKEN" ]; then
-            echo "Cachix is required for this workflow."
-            echo "Set CACHIX_AUTH_TOKEN as a repository secret."
-            exit 1
-          fi
-
-      - name: Configure Cachix
-        uses: cachix/cachix-action@v15
+      # Read-only substituter setup. No authToken: builds must not hold a
+      # cache-write credential.
+      - name: Configure Cachix (read-only substituter)
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
-          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
+          skipPush: true
 
-      - name: Build nixos-azure host closure (no activation)
+      - name: Build host closures (no activation, no credential)
         run: |
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            .#nixosConfigurations.nixos-azure.config.system.build.toplevel
+          set -euo pipefail
+          : > closures.txt
+          for host in nixos-azure pogbot vid-stream; do
+            nix build --show-trace --print-build-logs --accept-flake-config \
+              --no-link --print-out-paths \
+              ".#nixosConfigurations.$host.config.system.build.toplevel" \
+              >> closures.txt
+          done
+          cat closures.txt
 
-      - name: Build pogbot host closure (no activation)
+      # FINAL STEP. The only place the write token exists. Nothing may follow.
+      - name: Publish to Cachix
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: |
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            .#nixosConfigurations.pogbot.config.system.build.toplevel
-
-      - name: Build vid-stream host closure (no activation)
-        run: |
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            .#nixosConfigurations.vid-stream.config.system.build.toplevel
-
+          set -euo pipefail
+          test -s closures.txt
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-nixpi:
     name: Build nixpi closures
     runs-on: ubuntu-24.04-arm
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
         with:
           use-flakehub: disabled
           use-gha-cache: enabled
 
-      - name: Validate Cachix configuration
-        run: |
-          if [ -z "$CACHIX_AUTH_TOKEN" ]; then
-            echo "Cachix is required for this workflow."
-            echo "Set CACHIX_AUTH_TOKEN as a repository secret."
-            exit 1
-          fi
-
-      - name: Configure Cachix
-        uses: cachix/cachix-action@v15
+      - name: Configure Cachix (read-only substituter)
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
-          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
+          skipPush: true
 
-      - name: Build nixpi host closure (no activation)
+      # nixpi4-bare is the same Pi 4 hardware/kernel as nixpi, so it reuses the
+      # warm store of the first build instead of paying for a second ARM runner.
+      - name: Build host closures (no activation, no credential)
         run: |
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            .#nixosConfigurations.nixpi.config.system.build.toplevel
+          set -euo pipefail
+          : > closures.txt
+          for host in nixpi nixpi4-bare; do
+            nix build --show-trace --print-build-logs --accept-flake-config \
+              --no-link --print-out-paths \
+              ".#nixosConfigurations.$host.config.system.build.toplevel" \
+              >> closures.txt
+          done
+          cat closures.txt
 
-      # Same Pi 4 hardware/kernel as nixpi, so this reuses the warm store of the
-      # step above instead of paying for a second ARM runner.
-      - name: Build nixpi4-bare host closure (no activation)
+      - name: Publish to Cachix
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: |
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            .#nixosConfigurations.nixpi4-bare.config.system.build.toplevel
+          set -euo pipefail
+          test -s closures.txt
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-nixpi5:
     name: Build nixpi5 closure
     runs-on: ubuntu-24.04-arm
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
         with:
           use-flakehub: disabled
           use-gha-cache: enabled
 
-      - name: Validate Cachix configuration
-        run: |
-          if [ -z "$CACHIX_AUTH_TOKEN" ]; then
-            echo "Cachix is required for this workflow."
-            echo "Set CACHIX_AUTH_TOKEN as a repository secret."
-            exit 1
-          fi
-
-      - name: Configure Cachix
-        uses: cachix/cachix-action@v15
+      - name: Configure Cachix (read-only substituter)
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
-          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
+          skipPush: true
 
-      - name: Build host closure (no activation)
+      - name: Build host closure (no activation, no credential)
         run: |
+          set -euo pipefail
           nix build --show-trace --print-build-logs --accept-flake-config \
-            .#nixosConfigurations.nixpi5.config.system.build.toplevel
+            --no-link --print-out-paths \
+            .#nixosConfigurations.nixpi5.config.system.build.toplevel \
+            > closures.txt
+          cat closures.txt
+
+      - name: Publish to Cachix
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -s closures.txt
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-asahi:
     name: Build asahi closure
     runs-on: ubuntu-24.04-arm
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           lfs: true
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
         with:
           use-flakehub: disabled
           use-gha-cache: enabled
 
-      - name: Validate Cachix configuration
-        run: |
-          if [ -z "$CACHIX_AUTH_TOKEN" ]; then
-            echo "Cachix is required for this workflow."
-            echo "Set CACHIX_AUTH_TOKEN as a repository secret."
-            exit 1
-          fi
-
-      - name: Configure Cachix
-        uses: cachix/cachix-action@v15
+      - name: Configure Cachix (read-only substituter)
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: ${{ env.CACHIX_CACHE_NAME }}
-          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
+          skipPush: true
 
-      - name: Build host closure (no activation)
+      - name: Build host closure (no activation, no credential)
         run: |
+          set -euo pipefail
           nix build --show-trace --print-build-logs --accept-flake-config \
-            .#nixosConfigurations.asahi.config.system.build.toplevel
+            --no-link --print-out-paths \
+            .#nixosConfigurations.asahi.config.system.build.toplevel \
+            > closures.txt
+          cat closures.txt
+
+      - name: Publish to Cachix
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -s closures.txt
+          xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
