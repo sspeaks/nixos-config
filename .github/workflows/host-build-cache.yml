@@ -280,7 +280,11 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts
           PI_IMAGE="$(sed -n 1p closures.txt)"
-          IMAGE_ZST="$(find "$PI_IMAGE" -name '*.img.zst' | head -1)"
+          # -type f matters: the Nix output PATH is itself a directory named
+          # "...img.zst", containing sd-image/...img.zst. Without -type f,
+          # find returns the directory and zstd fails with
+          # "is a directory -- ignored".
+          IMAGE_ZST="$(find "$PI_IMAGE" -type f -name '*.img.zst' | head -1)"
           test -s "$IMAGE_ZST"
           nix run nixpkgs#zstd -- -t "$IMAGE_ZST"
           sha256sum "$IMAGE_ZST" | tee artifacts/raspberrytimemachine-image.sha256
