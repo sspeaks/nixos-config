@@ -1,4 +1,4 @@
-{ inputs, lib, outputs, ... }:
+{ inputs, lib, pkgs, outputs, ... }:
 # P2.2 — `.106` converted from Debian to NixOS, still serving Time Machine.
 #
 # THE CRITICAL CONSTRAINT: never format, partition, or otherwise write to the
@@ -117,6 +117,16 @@
   };
 
   # Avahi advertises the share so macOS discovers it. LAN only.
+  #
+  # The extraServiceFiles block is NOT optional decoration -- it is copied from
+  # the working Debian install and is what makes macOS treat this as a Time
+  # Machine destination at all:
+  #   _adisk._tcp with adVN=backups,adVF=0x82  -> "this host offers a Time
+  #     Machine volume named `backups`". Without it macOS may never offer the
+  #     destination in System Settings even though the share mounts fine.
+  #   _device-info._tcp model=TimeCapsule8,119 -> macOS shows it as a Time
+  #     Capsule rather than a generic file server.
+  # NixOS' samba/avahi modules do not publish these records on their own.
   services.avahi = {
     enable = true;
     nssmdns4 = true;
@@ -125,6 +135,28 @@
       enable = true;
       userServices = true;
     };
+    extraServiceFiles.samba = ''
+      <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+      <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+      <service-group>
+        <name replace-wildcards="yes">%h</name>
+        <service>
+          <type>_smb._tcp</type>
+          <port>445</port>
+        </service>
+        <service>
+          <type>_device-info._tcp</type>
+          <port>9</port>
+          <txt-record>model=TimeCapsule8,119</txt-record>
+        </service>
+        <service>
+          <type>_adisk._tcp</type>
+          <port>9</port>
+          <txt-record>dk0=adVN=backups,adVF=0x82</txt-record>
+          <txt-record>sys=adVF=0x100</txt-record>
+        </service>
+      </service-group>
+    '';
   };
 
   # Databases and dumps must NOT live on the shared USB spindle. vid-stream
@@ -132,7 +164,43 @@
   # Time Machine writes is exactly the contention the plan's load test targets.
   systemd.tmpfiles.rules = [
     "d /var/lib/vid-stream 0750 root root -"
+    "d /var/lib/samba/private 0700 root root -"
   ];
+
+  # Restore the Samba credential database captured from the Debian install.
+  #
+  # Why this matters: macOS has the Time Machine password saved in its keychain
+  # against this server. A fresh Samba install has an empty passdb, so backups
+  # would fail authentication until someone re-entered credentials by hand --
+  # and a forgotten manual step here means G-TIME-MACHINE cannot pass.
+  # Restoring passdb.tdb/secrets.tdb preserves the EXISTING password and the
+  # timemachine account's SID, so macOS reconnects with what it already knows.
+  #
+  # Runs once: it refuses to overwrite an existing passdb, so a later
+  # password change made on this host is never clobbered by a redeploy.
+  systemd.services.samba-passdb-restore = {
+    description = "Restore Samba passdb captured from the Debian install";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "samba-smbd.service" ];
+    unitConfig.ConditionPathExists = "!/var/lib/samba/private/passdb.tdb";
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      set -euo pipefail
+      seed=/var/lib/samba-seed/samba-private.tar
+      if [ ! -f "$seed" ]; then
+        echo "no seed tarball at $seed; leaving passdb empty" >&2
+        echo "Samba password must then be set manually: smbpasswd -a timemachine" >&2
+        exit 0
+      fi
+      install -d -m 0700 /var/lib/samba/private
+      ${pkgs.gnutar}/bin/tar -C /var/lib/samba/private -xf "$seed"
+      chmod 0600 /var/lib/samba/private/passdb.tdb /var/lib/samba/private/secrets.tdb
+      echo "restored Samba passdb from $seed"
+    '';
+  };
 
   services.openssh = {
     enable = true;
