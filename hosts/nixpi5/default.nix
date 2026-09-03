@@ -1,4 +1,4 @@
-{ pkgs, lib, inputs, ... }:
+{ pkgs, lib, inputs, config, ... }:
 
 {
   imports = [
@@ -54,6 +54,41 @@
     imports = [ ../../home/sspeaks-bare.nix ];
     programs.starship.settings.hostname.disabled = false;
     home.enableNixpkgsReleaseCheck = false;
+  };
+
+
+  # P2.3 — home-initiated tunnel to the old Azure edge.
+  #
+  # This INVERTS the previous topology. Before, `blog` dialled OUT to a
+  # residential endpoint, which meant the old edge depended on the home IP
+  # staying reachable: a router reboot or an ISP address change broke the
+  # fallback path, and the residential address had to be written into the
+  # edge's config. Now the Pi dials the edge's STATIC Azure address, so the
+  # home address is never needed anywhere and can change freely.
+  #
+  # persistentKeepalive is what makes an outbound-only tunnel survive NAT:
+  # without it the home NAT mapping expires and the edge can no longer reach
+  # back to deliver traffic.
+  sops.secrets.wg-edge-private-key = {
+    format = "yaml";
+    sopsFile = ../../secrets/nixpi5.yaml;
+    mode = "0400";
+    owner = "root";
+  };
+
+  networking.wireguard.enable = true;
+  networking.wireguard.interfaces.wg-edge = {
+    ips = [ "10.10.0.2/32" ];
+    privateKeyFile = config.sops.secrets.wg-edge-private-key.path;
+    peers = [{
+      publicKey = "gTkLAa4pN+STVJDde9wWI4QDi4AFBn/ArTx6ul/PFAU=";
+      endpoint = "40.86.75.95:51820";
+      # Only the edge's own overlay address. NOT a LAN prefix: the edge must
+      # never be able to route into 192.168.5.0/24, which is what the P1.4
+      # narrowing of the old tunnel was about.
+      allowedIPs = [ "10.10.0.1/32" ];
+      persistentKeepalive = 25;
+    }];
   };
 
   security.sudo.wheelNeedsPassword = false;
