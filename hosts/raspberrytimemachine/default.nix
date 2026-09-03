@@ -60,24 +60,25 @@
   };
 
   # ------------------------------------------------------- the USB data disk ---
-  # Referenced by UUID because USB enumeration order is not stable, and pointing
-  # a format-capable tool at the wrong /dev/sdX is the one failure this
-  # migration cannot survive.
+  # BOOT-FROM-USB LAYOUT.
   #
-  # nofail + device-timeout: if the disk is missing or slow, the Pi still boots
-  # and stays reachable over SSH rather than dropping to an emergency shell
-  # where it cannot be helped remotely.
+  # The owner had no spare SD card and was remote, so the SD card is NOT
+  # reimaged. Instead the whole NixOS image is written to the USB disk and the
+  # Pi's EEPROM boot order is set to try USB before SD. That leaves the Debian
+  # SD card completely untouched and still bootable, so a USB that fails to
+  # boot simply falls through to Debian -- the pre-migration state -- with no
+  # physical access required.
   #
-  # There is deliberately NO disko module and NO autoFormat/autoResize here.
-  fileSystems."/srv/timemachine" = {
-    device = "/dev/disk/by-uuid/0adbb212-cb0d-4371-b452-940540914211";
-    fsType = "ext4";
-    options = [
-      "nofail"
-      "noatime"
-      "x-systemd.device-timeout=30s"
-    ];
-  };
+  # Consequence: the USB disk is now the ROOT device, expanded to fill the
+  # drive on first boot. There is no separate data partition to mount, so the
+  # previous by-UUID mount of sda2 is gone along with the 593 GB of Time
+  # Machine history it held. The owner explicitly accepted that loss:
+  # "I dont care if it's risky or causes time machine backup dataloss.. I can
+  # always do another backup".
+  #
+  # /srv/timemachine is therefore a plain directory on the expanded root.
+  # Ownership must still be uid/gid 1001 so the restored Samba account can
+  # write to it.
 
   # Must match the Debian install exactly -- continuity decision 2.
   users.groups.timemachine.gid = 1001;
@@ -165,6 +166,9 @@
   systemd.tmpfiles.rules = [
     "d /var/lib/vid-stream 0750 root root -"
     "d /var/lib/samba/private 0700 root root -"
+    # Time Machine target lives on the expanded root now. uid/gid 1001 must
+    # match the restored Samba account or the share is unwritable.
+    "d /srv/timemachine 0755 timemachine timemachine -"
   ];
 
   # Restore the Samba credential database captured from the Debian install.
