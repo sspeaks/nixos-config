@@ -28,6 +28,9 @@
     # mode) so the Pi is still reachable without an Ethernet cable.
     ../nixpi/networking/wlan.nix
     inputs.home-manager.nixosModules.home-manager
+    # P3.1 workloads migrated off the Azure `nixos` VM.
+    inputs.boggle.nixosModules.default
+    ./workloads.nix
   ];
 
   networking = {
