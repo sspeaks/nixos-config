@@ -286,10 +286,16 @@ jobs:
           # "is a directory -- ignored".
           IMAGE_ZST="$(find "$PI_IMAGE" -type f -name '*.img.zst' | head -1)"
           test -s "$IMAGE_ZST"
-          nix run nixpkgs#zstd -- -t "$IMAGE_ZST"
-          sha256sum "$IMAGE_ZST" | tee artifacts/raspberrytimemachine-image.sha256
-          nix run nixpkgs#zstd -- -dc "$IMAGE_ZST" > artifacts/rtm.img
-          nix run nixpkgs#util-linux -- fdisk -l artifacts/rtm.img | tee artifacts/pi-image-fdisk.txt
+          # `nix shell`, not `nix run`: `nix run nixpkgs#util-linux` tries to
+          # exec a binary literally named "util-linux", which does not exist --
+          # the package provides fdisk, lsblk and friends.
+          nix shell nixpkgs#zstd nixpkgs#util-linux --command bash -c '
+            set -euo pipefail
+            zstd -t "$0"
+            sha256sum "$0" | tee artifacts/raspberrytimemachine-image.sha256
+            zstd -dc "$0" > artifacts/rtm.img
+            fdisk -l artifacts/rtm.img | tee artifacts/pi-image-fdisk.txt
+          ' "$IMAGE_ZST"
           # A Pi image must be MBR/DOS with a FAT firmware partition; a GPT
           # layout here would not boot on a Pi 4 at all.
           grep -qiE 'Disklabel type: dos' artifacts/pi-image-fdisk.txt
