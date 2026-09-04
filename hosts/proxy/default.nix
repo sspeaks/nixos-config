@@ -12,6 +12,7 @@
     ../common/users/sspeaks
     ../common/users/sspeaks/authorized-keys.nix
     ../../modules/azure-serial-console.nix
+    ./edge.nix
     inputs.home-manager.nixosModules.home-manager
   ];
 
