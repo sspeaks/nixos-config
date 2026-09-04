@@ -26,8 +26,9 @@
     ../common/global
     ../common/users/sspeaks
     ../common/users/sspeaks/authorized-keys.nix
-    # Shared with `nixpi`: same Pi 4 hardware and the rpi4 kernel workaround.
-    ../nixpi/hardware-config.nix
+    # NOTE: deliberately NOT importing ../nixpi/hardware-config.nix (which
+    # pulls in nixos-hardware's raspberry-pi-4 profile). See the boot-path
+    # note below -- that profile is what broke booting here.
     inputs.home-manager.nixosModules.home-manager
   ];
 
@@ -37,96 +38,44 @@
     config.allowUnfree = lib.mkDefault true;
   };
 
-  # sd-image-aarch64.nix imports profiles/base.nix, which turns on ZFS support
-  # and `hardware.enableAllHardware`. Both break the build on this Pi:
+  # BOOT PATH: the stock nixpkgs sd-image-aarch64 chain, deliberately.
   #
-  #   * ZFS drags its kernel modules into the image and they fail to build
-  #     against the Raspberry Pi 6.18 kernel.
-  #   * enableAllHardware requests a broad module list intended for generic
-  #     install media, including `dw-hdmi`, which the Pi kernel does not build:
-  #       modprobe: FATAL: Module dw-hdmi not found
-  #     That fails `modules-shrunk` and takes the whole SD image with it.
-  #
-  # Neither is wanted here. This is a single-purpose appliance on known
-  # hardware with one ext4 USB disk and one ext4 SD card -- not install media
-  # that has to boot on an unknown machine. The Pi-specific modules it does
-  # need come from ../nixpi/hardware-config.nix (nixos-hardware raspberry-pi-4).
-  boot.supportedFilesystems.zfs = lib.mkForce false;
-  hardware.enableAllHardware = lib.mkForce false;
-
-  # The Pi 4 firmware needs something to load before Linux starts. This host
-  # stacks sd-image-aarch64.nix (which would supply U-Boot itself) with
-  # nixos-hardware's raspberry-pi-4 profile, and nixos-hardware claims
+  # This host previously also imported nixos-hardware's raspberry-pi-4 profile
+  # (via ../nixpi/hardware-config.nix). That profile claims
   # `sdImage.populateFirmwareCommands` with lib.mkForce
-  # (raspberry-pi/common/firmware.nix), so the sd-image version never runs.
+  # (raspberry-pi/common/firmware.nix), so sd-image-aarch64's own firmware
+  # population never ran, and two separate failures followed:
   #
-  # What nixos-hardware installs instead tracks the Raspberry Pi OS pi-gen
-  # config.txt -- camera/display autodetect, KMS, arm_boost -- and it carries
-  # no `kernel=` line at all. The first image built for `.106` therefore
-  # shipped start4.elf and every .dtb but NO kernel and NO U-Boot, so the
-  # firmware fell back to a kernel8.img that was never placed and halted with
-  # the green-LED "kernel image not found" code (7 short flashes). That is a
-  # missing bootloader, NOT the EEPROM.
+  #   1. Its config.txt tracks the Raspberry Pi OS pi-gen file and carries no
+  #      `kernel=` line, so the firmware had no bootloader to load and halted
+  #      with the green-LED "kernel image not found" code (7 short flashes).
+  #   2. Enabling its uboot option fixed that, but it copies the ENTIRE vendor
+  #      firmware set -- every start*.elf variant is 22 MiB by itself, plus 28
+  #      device trees and 371 overlays -- which overflowed the firmware
+  #      partition. The flashed card came back 100% full, 2.0K free, with a
+  #      stranded start_db.elf.tmp.3148182: a copy that died mid-write. The
+  #      board got an incomplete boot partition and never reached stage-1.
   #
-  # Rather than fight the mkForce, use the option nixos-hardware provides for
-  # exactly this: it copies u-boot.bin onto the firmware partition and writes
-  # the matching `kernel=` line, restoring the intended
-  # firmware -> U-Boot -> extlinux.conf chain. The extlinux side of the image
-  # was correct all along, so this is the only missing link.
+  # The stock sd-image-aarch64 path copies a SELECTIVE set of device trees
+  # plus armstub8-gic.bin and writes a config.txt with `kernel=u-boot.bin`,
+  # which is what the NixOS wiki documents and what nixpi4-bare -- the same Pi
+  # 4 model -- was originally flashed with and still boots from.
   #
-  # `firmware.enable` is deliberately left off: that is the activation script
-  # for a RUNNING system and would need /boot/firmware mounted. For image
-  # builds populateFirmwareCommands is wired up unconditionally.
-  # The firmware partition must be bigger than the 30 MiB default.
+  # The trade is the vendor linux-rpi kernel for the mainline one. That is
+  # what the official aarch64 image uses on this board, and it costs nothing
+  # this appliance needs. Getting a reachable system first is worth more than
+  # the vendor kernel; nixos-hardware can be reintroduced later over SSH,
+  # where a failed boot is recoverable instead of another trip to the machine.
   #
-  # nixos-hardware copies the ENTIRE vendor firmware set, not the trimmed
-  # selection the stock sd-image uses: every start*.elf variant (22 MiB on its
-  # own), 28 device trees, and 371 overlays. Adding u-boot.bin on top of that
-  # pushed it past 30 MiB, and the copy simply ran out of room -- the flashed
-  # card came back 100% full with 2.0K free and a stranded
-  # start_db.elf.tmp.3148182, the signature of a copy that died mid-write.
-  #
-  # That, not the bootloader choice, is why the board stopped at a solid-green
-  # ACT LED: the firmware partition it was handed was incomplete. Sizing this
-  # generously is free -- the partition is created inside an image that is
-  # immediately expanded on first boot anyway.
+  # ZFS stays off: profiles/base.nix enables it, it is not wanted on a
+  # single-purpose appliance, and it only adds build time and image size.
+  boot.supportedFilesystems.zfs = lib.mkForce false;
+
+  # Headroom over the 30 MiB default. The stock firmware set fits, but it was
+  # a full partition that silently truncated the last build, and the cost of
+  # over-sizing here is zero -- the image is expanded on first boot anyway.
   sdImage.firmwareSize = 256;
 
-  hardware.raspberry-pi.firmware.uboot = {
-    enable = true;
-    # nixos-hardware defaults to ubootRaspberryPiAarch64 (rpi_arm64_defconfig,
-    # a single binary covering Pi 3/4/5). That got the firmware past "kernel
-    # image not found", but it still never handed off on this board: after
-    # flashing and booting, the card came back with the root partition still
-    # unexpanded at 3.3 GiB, no /etc/ssh host keys, and no journal, so stage-1
-    # never ran. Externally that looked like a solid-green ACT LED, a linked
-    # Ethernet port, and nothing on the network.
-    #
-    # nixpi4-bare is the same Pi 4 model and boots reliably from the
-    # board-specific rpi_4_defconfig build, so use the one with evidence
-    # behind it rather than the more general one.
-    package = pkgs.ubootRaspberryPi4_64bit;
-  };
-
-  # Deliberately NOT setting enable_gic / armstub, despite nixpi4-bare having
-  # both. They were tried here and removed: the config.txt gained
-  # `armstub=armstub8-gic.bin` while the file itself never reached the
-  # partition, which is strictly worse than omitting it -- the firmware is
-  # told to load a stub that does not exist.
-  #
-  # The copy was silently dropped because nixos-hardware claims
-  # populateFirmwareCommands with lib.mkForce (priority 50) and the extra copy
-  # was an ordinary definition (priority 100). Differing priorities do not
-  # merge: the higher-priority definition wins outright and the other is
-  # discarded. String concatenation only applies between definitions of EQUAL
-  # priority.
-  #
-  # It is also unnecessary. The armstub route belongs to the older
-  # mainline-kernel setup nixpi4-bare was originally flashed with; the NixOS
-  # wiki notes it is not required on a Pi 4 with current firmware, and
-  # nixos-hardware pairs the vendor kernel with vendor device trees, which is
-  # how Raspberry Pi OS itself boots. The real defect was the overflowing
-  # firmware partition above.
 
   networking = {
     hostName = "raspberrypi"; # continuity decision 1 -- see header
