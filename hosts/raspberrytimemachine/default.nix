@@ -108,29 +108,25 @@
     package = pkgs.ubootRaspberryPi4_64bit;
   };
 
-  # The other two differences from nixpi4-bare's known-good firmware
-  # partition. nixos-hardware sets neither anywhere under raspberry-pi/,
-  # because it targets the vendor-kernel + vendor-DTB path Raspberry Pi OS
-  # uses, where the legacy interrupt controller is fine. U-Boot's
-  # rpi_4_defconfig is built expecting the GIC-400, and the Pi 4 only exposes
-  # that when the firmware is told to load the GIC armstub.
-  hardware.raspberry-pi.configtxt.settings.pi4 = {
-    enable_gic = true;
-    armstub = "armstub8-gic.bin";
-  };
-
-  # armstub8-gic.bin must actually be present on the firmware partition, and
-  # nixos-hardware never copies it. This ADDS to populateFirmwareCommands
-  # instead of replacing it: the option is declared with no type, so
-  # definitions merge by string concatenation. That is normally a hazard, but
-  # it is safe here precisely because this only creates a new file and
-  # overwrites nothing, so the result does not depend on evaluation order.
-  # nixos-hardware's own script only prunes stale *.dtb and overlays/*, so it
-  # will not remove this.
-  sdImage.populateFirmwareCommands = ''
-    mkdir -p firmware
-    cp ${pkgs.raspberrypi-armstubs}/armstub8-gic.bin firmware/armstub8-gic.bin
-  '';
+  # Deliberately NOT setting enable_gic / armstub, despite nixpi4-bare having
+  # both. They were tried here and removed: the config.txt gained
+  # `armstub=armstub8-gic.bin` while the file itself never reached the
+  # partition, which is strictly worse than omitting it -- the firmware is
+  # told to load a stub that does not exist.
+  #
+  # The copy was silently dropped because nixos-hardware claims
+  # populateFirmwareCommands with lib.mkForce (priority 50) and the extra copy
+  # was an ordinary definition (priority 100). Differing priorities do not
+  # merge: the higher-priority definition wins outright and the other is
+  # discarded. String concatenation only applies between definitions of EQUAL
+  # priority.
+  #
+  # It is also unnecessary. The armstub route belongs to the older
+  # mainline-kernel setup nixpi4-bare was originally flashed with; the NixOS
+  # wiki notes it is not required on a Pi 4 with current firmware, and
+  # nixos-hardware pairs the vendor kernel with vendor device trees, which is
+  # how Raspberry Pi OS itself boots. The real defect was the overflowing
+  # firmware partition above.
 
   networking = {
     hostName = "raspberrypi"; # continuity decision 1 -- see header
