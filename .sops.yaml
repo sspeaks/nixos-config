@@ -33,6 +33,7 @@ creation_rules:
         - *nixosWSL
         - *asahi
         - *nixpi5
+        - *proxy
         - *vidstream
   # Azure-only secrets (pogbot, wireguard server)
   - path_regex: secrets/nixos-azure\.yaml$
