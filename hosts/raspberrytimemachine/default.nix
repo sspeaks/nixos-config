@@ -54,6 +54,62 @@
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.enableAllHardware = lib.mkForce false;
 
+  # Restore the U-Boot firmware chain that sd-image-aarch64.nix provides.
+  #
+  # This host stacks two modules that both claim `sdImage`:
+  #   * sd-image-aarch64.nix populates the FAT partition for the generic
+  #     aarch64 chain -- firmware loads u-boot-rpi4.bin, U-Boot then reads
+  #     /boot/extlinux/extlinux.conf off the ext4 root and boots the system.
+  #   * nixos-hardware's raspberry-pi-4 module replaces
+  #     populateFirmwareCommands with a verbatim copy of the Raspberry Pi OS
+  #     boot directory, whose config.txt carries no `kernel=` line at all.
+  #
+  # nixos-hardware wins the merge, so the built image shipped start4.elf and
+  # every .dtb but NO kernel and NO U-Boot. The Pi 4 firmware then falls back
+  # to looking for kernel8.img, does not find it, and halts with the green-LED
+  # "kernel image not found" code (7 short flashes) -- which is exactly how
+  # this failed on `.106`, and it is not an EEPROM fault.
+  #
+  # The extlinux side of the image was always correct, so only the FAT
+  # partition needed fixing. This reproduces the firmware layout running on
+  # nixpi4-bare, which is the same Pi 4 hardware and boots reliably.
+  sdImage.populateFirmwareCommands =
+    let
+      configTxt = pkgs.writeText "config.txt" ''
+        [pi3]
+        kernel=u-boot-rpi3.bin
+
+        [pi02]
+        kernel=u-boot-rpi3.bin
+
+        [pi4]
+        kernel=u-boot-rpi4.bin
+        enable_gic=1
+        armstub=armstub8-gic.bin
+
+        disable_overscan=1
+        arm_boost=1
+
+        [cm4]
+        otg_mode=1
+
+        [all]
+        arm_64bit=1
+        # U-Boot requires this whether or not the UART is actually used, and it
+        # is also what makes the serial console usable for recovery here.
+        enable_uart=1
+        avoid_warnings=1
+      '';
+    in
+    lib.mkForce ''
+      (cd ${pkgs.raspberrypifw}/share/raspberrypi/boot && cp bootcode.bin fixup*.dat start*.elf $NIX_BUILD_TOP/firmware/)
+      cp ${configTxt} firmware/config.txt
+      cp ${pkgs.ubootRaspberryPi3_64bit}/u-boot.bin firmware/u-boot-rpi3.bin
+      cp ${pkgs.ubootRaspberryPi4_64bit}/u-boot.bin firmware/u-boot-rpi4.bin
+      cp ${pkgs.raspberrypi-armstubs}/armstub8-gic.bin firmware/armstub8-gic.bin
+      cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/bcm2711-rpi-4-b.dtb firmware/
+    '';
+
   networking = {
     hostName = "raspberrypi"; # continuity decision 1 -- see header
     useDHCP = lib.mkDefault true;
