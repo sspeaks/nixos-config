@@ -15,6 +15,29 @@ keys:
     - &proxy age15fp39am5ghay6hcrwrseyz3ksrhdqtjyehatrc3hxeyr0l08sp7s59pa62
     - &vidstream age1sxpm3la3wdl6k5qyrzrlky34tc9kk3ewrklu48nf99hr4dzwep3qvj9v6y
 creation_rules:
+  # The client-certificate CA that guards home-assistant.sspeaks.net.
+  #
+  # Rescued from the old edge (blog VM), where /home/sspeaks/serverCerts/ca/
+  # held the ONLY copy -- that host has no restic, no borg and no Azure Backup
+  # VM extension, so P5.1 (delete the VM) and P5.2 (purge vault892) would have
+  # destroyed it permanently. Existing client certs would keep working, because
+  # the edge only needs the public hosts/proxy/myCA.pem, but no NEW client
+  # certificate could ever be issued without regenerating the CA and
+  # re-enrolling every device.
+  #
+  # Encrypted to sspeaks ONLY, deliberately: no host needs to decrypt this. The
+  # edge verifies clients with the public certificate; the private key is used
+  # offline, by a human, to sign new client certs. Granting any host access
+  # would mean compromising that host also compromises the CA.
+  #
+  # The key is additionally passphrase-protected at rest (PKCS#8 ENCRYPTED
+  # PRIVATE KEY), so sops is a second layer, not the only one. The passphrase
+  # itself is NOT stored here and must be recorded durably elsewhere -- without
+  # it this backup is inert.
+  - path_regex: secrets/client-ca\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
   # P4: the replacement Azure edge.
   - path_regex: secrets/proxy\.yaml$
     key_groups:
