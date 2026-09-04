@@ -28,7 +28,18 @@ in
       {
         publicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0=";
         allowedIPs = [ "0.0.0.0/0" "::/0" ];
-        endpoint = "13.91.123.214:51820";
+        # NO ENDPOINT. The server this used to dial was the `nixos` Azure VM at
+        # 13.91.123.214, deleted 2026-09-04 in P3.3. Azure has taken that Basic
+        # public IP back into its pool, so it can be reassigned to an unrelated
+        # tenant; leaving the literal here would mean anyone flipping
+        # enableWireguard to true would start sending handshakes to a stranger.
+        #
+        # The VM was not running WireGuard by the end anyway: its NixOS config
+        # had networking.wireguard.enable = false and defined no interfaces. The
+        # UDP 51820 rule in nixosNSG was a leftover from the earlier imperative
+        # setup, alongside the Minecraft and Dynmap rules.
+        #
+        # Set a new endpoint here before re-enabling this tunnel.
         persistentKeepalive = 25;
       }
     ];
