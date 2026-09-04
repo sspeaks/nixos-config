@@ -77,7 +77,45 @@
   # `firmware.enable` is deliberately left off: that is the activation script
   # for a RUNNING system and would need /boot/firmware mounted. For image
   # builds populateFirmwareCommands is wired up unconditionally.
-  hardware.raspberry-pi.firmware.uboot.enable = true;
+  hardware.raspberry-pi.firmware.uboot = {
+    enable = true;
+    # nixos-hardware defaults to ubootRaspberryPiAarch64 (rpi_arm64_defconfig,
+    # a single binary covering Pi 3/4/5). That got the firmware past "kernel
+    # image not found", but it still never handed off on this board: after
+    # flashing and booting, the card came back with the root partition still
+    # unexpanded at 3.3 GiB, no /etc/ssh host keys, and no journal, so stage-1
+    # never ran. Externally that looked like a solid-green ACT LED, a linked
+    # Ethernet port, and nothing on the network.
+    #
+    # nixpi4-bare is the same Pi 4 model and boots reliably from the
+    # board-specific rpi_4_defconfig build, so use the one with evidence
+    # behind it rather than the more general one.
+    package = pkgs.ubootRaspberryPi4_64bit;
+  };
+
+  # The other two differences from nixpi4-bare's known-good firmware
+  # partition. nixos-hardware sets neither anywhere under raspberry-pi/,
+  # because it targets the vendor-kernel + vendor-DTB path Raspberry Pi OS
+  # uses, where the legacy interrupt controller is fine. U-Boot's
+  # rpi_4_defconfig is built expecting the GIC-400, and the Pi 4 only exposes
+  # that when the firmware is told to load the GIC armstub.
+  hardware.raspberry-pi.configtxt.settings.pi4 = {
+    enable_gic = true;
+    armstub = "armstub8-gic.bin";
+  };
+
+  # armstub8-gic.bin must actually be present on the firmware partition, and
+  # nixos-hardware never copies it. This ADDS to populateFirmwareCommands
+  # instead of replacing it: the option is declared with no type, so
+  # definitions merge by string concatenation. That is normally a hazard, but
+  # it is safe here precisely because this only creates a new file and
+  # overwrites nothing, so the result does not depend on evaluation order.
+  # nixos-hardware's own script only prunes stale *.dtb and overlays/*, so it
+  # will not remove this.
+  sdImage.populateFirmwareCommands = ''
+    mkdir -p firmware
+    cp ${pkgs.raspberrypi-armstubs}/armstub8-gic.bin firmware/armstub8-gic.bin
+  '';
 
   networking = {
     hostName = "raspberrypi"; # continuity decision 1 -- see header
