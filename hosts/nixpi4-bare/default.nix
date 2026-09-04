@@ -69,12 +69,22 @@
   networking.wireguard.interfaces.wg-edge = {
     ips = [ "10.10.0.3/32" ];
     privateKeyFile = config.sops.secrets.wg-edge-private-key.path;
-    peers = [{
-      publicKey = "gTkLAa4pN+STVJDde9wWI4QDi4AFBn/ArTx6ul/PFAU=";
-      endpoint = "40.86.75.95:51820";
-      allowedIPs = [ "10.10.0.1/32" ];
-      persistentKeepalive = 25;
-    }];
+    peers = [
+      {
+        publicKey = "gTkLAa4pN+STVJDde9wWI4QDi4AFBn/ArTx6ul/PFAU=";
+        endpoint = "40.86.75.95:51820";
+        allowedIPs = [ "10.10.0.1/32" ];
+        persistentKeepalive = 25;
+      }
+      {
+        # P4.1 replacement edge -- see the note in hosts/nixpi5/default.nix.
+        # Both edges are carried at once so DNS is the only cutover switch.
+        publicKey = "Sbm2/JkGPNO9LEsrI2oJSHZNIxoOCsf/2l8jwm6AtHM=";
+        endpoint = "20.83.103.87:51820";
+        allowedIPs = [ "10.10.0.4/32" ];
+        persistentKeepalive = 25;
+      }
+    ];
   };
 
   security.sudo.wheelNeedsPassword = false;

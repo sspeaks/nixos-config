@@ -13,7 +13,12 @@ let
   # Flip to true for the P4.2 Let's Encrypt STAGING rehearsal, then back to
   # false before the real cutover. Staging has effectively no rate limit, so a
   # botched rehearsal cannot burn the production 5-failures-per-hour budget.
-  useStagingACME = false;
+  #
+  # CURRENTLY TRUE, deliberately: DNS still resolves to the OLD edge, so every
+  # HTTP-01 challenge aimed at this host is answered by the wrong machine and
+  # fails. Against production that would exhaust the failure budget needed for
+  # the actual cutover. Set to false as the LAST step of P4.2, after DNS moves.
+  useStagingACME = true;
 
   # Old edge -> new edge. The pipelines write to the /usr/share names, which do
   # not exist on NixOS; the real roots are these, and compatibility symlinks
@@ -43,7 +48,12 @@ in
   # on this machine.
   networking.wireguard.enable = true;
   networking.wireguard.interfaces.wg-edge = {
-    ips = [ "10.10.0.1/32" ];
+    # 10.10.0.4, NOT 10.10.0.1, even though this replaces the host that holds
+    # .1. During the P4.2 overlap both edges are peers of the same home hosts
+    # at the same time, and WireGuard cannot have two peers sharing an
+    # allowedIPs entry. Keeping a distinct address means DNS is the only thing
+    # the cutover switches, and rolling back does not touch the tunnel.
+    ips = [ "10.10.0.4/32" ];
     listenPort = 51820;
     privateKeyFile = config.sops.secrets.proxy-wg-private-key.path;
     peers = [
