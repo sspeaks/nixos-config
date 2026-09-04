@@ -80,15 +80,28 @@
   networking.wireguard.interfaces.wg-edge = {
     ips = [ "10.10.0.2/32" ];
     privateKeyFile = config.sops.secrets.wg-edge-private-key.path;
-    peers = [{
-      publicKey = "gTkLAa4pN+STVJDde9wWI4QDi4AFBn/ArTx6ul/PFAU=";
-      endpoint = "40.86.75.95:51820";
-      # Only the edge's own overlay address. NOT a LAN prefix: the edge must
-      # never be able to route into 192.168.5.0/24, which is what the P1.4
-      # narrowing of the old tunnel was about.
-      allowedIPs = [ "10.10.0.1/32" ];
-      persistentKeepalive = 25;
-    }];
+    peers = [
+      {
+        publicKey = "gTkLAa4pN+STVJDde9wWI4QDi4AFBn/ArTx6ul/PFAU=";
+        endpoint = "40.86.75.95:51820";
+        # Only the edge's own overlay address. NOT a LAN prefix: the edge must
+        # never be able to route into 192.168.5.0/24, which is what the P1.4
+        # narrowing of the old tunnel was about.
+        allowedIPs = [ "10.10.0.1/32" ];
+        persistentKeepalive = 25;
+      }
+      {
+        # P4.1 replacement edge. Carried alongside the old one deliberately:
+        # both edges must be reachable at once so the P4.2 DNS cutover is the
+        # only thing that switches, and so it can be reversed without touching
+        # the tunnel. The new edge has its own overlay address because
+        # WireGuard cannot have two peers sharing allowedIPs.
+        publicKey = "Sbm2/JkGPNO9LEsrI2oJSHZNIxoOCsf/2l8jwm6AtHM=";
+        endpoint = "20.83.103.87:51820";
+        allowedIPs = [ "10.10.0.4/32" ];
+        persistentKeepalive = 25;
+      }
+    ];
   };
 
   security.sudo.wheelNeedsPassword = false;

@@ -26,8 +26,9 @@
     ../common/global
     ../common/users/sspeaks
     ../common/users/sspeaks/authorized-keys.nix
-    # Shared with `nixpi`: same Pi 4 hardware and the rpi4 kernel workaround.
-    ../nixpi/hardware-config.nix
+    # NOTE: deliberately NOT importing ../nixpi/hardware-config.nix (which
+    # pulls in nixos-hardware's raspberry-pi-4 profile). See the boot-path
+    # note below -- that profile is what broke booting here.
     inputs.home-manager.nixosModules.home-manager
   ];
 
@@ -37,22 +38,44 @@
     config.allowUnfree = lib.mkDefault true;
   };
 
-  # sd-image-aarch64.nix imports profiles/base.nix, which turns on ZFS support
-  # and `hardware.enableAllHardware`. Both break the build on this Pi:
+  # BOOT PATH: the stock nixpkgs sd-image-aarch64 chain, deliberately.
   #
-  #   * ZFS drags its kernel modules into the image and they fail to build
-  #     against the Raspberry Pi 6.18 kernel.
-  #   * enableAllHardware requests a broad module list intended for generic
-  #     install media, including `dw-hdmi`, which the Pi kernel does not build:
-  #       modprobe: FATAL: Module dw-hdmi not found
-  #     That fails `modules-shrunk` and takes the whole SD image with it.
+  # This host previously also imported nixos-hardware's raspberry-pi-4 profile
+  # (via ../nixpi/hardware-config.nix). That profile claims
+  # `sdImage.populateFirmwareCommands` with lib.mkForce
+  # (raspberry-pi/common/firmware.nix), so sd-image-aarch64's own firmware
+  # population never ran, and two separate failures followed:
   #
-  # Neither is wanted here. This is a single-purpose appliance on known
-  # hardware with one ext4 USB disk and one ext4 SD card -- not install media
-  # that has to boot on an unknown machine. The Pi-specific modules it does
-  # need come from ../nixpi/hardware-config.nix (nixos-hardware raspberry-pi-4).
+  #   1. Its config.txt tracks the Raspberry Pi OS pi-gen file and carries no
+  #      `kernel=` line, so the firmware had no bootloader to load and halted
+  #      with the green-LED "kernel image not found" code (7 short flashes).
+  #   2. Enabling its uboot option fixed that, but it copies the ENTIRE vendor
+  #      firmware set -- every start*.elf variant is 22 MiB by itself, plus 28
+  #      device trees and 371 overlays -- which overflowed the firmware
+  #      partition. The flashed card came back 100% full, 2.0K free, with a
+  #      stranded start_db.elf.tmp.3148182: a copy that died mid-write. The
+  #      board got an incomplete boot partition and never reached stage-1.
+  #
+  # The stock sd-image-aarch64 path copies a SELECTIVE set of device trees
+  # plus armstub8-gic.bin and writes a config.txt with `kernel=u-boot.bin`,
+  # which is what the NixOS wiki documents and what nixpi4-bare -- the same Pi
+  # 4 model -- was originally flashed with and still boots from.
+  #
+  # The trade is the vendor linux-rpi kernel for the mainline one. That is
+  # what the official aarch64 image uses on this board, and it costs nothing
+  # this appliance needs. Getting a reachable system first is worth more than
+  # the vendor kernel; nixos-hardware can be reintroduced later over SSH,
+  # where a failed boot is recoverable instead of another trip to the machine.
+  #
+  # ZFS stays off: profiles/base.nix enables it, it is not wanted on a
+  # single-purpose appliance, and it only adds build time and image size.
   boot.supportedFilesystems.zfs = lib.mkForce false;
-  hardware.enableAllHardware = lib.mkForce false;
+
+  # Headroom over the 30 MiB default. The stock firmware set fits, but it was
+  # a full partition that silently truncated the last build, and the cost of
+  # over-sizing here is zero -- the image is expanded on first boot anyway.
+  sdImage.firmwareSize = 256;
+
 
   networking = {
     hostName = "raspberrypi"; # continuity decision 1 -- see header
@@ -69,16 +92,18 @@
   # boot simply falls through to Debian -- the pre-migration state -- with no
   # physical access required.
   #
-  # Consequence: the USB disk is now the ROOT device, expanded to fill the
-  # drive on first boot. There is no separate data partition to mount, so the
-  # previous by-UUID mount of sda2 is gone along with the 593 GB of Time
-  # Machine history it held. The owner explicitly accepted that loss:
-  # "I dont care if it's risky or causes time machine backup dataloss.. I can
-  # always do another backup".
+  # Consequence: the 593 GB of Time Machine history that lived on the USB is
+  # gone -- the P2.2 boot image was written over its partition table. The owner
+  # explicitly accepted that loss: "I dont care if it's risky or causes time
+  # machine backup dataloss.. I can always do another backup".
   #
-  # /srv/timemachine is therefore a plain directory on the expanded root.
-  # Ownership must still be uid/gid 1001 so the restored Samba account can
-  # write to it.
+  # The board ultimately boots from the SD card, and the USB has been
+  # repartitioned as a single ext4 volume (label TIMEMACHINE) mounted at
+  # /srv/timemachine -- see the fileSystems entry below. It is deliberately NOT
+  # labelled NIXOS_SD: the leftover image on it carried that label, which
+  # collides with the SD card's own root label and could mount the wrong disk.
+  #
+  # Ownership must be uid/gid 1001 so the restored Samba account can write.
 
   # Must match the Debian install exactly -- continuity decision 2.
   users.groups.timemachine.gid = 1001;
@@ -163,6 +188,31 @@
   # Databases and dumps must NOT live on the shared USB spindle. vid-stream
   # co-hosts here after P3.2, and putting PostgreSQL/SQLite on the same disk as
   # Time Machine writes is exactly the contention the plan's load test targets.
+  # The Time Machine target lives on the USB spindle, not the SD card.
+  #
+  # This was briefly wrong in practice: the share pointed at /srv/timemachine
+  # on the expanded root while the USB was detached, so macOS happily began
+  # backing up to the 59 GB SD card (reporting 54 GB free, which is what gave
+  # it away). The SD cannot hold a Mac's backup and it is the wrong medium for
+  # sustained write load.
+  #
+  # `nofail` is REQUIRED and is not decoration. The original Debian install on
+  # this machine had
+  #     /dev/sda2  /home/pi/tmbackup/data  ext4  defaults  0  2
+  # with no nofail and fsck pass 2, so with the USB absent systemd stopped at
+  # an emergency shell before networking came up and the box was unreachable
+  # without physical access. `nofail` plus pass 0 means a missing or dead USB
+  # degrades to "share is empty" instead of "host is off the network".
+  #
+  # Matched by UUID rather than /dev/sda: device names reorder, and the USB
+  # previously carried a partition labelled NIXOS_SD (left by the P2.2 boot
+  # image) which collided with the SD card's own root label.
+  fileSystems."/srv/timemachine" = {
+    device = "/dev/disk/by-uuid/7d1f6fce-dee0-49cc-bd47-98ed7dd4438e";
+    fsType = "ext4";
+    options = [ "nofail" "noatime" "x-systemd.device-timeout=15s" ];
+  };
+
   systemd.tmpfiles.rules = [
     "d /var/lib/vid-stream 0750 root root -"
     "d /var/lib/samba/private 0700 root root -"
