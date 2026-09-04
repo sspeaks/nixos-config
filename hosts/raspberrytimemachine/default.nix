@@ -92,16 +92,18 @@
   # boot simply falls through to Debian -- the pre-migration state -- with no
   # physical access required.
   #
-  # Consequence: the USB disk is now the ROOT device, expanded to fill the
-  # drive on first boot. There is no separate data partition to mount, so the
-  # previous by-UUID mount of sda2 is gone along with the 593 GB of Time
-  # Machine history it held. The owner explicitly accepted that loss:
-  # "I dont care if it's risky or causes time machine backup dataloss.. I can
-  # always do another backup".
+  # Consequence: the 593 GB of Time Machine history that lived on the USB is
+  # gone -- the P2.2 boot image was written over its partition table. The owner
+  # explicitly accepted that loss: "I dont care if it's risky or causes time
+  # machine backup dataloss.. I can always do another backup".
   #
-  # /srv/timemachine is therefore a plain directory on the expanded root.
-  # Ownership must still be uid/gid 1001 so the restored Samba account can
-  # write to it.
+  # The board ultimately boots from the SD card, and the USB has been
+  # repartitioned as a single ext4 volume (label TIMEMACHINE) mounted at
+  # /srv/timemachine -- see the fileSystems entry below. It is deliberately NOT
+  # labelled NIXOS_SD: the leftover image on it carried that label, which
+  # collides with the SD card's own root label and could mount the wrong disk.
+  #
+  # Ownership must be uid/gid 1001 so the restored Samba account can write.
 
   # Must match the Debian install exactly -- continuity decision 2.
   users.groups.timemachine.gid = 1001;
@@ -186,6 +188,31 @@
   # Databases and dumps must NOT live on the shared USB spindle. vid-stream
   # co-hosts here after P3.2, and putting PostgreSQL/SQLite on the same disk as
   # Time Machine writes is exactly the contention the plan's load test targets.
+  # The Time Machine target lives on the USB spindle, not the SD card.
+  #
+  # This was briefly wrong in practice: the share pointed at /srv/timemachine
+  # on the expanded root while the USB was detached, so macOS happily began
+  # backing up to the 59 GB SD card (reporting 54 GB free, which is what gave
+  # it away). The SD cannot hold a Mac's backup and it is the wrong medium for
+  # sustained write load.
+  #
+  # `nofail` is REQUIRED and is not decoration. The original Debian install on
+  # this machine had
+  #     /dev/sda2  /home/pi/tmbackup/data  ext4  defaults  0  2
+  # with no nofail and fsck pass 2, so with the USB absent systemd stopped at
+  # an emergency shell before networking came up and the box was unreachable
+  # without physical access. `nofail` plus pass 0 means a missing or dead USB
+  # degrades to "share is empty" instead of "host is off the network".
+  #
+  # Matched by UUID rather than /dev/sda: device names reorder, and the USB
+  # previously carried a partition labelled NIXOS_SD (left by the P2.2 boot
+  # image) which collided with the SD card's own root label.
+  fileSystems."/srv/timemachine" = {
+    device = "/dev/disk/by-uuid/7d1f6fce-dee0-49cc-bd47-98ed7dd4438e";
+    fsType = "ext4";
+    options = [ "nofail" "noatime" "x-systemd.device-timeout=15s" ];
+  };
+
   systemd.tmpfiles.rules = [
     "d /var/lib/vid-stream 0750 root root -"
     "d /var/lib/samba/private 0700 root root -"
