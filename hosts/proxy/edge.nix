@@ -10,15 +10,23 @@ let
     sopsFile = ../../secrets/proxy.yaml;
   };
 
-  # Flip to true for the P4.2 Let's Encrypt STAGING rehearsal, then back to
-  # false before the real cutover. Staging has effectively no rate limit, so a
-  # botched rehearsal cannot burn the production 5-failures-per-hour budget.
+  # Flip to true for a Let's Encrypt STAGING rehearsal, back to false for real
+  # certificates. Staging has effectively no rate limit, so a botched rehearsal
+  # cannot burn the production 5-failures-per-hour-per-hostname budget.
   #
-  # CURRENTLY TRUE, deliberately: DNS still resolves to the OLD edge, so every
-  # HTTP-01 challenge aimed at this host is answered by the wrong machine and
-  # fails. Against production that would exhaust the failure budget needed for
-  # the actual cutover. Set to false as the LAST step of P4.2, after DNS moves.
-  useStagingACME = true;
+  # NOW FALSE. The P4.2 canary is done: mycatsonfire.com was moved to this host
+  # at GoDaddy and Caddy issued a staging certificate for it on the first
+  # attempt ("(STAGING) Baloney Bulgur YE2"), serving byte-identical content to
+  # the old edge. That proves the whole path end to end -- NSG, port 80, the
+  # http-01 challenge and the vhost -- so staging has nothing left to tell us,
+  # and every minute it stays on is a browser warning for a live site.
+  #
+  # ORDERING: this must reach the target BEFORE the six Azure DNS records move.
+  # ./deploy pulls a prebuilt closure from Cachix, so the build has to happen in
+  # CI first; pre-fetch with `./deploy proxy --dry-run`, move DNS, then
+  # `--switch`. Switching while the six still resolve to the old edge would make
+  # Caddy fail production challenges for them and burn the failure budget.
+  useStagingACME = false;
 
   # Old edge -> new edge. The pipelines write to the /usr/share names, which do
   # not exist on NixOS; the real roots are these, and compatibility symlinks
