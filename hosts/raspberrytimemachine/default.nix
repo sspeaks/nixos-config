@@ -77,6 +77,21 @@
   # `firmware.enable` is deliberately left off: that is the activation script
   # for a RUNNING system and would need /boot/firmware mounted. For image
   # builds populateFirmwareCommands is wired up unconditionally.
+  # The firmware partition must be bigger than the 30 MiB default.
+  #
+  # nixos-hardware copies the ENTIRE vendor firmware set, not the trimmed
+  # selection the stock sd-image uses: every start*.elf variant (22 MiB on its
+  # own), 28 device trees, and 371 overlays. Adding u-boot.bin on top of that
+  # pushed it past 30 MiB, and the copy simply ran out of room -- the flashed
+  # card came back 100% full with 2.0K free and a stranded
+  # start_db.elf.tmp.3148182, the signature of a copy that died mid-write.
+  #
+  # That, not the bootloader choice, is why the board stopped at a solid-green
+  # ACT LED: the firmware partition it was handed was incomplete. Sizing this
+  # generously is free -- the partition is created inside an image that is
+  # immediately expanded on first boot anyway.
+  sdImage.firmwareSize = 256;
+
   hardware.raspberry-pi.firmware.uboot = {
     enable = true;
     # nixos-hardware defaults to ubootRaspberryPiAarch64 (rpi_arm64_defconfig,
