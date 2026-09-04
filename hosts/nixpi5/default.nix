@@ -13,6 +13,7 @@
     ./home-assistant.nix
     ./go2rtc.nix
     ./webmailclient.nix
+    ../../modules/restic-offsite.nix
     # garage-monitor input is currently disabled — uncomment in flake.nix to restore
     # inputs.garage-monitor.nixosModules.default
     # ./garage-monitor.nix
@@ -75,6 +76,84 @@
     mode = "0400";
     owner = "root";
   };
+
+  # ------------------------------------------------------------- backups ---
+  # Until now this host had NO backups of any kind: no restic, no borg, and
+  # restic-offsite was enabled on exactly one machine in the estate,
+  # hosts/vid-stream. That is the wrong host to be the only one -- it is the one
+  # slated to move home and then be deleted -- and it left the Authentik
+  # database unprotected, which is the SSO that gates auth.sspeaks.net,
+  # home-assistant.sspeaks.net and streams.sspeaks.net through oauth2-proxy.
+  #
+  # The `nixpi5` blob container already existed; it was created in P1.2
+  # alongside the others and never used.
+  #
+  # The restic password here is deliberately NOT the same as vid-stream's, so
+  # that compromising this host cannot decrypt vid-stream's repository. The
+  # Azure environment file is shared, because it is the same storage account.
+  sops.secrets.restic-password = {
+    format = "yaml";
+    sopsFile = ../../secrets/nixpi5.yaml;
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+  sops.secrets.restic-azure-environment = {
+    format = "yaml";
+    sopsFile = ../../secrets/nixpi5.yaml;
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  services.resticOffsite = {
+    enable = true;
+    container = "nixpi5";
+
+    # Authentik keeps its real state in postgres, so it is dumped rather than
+    # copied: /var/lib/authentik is 0 bytes. /var/lib/postgresql is deliberately
+    # NOT in `paths` -- copying a live cluster directory yields a torn,
+    # unrestorable snapshot, which is exactly what pg_dump avoids.
+    postgresDatabases = [ "authentik" ];
+
+    # Home Assistant's recorder database. `.backup` is required rather than a
+    # file copy: Home Assistant runs SQLite in WAL mode, so a plain copy can
+    # miss the -wal contents and restore torn state. No -wal sidecar happened
+    # to be present when this was written, which only means it had just been
+    # checkpointed; it is not a reason to copy the file directly.
+    sqliteDatabases = {
+      home-assistant = "/var/lib/hass/home-assistant_v2.db";
+    };
+
+    paths = [
+      # Automations, blueprints, custom components, the device registry, and
+      # the .storage tree that holds every entity's configuration.
+      "/var/lib/hass"
+      # systemd DynamicUser state. Holds authentik's media and certificates,
+      # which are NOT in the database, plus ntfy-sh.
+      "/var/lib/private"
+      "/var/lib/snappymail"
+      # The Samba passdb and Debian fstab/smb.conf carried across during the
+      # P2.2 .106 conversion. Small, and not reproducible if lost.
+      "/var/lib/migration-seed"
+    ];
+
+    exclude = [
+      # Python dependencies and HTTP caches that Home Assistant refetches.
+      "/var/lib/hass/deps"
+      "/var/lib/hass/.cache"
+    ];
+  };
+
+  # Deliberately NOT backed up:
+  #   /var/lib/garage-monitor  2.0 GB, and the module is currently commented out
+  #     of the imports above, so this is stale data from when it last ran. It is
+  #     1.2 GB of downloadable ML model-cache plus 849 MB of camera JPEGs -- a
+  #     monitoring stream, not irreplaceable state.
+  #   /var/lib/docker, /var/lib/containers  image layers, refetchable. The
+  #     docker volumes that would matter total 100 KB and snappymail's real
+  #     configuration lives in /var/lib/snappymail, which IS included.
+  #   /var/lib/rspamd, /var/lib/tor  regenerable service state.
 
   networking.wireguard.enable = true;
   networking.wireguard.interfaces.wg-edge = {
