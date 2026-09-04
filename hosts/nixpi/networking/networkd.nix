@@ -50,7 +50,11 @@ in
           {
             PublicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0="; # server public key
             AllowedIPs = [ "0.0.0.0/0" ];
-            Endpoint = "13.91.123.214:51820";
+            # NO Endpoint. This dialled the `nixos` Azure VM at 13.91.123.214,
+            # deleted 2026-09-04 in P3.3. Azure has reclaimed that Basic public
+            # IP, so it can be reassigned to an unrelated tenant -- keeping the
+            # literal would mean re-enabling this tunnel sends handshakes to
+            # whoever holds it now. Set a new endpoint before re-enabling.
             RouteTable = "off";
           }
         ];
