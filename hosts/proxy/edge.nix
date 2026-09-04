@@ -113,69 +113,86 @@ in
     acmeCA = lib.mkIf useStagingACME
       "https://acme-staging-v02.api.letsencrypt.org/directory";
 
-    virtualHosts = {
-      # vid-stream is still the Azure VM until P3.2 moves it home; this becomes
-      # a 10.10.0.x overlay address at that point.
-      "streams.sspeaks.net".extraConfig = ''
-        reverse_proxy 20.236.57.191:8080
-      '';
-
-      "auth.sspeaks.net".extraConfig = ''
-        reverse_proxy 10.10.0.2:9000
-      '';
-
-      "home-assistant.sspeaks.net".extraConfig = ''
-        tls {
-          client_auth {
-            mode require_and_verify
-            trusted_ca_cert_file ${./myCA.pem}
+    # Bound the access logs. The NixOS module gives every vhost a
+    # `log { output file ... }` block by default, and Caddy's own defaults for
+    # a file logger are roll_size 100MiB with roll_keep 10 -- about 1.1 GB per
+    # vhost, so ~7.7 GB across these seven, against 9.7 GB free on a 15 GiB
+    # disk. A busy week could fill the edge's root filesystem. The old
+    # hand-written Caddyfile wrote no access logs at all, so this is a
+    # regression introduced purely by moving to the module.
+    virtualHosts = lib.mapAttrs
+      (host: vhost: vhost // {
+        logFormat = ''
+          output file /var/log/caddy/access-${host}.log {
+            roll_size 10MiB
+            roll_keep 3
           }
-        }
-        reverse_proxy 10.10.0.2:8123 {
-          header_up Host home-assistant.sspeaks.net
-        }
-      '';
+          level ERROR
+        '';
+      })
+      {
+        # vid-stream is still the Azure VM until P3.2 moves it home; this becomes
+        # a 10.10.0.x overlay address at that point.
+        "streams.sspeaks.net".extraConfig = ''
+          reverse_proxy 20.236.57.191:8080
+        '';
 
-      "bootstrap.sspeaks.net".extraConfig = ''
-        redir https://raw.githubusercontent.com/sspeaks/nixos-config/main/scripts/bootstrap.sh 302
-      '';
+        "auth.sspeaks.net".extraConfig = ''
+          reverse_proxy 10.10.0.2:9000
+        '';
 
-      "mycatsonfire.com".extraConfig = ''
-        root * ${webroots."mycatsonfire.com"}
-        file_server
+        "home-assistant.sspeaks.net".extraConfig = ''
+          tls {
+            client_auth {
+              mode require_and_verify
+              trusted_ca_cert_file ${./myCA.pem}
+            }
+          }
+          reverse_proxy 10.10.0.2:8123 {
+            header_up Host home-assistant.sspeaks.net
+          }
+        '';
 
-        reverse_proxy /pogbot {
-          to http://10.10.0.3:8080
-          header_up X-Requested-With {doesntmatter}
-        }
-        handle_path /pogbot/* {
-          reverse_proxy http://10.10.0.3:8080
-        }
-      '';
+        "bootstrap.sspeaks.net".extraConfig = ''
+          redir https://raw.githubusercontent.com/sspeaks/nixos-config/main/scripts/bootstrap.sh 302
+        '';
 
-      "chordplay.sspeaks.net".extraConfig = ''
-        encode zstd gzip
-        root * ${webroots."chordplay.sspeaks.net"}
-        file_server
-      '';
+        "mycatsonfire.com".extraConfig = ''
+          root * ${webroots."mycatsonfire.com"}
+          file_server
 
-      # The old edge sent /boggle/* through a Node 10.11.0 cors-anywhere
-      # container: it rewrote the path to /http://10.10.0.3:8081/<board> and
-      # proxied that to localhost:8080, which re-fetched it. The frontend calls
-      # a RELATIVE URL (fetch(`boggle/${board}`)), so it was always same-origin
-      # and the CORS hop was a pure forwarder. handle_path strips the prefix
-      # and reaches the same backend directly; verified byte-identical
-      # (sha256 81c5879f...) against the live path before removal. That
-      # retires an EOL-since-2019 Node runtime from the public edge.
-      "sspeaks.net".extraConfig = ''
-        encode zstd gzip
-        root * ${webroots."sspeaks.net"}
-        file_server
+          reverse_proxy /pogbot {
+            to http://10.10.0.3:8080
+            header_up X-Requested-With {doesntmatter}
+          }
+          handle_path /pogbot/* {
+            reverse_proxy http://10.10.0.3:8080
+          }
+        '';
 
-        handle_path /boggle/* {
-          reverse_proxy 10.10.0.3:8081
-        }
-      '';
-    };
+        "chordplay.sspeaks.net".extraConfig = ''
+          encode zstd gzip
+          root * ${webroots."chordplay.sspeaks.net"}
+          file_server
+        '';
+
+        # The old edge sent /boggle/* through a Node 10.11.0 cors-anywhere
+        # container: it rewrote the path to /http://10.10.0.3:8081/<board> and
+        # proxied that to localhost:8080, which re-fetched it. The frontend calls
+        # a RELATIVE URL (fetch(`boggle/${board}`)), so it was always same-origin
+        # and the CORS hop was a pure forwarder. handle_path strips the prefix
+        # and reaches the same backend directly; verified byte-identical
+        # (sha256 81c5879f...) against the live path before removal. That
+        # retires an EOL-since-2019 Node runtime from the public edge.
+        "sspeaks.net".extraConfig = ''
+          encode zstd gzip
+          root * ${webroots."sspeaks.net"}
+          file_server
+
+          handle_path /boggle/* {
+            reverse_proxy 10.10.0.3:8081
+          }
+        '';
+      };
   };
 }
