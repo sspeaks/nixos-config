@@ -41,6 +41,7 @@ in
     ../common/users/sspeaks/authorized-keys.nix
     ./hardware-configuration.nix
     ./ai-coaching.nix
+    ../../modules/restic-offsite.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.determinate.nixosModules.default
     inputs.large-video-streamer.nixosModules.vidStreamer
@@ -83,9 +84,55 @@ in
     ai-coaching-evidence-api-env = sopsFileLocation // { mode = "0400"; };
     ai-coaching-evidence-worker-env = sopsFileLocation // { mode = "0400"; };
     ai-coaching-extraction-gateway-env = sopsFileLocation // { mode = "0400"; };
+    restic-password = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+    restic-azure-environment = sopsFileLocation // {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
     wg-edge-private-key = sopsFileLocation // {
       owner = "root";
       mode = "0400";
+    };
+  };
+
+  # -------------------------------------------------------------- backups ---
+  # Deleting the vid-stream resource group removes the only host that was
+  # backing this data up, and after the migration these 41 GB exist in exactly
+  # one place. This must be live BEFORE that deletion, not after.
+  #
+  # The container is deliberately still "vid-stream", and the restic password
+  # was carried across unchanged in secrets/vidbox.yaml, so this host opens the
+  # EXISTING repository rather than starting a new one. The backup history from
+  # the Azure host therefore continues uninterrupted instead of being orphaned.
+  # Note that repository lives in the migration-backup resource group, not in
+  # vid-stream's, so deleting that group does not touch it.
+  #
+  # hls is excluded for the same reason it was never copied: 35 GB of derived
+  # segments that vidbox regenerated on its own within minutes of the recordings
+  # landing. Backing it up would nearly double the repository for no recovery
+  # value.
+  services.resticOffsite = {
+    enable = true;
+    container = "vid-stream";
+    paths = [
+      "/srv/videos"
+      "/var/lib/ai-coaching"
+      "/var/lib/vid-streamer"
+    ];
+    exclude = [
+      "/var/lib/vid-streamer/hls"
+    ];
+    postgresDatabases = [ "evidence" ];
+    sqliteDatabases = {
+      # WAL-mode databases: `.backup` gives a consistent snapshot; a plain file
+      # copy would miss the -wal contents and could restore torn state.
+      vid-streamer-app = "/var/lib/vid-streamer/app.db";
+      speakr-transcriptions = "/var/lib/ai-coaching/speakr/instance/transcriptions.db";
     };
   };
 
