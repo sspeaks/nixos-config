@@ -37,6 +37,13 @@ in
       "${inputs.nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
     ];
     vm = mkHost ../hosts/vm [ ];
+    # Home Hyper-V VM taking vid-stream's workload off Azure. Gen2/UEFI, so it
+    # gets the same disko treatment as the Azure x86_64 hosts -- an Azure VM is
+    # a Hyper-V VM, so the guest layout is identical.
+    vidbox = mkHost ../hosts/vidbox [
+      inputs.disko.nixosModules.disko
+      ../hosts/vidbox/disko.nix
+    ];
     asahi = mkHost ../hosts/asahi
       (inputs.nixpkgs.lib.optional (temporaryHostModules ? asahi) temporaryHostModules.asahi);
     nixpi5 = inputs.nixos-raspberrypi.lib.nixosSystem {
