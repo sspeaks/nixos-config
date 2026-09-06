@@ -18,10 +18,6 @@ in
       inputs.disko.nixosModules.disko
       ../hosts/nixos-azure/disko.nix
     ];
-    vid-stream = mkHost ../hosts/vid-stream [
-      inputs.disko.nixosModules.disko
-      ../hosts/nixos-azure/disko.nix
-    ];
     pogbot = mkHost ../hosts/pogbot [ ];
     # P2.1 replacement Azure edge: aarch64, Gen2 UEFI, specialized VHD.
     proxy = mkHost ../hosts/proxy [

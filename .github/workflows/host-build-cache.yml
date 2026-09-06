@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           : > closures.txt
-          for host in nixos-azure pogbot vid-stream vidbox; do
+          for host in nixos-azure pogbot vidbox; do
             nix build --show-trace --print-build-logs --accept-flake-config \
               --no-link --print-out-paths \
               ".#nixosConfigurations.$host.config.system.build.toplevel" \
