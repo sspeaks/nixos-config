@@ -75,6 +75,15 @@ in
         publicKey = "i6lFAchjSAx0zohEa2mm/qJ4JGL36HYXuQqNsQ3Jk38=";
         allowedIPs = [ "10.10.0.3/32" ];
       }
+      {
+        # vidbox — P3.2 home replacement for the vid-stream Azure VM.
+        # Added BEFORE the streams.sspeaks.net vhost is repointed, deliberately:
+        # this entry alone changes no traffic, so the tunnel can be brought up
+        # and proven end to end while vid-stream is still serving. The cutover
+        # is then a one-line change to the reverse_proxy target below.
+        publicKey = "jTa6Da0QXwj7tg9nE2MM99CYIl6AufCztXCwTTR11x8=";
+        allowedIPs = [ "10.10.0.5/32" ];
+      }
     ];
   };
 
