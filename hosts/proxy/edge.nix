@@ -148,10 +148,12 @@ in
         '';
       })
       {
-        # vid-stream is still the Azure VM until P3.2 moves it home; this becomes
-        # a 10.10.0.x overlay address at that point.
+        # P3.2 COMPLETE: streams now terminates at vidbox over the overlay
+        # rather than at the vid-stream Azure VM's public IP. Rollback is this
+        # one line -- put back `reverse_proxy 20.236.57.191:8080` and redeploy,
+        # which is why the peer was added in a separate, earlier change.
         "streams.sspeaks.net".extraConfig = ''
-          reverse_proxy 20.236.57.191:8080
+          reverse_proxy 10.10.0.5:8080
         '';
 
         "auth.sspeaks.net".extraConfig = ''
