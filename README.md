@@ -88,9 +88,12 @@ The workflow [.github/workflows/host-build-cache.yml](.github/workflows/host-bui
 
 - `nixos-azure` on `x86_64-linux`
 - `pogbot` on `x86_64-linux`
+- `vid-stream` on `x86_64-linux`
+- `vidbox` on `x86_64-linux`
 - `nixpi` and `nixpi4-bare` on `aarch64-linux`
 - `nixpi5` on `aarch64-linux`
 - `asahi` on `aarch64-linux`
+- `proxy` on `aarch64-linux`, alongside the Pi SD image
 
 It runs on pushes to `main` and can also be started manually via `workflow_dispatch`.
 
