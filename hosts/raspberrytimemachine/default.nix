@@ -18,6 +18,21 @@
 #      1001, matching the Debian install exactly. Backup files are owned by uid
 #      1001; any other uid makes them unwritable.
 #
+# THREE NAMES: the flake attribute/directory is `raspberrytimemachine`, the
+# guest hostname is deliberately `raspberrypi`, and the home router publishes
+# `raspberrytimemachine.bs.home` through a manually maintained DHCP reservation.
+# That router mapping lives outside this repository and is not derived from
+# the flake attribute. Keep the repository name aligned with that external
+# alias; changing the guest hostname would risk Time Machine destination
+# continuity rather than fixing the naming difference.
+#
+# The NixOS conversion regenerated SSH host keys. A client's known_hosts may
+# still hold the pre-conversion key under `raspberrytimemachine` even when its
+# entry for the IP address is current. This is client state, not a Nix setting:
+# independently verify the live key, remove the stale alias with
+# `ssh-keygen -R raspberrytimemachine`, then record the verified replacement.
+# Do not disable host-key checking or rename the machine to work around it.
+#
 # The Debian USB volume held 593 GB of backups before conversion. That history
 # was lost during the initial USB boot attempt described below; the current
 # filesystem UUID is in the fileSystems entry.
