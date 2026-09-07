@@ -1,12 +1,16 @@
 { inputs, lib, config, ... }:
 
-# Bare-bones sibling of `nixpi`: the same Raspberry Pi 4 (same SD card, same
-# SSH host key, therefore the same sops age identity), but without the travel
-# router. Build this generation when the Pi is just a headless box sitting on
-# somebody else's network:
+# Home service configuration for the Raspberry Pi 4: runs Pogbot and Boggle.
+# `nixpi` is the travel-router alternative for the SAME physical machine
+# (same SD card and SSH host key, therefore the same sops age identity), not
+# another host:
 #
-#   sudo nixos-rebuild switch --flake .#nixpi4-bare   # plain server
-#   sudo nixos-rebuild switch --flake .#nixpi         # travel router
+#   sudo nixos-rebuild switch --flake .#nixpi4   # home services
+#   sudo nixos-rebuild switch --flake .#nixpi    # travel router
+#
+# The router variant does not import the workloads below: switching to it
+# takes Pogbot and Boggle offline and also changes the hostname to `nixpi`.
+# Choose that variant deliberately, not as an equivalent deployment alias.
 #
 # Reboot after switching in either direction: the two generations use different
 # network stacks (scripted dhcpcd here vs. systemd-networkd there), and a live
@@ -34,7 +38,7 @@
   ];
 
   networking = {
-    hostName = "nixpi4-bare";
+    hostName = "nixpi4";
     # `nixpi` replaces this with systemd-networkd; here stock scripted
     # networking + DHCP on every interface is exactly what we want.
     useDHCP = lib.mkDefault true;

@@ -102,13 +102,13 @@ jobs:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
 
-      # nixpi4-bare is the same Pi 4 hardware/kernel as nixpi, so it reuses the
+      # nixpi4 is the same Pi 4 hardware/kernel as nixpi, so it reuses the
       # warm store of the first build instead of paying for a second ARM runner.
       - name: Build host closures (no activation, no credential)
         run: |
           set -euo pipefail
           : > closures.txt
-          for host in nixpi nixpi4-bare; do
+          for host in nixpi nixpi4; do
             nix build --show-trace --print-build-logs --accept-flake-config \
               --no-link --print-out-paths \
               ".#nixosConfigurations.$host.config.system.build.toplevel" \

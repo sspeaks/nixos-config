@@ -143,7 +143,7 @@ in
   # tunnel: without it the home NAT mapping expires and the edge can no longer
   # reach back to deliver traffic.
   #
-  # 10.10.0.5, because .2 is nixpi5, .3 is nixpi4-bare and .4 is the edge
+  # 10.10.0.5, because .2 is nixpi5, .3 is nixpi4 and .4 is the edge
   # itself. WireGuard cannot have two peers sharing an allowedIPs entry, so
   # every host needs its own.
   networking.wireguard.enable = true;

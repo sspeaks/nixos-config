@@ -7,7 +7,7 @@
 let
   sopsFileLocation = {
     format = "yaml";
-    # nixpi4-bare shares the nixpi age identity: same Pi, same SD card,
+    # nixpi4 shares the nixpi age identity: same Pi, same SD card,
     # therefore the same SSH host key.
     sopsFile = ../../secrets/nixpi.yaml;
   };
