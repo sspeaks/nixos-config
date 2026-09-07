@@ -1,3 +1,4 @@
+{ self, ... }:
 {
   perSystem = { pkgs, lib, ... }: {
     # P1.1 supply-chain fixture.
@@ -22,6 +23,25 @@
     # Linux-only: the fixture exists to be copied to a Linux target, and the
     # controller is aarch64-darwin.
     checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      pi4-identity =
+        let
+          hosts = self.nixosConfigurations;
+          pi = hosts.nixpi4-services.config;
+        in
+        assert lib.assertMsg (!(hosts ? nixpi4-bare) && !(hosts ? nixpi4))
+          "Neither the old bare name nor the hardware-only name should remain as an ambiguous alias.";
+        assert lib.assertMsg (pi.networking.hostName == "nixpi4-services")
+          "The home Pi 4 configuration and hostname must both describe the services role.";
+        assert lib.assertMsg (hosts ? nixpi && hosts ? vm && hosts ? asahi)
+          "The owner-retained nixpi, vm and asahi configurations must remain available.";
+        assert lib.assertMsg (hosts.nixpi.config.networking.hostName == "nixpi")
+          "The travel-router variant remains a distinct configuration.";
+        assert lib.assertMsg (pi.networking.wireguard.interfaces.wg-edge.ips == [ "10.10.0.3/32" ])
+          "Renaming the Pi must not move its workload overlay address.";
+        pkgs.runCommandLocal "pi4-identity" { } ''
+          touch "$out"
+        '';
+
       nix-copy-fixture =
         let
           marker = "p1-1-nix-copy-fixture-20260902";
