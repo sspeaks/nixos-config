@@ -71,7 +71,7 @@ in
         allowedIPs = [ "10.10.0.2/32" ];
       }
       {
-        # nixpi4 — pogbot, boggle
+        # nixpi4-services — pogbot, boggle
         publicKey = "i6lFAchjSAx0zohEa2mm/qJ4JGL36HYXuQqNsQ3Jk38=";
         allowedIPs = [ "10.10.0.3/32" ];
       }

@@ -7,7 +7,7 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 | Host | Arch | Description |
 |------|------|-------------|
 | `nixpi` | aarch64-linux | Raspberry Pi 4 — travel router (hostapd AP, dnsmasq, nftables NAT, WireGuard) |
-| `nixpi4` | aarch64-linux | Home service configuration of the same Pi 4 as `nixpi` — Pogbot and Boggle |
+| `nixpi4-services` | aarch64-linux | Home service configuration of the same Pi 4 as `nixpi` — Pogbot and Boggle |
 | `nixpi5` | aarch64-linux | Raspberry Pi 5 — Authentik, Home Assistant, SnappyMail, Garage Monitor |
 | `NixOS-WSL` | x86_64-linux | WSL dev environment |
 | `NixOS-WSL-work` | x86_64-linux | WSL dev environment (work) |
@@ -16,10 +16,16 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 | `vm` | x86_64-linux | Minimal test/dev VM |
 | `asahi` | aarch64-linux | Apple Silicon Mac — GNOME desktop workstation |
 
-### Pi 4 identity transition
+### Proposed Pi 4 services identity transition
 
-`nixpi4` replaces the old `nixpi4-bare` flake output and changes the machine's
-hostname too. There is no compatibility output under the old name. `nixpi` is
+`nixpi4-services` is the proposed replacement for the `nixpi4-bare` flake output
+and machine hostname. The role suffix distinguishes it from the retained
+`nixpi` travel router; “services” covers both Pogbot and Boggle without implying
+that this is a second Pi or limiting future workloads to bots.
+
+The owner must approve the proposal and coordinate deployment; the live name
+remains `nixpi4-bare` until activation. This branch provides no compatibility
+output under the old name or the rejected hardware-only `nixpi4` name. `nixpi` is
 still a separate travel-router configuration for this same physical Pi, not a
 second server; switching to it stops the home workloads and requires a reboot
 because the network stacks differ.
@@ -31,19 +37,19 @@ reviewed commit, on a controller that can evaluate the Pi configuration:
 
 ```bash
 # Keep using the existing, verified SSH alias during the hostname transition.
-./deploy --dry-run --ssh-target nixpi4-bare nixpi4
-./deploy --test --ssh-target nixpi4-bare nixpi4
+./deploy --dry-run --ssh-target nixpi4-bare nixpi4-services
+./deploy --test --ssh-target nixpi4-bare nixpi4-services
 # Only after a successful test and a fresh SSH connection:
-./deploy --switch --ssh-target nixpi4-bare nixpi4
+./deploy --switch --ssh-target nixpi4-bare nixpi4-services
 ```
 
 The SSH alias used during transition must resolve independently of the old
 hostname (for example, to the known LAN address), not through an old `.local`
-name. Then update the operator's SSH/known_hosts aliases to `nixpi4`, verifying
+name. Then update the operator's SSH/known_hosts aliases to `nixpi4-services`, verifying
 the existing SSH host-key fingerprint rather than accepting an unexpected key.
-`./deploy nixpi4` defaults its SSH target to `nixpi4`.
+`./deploy nixpi4-services` defaults its SSH target to `nixpi4-services`.
 
-Hostname-derived mDNS/Avahi advertisements change to `nixpi4.local` when enabled;
+Hostname-derived mDNS/Avahi advertisements become `nixpi4-services.local` when enabled;
 this NixOS configuration currently has Avahi disabled. The system derivation
 name changes, so the new closure must be built and cached, although unchanged
 package dependencies can be reused. SSH host keys, SOPS recipients and
@@ -132,7 +138,7 @@ The workflow [.github/workflows/host-build-cache.yml](.github/workflows/host-bui
 - `nixos-azure` on `x86_64-linux`
 - `pogbot` on `x86_64-linux`
 - `vidbox` on `x86_64-linux`
-- `nixpi` and `nixpi4` on `aarch64-linux`
+- `nixpi` and `nixpi4-services` on `aarch64-linux`
 - `nixpi5` on `aarch64-linux`
 - `asahi` on `aarch64-linux`
 - `proxy` on `aarch64-linux`, alongside the Pi SD image

@@ -26,12 +26,14 @@
       pi4-identity =
         let
           hosts = self.nixosConfigurations;
-          pi = hosts.nixpi4.config;
+          pi = hosts.nixpi4-services.config;
         in
-        assert lib.assertMsg (!(hosts ? nixpi4-bare))
-          "The retired nixpi4-bare flake name must not remain as an ambiguous alias.";
-        assert lib.assertMsg (pi.networking.hostName == "nixpi4")
-          "The home Pi 4 configuration and its hostname must both be nixpi4.";
+        assert lib.assertMsg (!(hosts ? nixpi4-bare) && !(hosts ? nixpi4))
+          "Neither the old bare name nor the hardware-only name should remain as an ambiguous alias.";
+        assert lib.assertMsg (pi.networking.hostName == "nixpi4-services")
+          "The home Pi 4 configuration and hostname must both describe the services role.";
+        assert lib.assertMsg (hosts ? nixpi && hosts ? vm && hosts ? asahi)
+          "The owner-retained nixpi, vm and asahi configurations must remain available.";
         assert lib.assertMsg (hosts.nixpi.config.networking.hostName == "nixpi")
           "The travel-router variant remains a distinct configuration.";
         assert lib.assertMsg (pi.networking.wireguard.interfaces.wg-edge.ips == [ "10.10.0.3/32" ])

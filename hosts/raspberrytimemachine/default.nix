@@ -58,7 +58,7 @@
   #
   # The stock sd-image-aarch64 path copies a SELECTIVE set of device trees
   # plus armstub8-gic.bin and writes a config.txt with `kernel=u-boot.bin`,
-  # which is what the NixOS wiki documents and what nixpi4 -- the same Pi
+  # which is what the NixOS wiki documents and what nixpi4-services -- the same Pi
   # 4 model -- was originally flashed with and still boots from.
   #
   # The trade is the vendor linux-rpi kernel for the mainline one. That is

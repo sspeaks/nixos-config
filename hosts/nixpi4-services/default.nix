@@ -5,8 +5,8 @@
 # (same SD card and SSH host key, therefore the same sops age identity), not
 # another host:
 #
-#   sudo nixos-rebuild switch --flake .#nixpi4   # home services
-#   sudo nixos-rebuild switch --flake .#nixpi    # travel router
+#   sudo nixos-rebuild switch --flake .#nixpi4-services   # home services
+#   sudo nixos-rebuild switch --flake .#nixpi             # travel router
 #
 # The router variant does not import the workloads below: switching to it
 # takes Pogbot and Boggle offline and also changes the hostname to `nixpi`.
@@ -38,7 +38,7 @@
   ];
 
   networking = {
-    hostName = "nixpi4";
+    hostName = "nixpi4-services";
     # `nixpi` replaces this with systemd-networkd; here stock scripted
     # networking + DHCP on every interface is exactly what we want.
     useDHCP = lib.mkDefault true;
