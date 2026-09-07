@@ -12,7 +12,7 @@ concurrency:
   group: host-build-cache
   cancel-in-progress: false
 
-# Supply-chain boundary (P1.1).
+# Supply-chain boundary.
 #
 # A trusted cache writer is root-equivalent: anything holding CACHIX_AUTH_TOKEN
 # can publish a signed closure that a target will activate as root. Every build
@@ -28,8 +28,8 @@ concurrency:
 # after a publish step.
 
 jobs:
-  build-azure-linux:
-    name: Build Azure Linux closures
+  build-x86-linux:
+    name: Build x86_64 Linux closures
     runs-on: ubuntu-latest
     env:
       CACHIX_CACHE_NAME: sspeaks-nix
@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           : > closures.txt
-          for host in nixos-azure pogbot vidbox; do
+          for host in vidbox; do
             nix build --show-trace --print-build-logs --accept-flake-config \
               --no-link --print-out-paths \
               ".#nixosConfigurations.$host.config.system.build.toplevel" \
@@ -244,11 +244,9 @@ jobs:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
 
-      # P2.1: these are the REAL artifacts. A toplevel closure is neither an
-      # Azure VHD nor a bootable SD card, and G-ARM-REPLACEMENT may not pass
-      # until both have been produced, inspected and checksummed here --
-      # BEFORE nixos-aarch64-linux (the only known ARM builder) is deleted.
-      # NOTE: the Azure VHD is deliberately NOT built here.
+      # A toplevel closure is neither an Azure VHD nor a bootable SD card.
+      # Build, inspect and checksum the Pi image here; the Azure VHD is
+      # deliberately NOT built here.
       #
       # `make-disk-image.nix` runs inside a VM and requires the `kvm` system
       # feature. GitHub-hosted ubuntu-24.04-arm runners have no /dev/kvm
@@ -256,11 +254,10 @@ jobs:
       # cannot be produced on this runner at all -- advertising the feature
       # only moves the failure later.
       #
-      # The VHD is instead built on nixpi5, which is real aarch64 hardware
-      # WITH /dev/kvm and 78 GB free. That is strictly better than the
-      # migration plan's assumption of "native Arm64 CI" for this artifact:
-      # it costs nothing, is always available, and -- the point of Checkpoint
-      # 2 -- it removes the dependency on the Azure ARM build VM entirely.
+      # Build the VHD on nixpi5 instead: it is real aarch64 hardware WITH
+      # /dev/kvm. Check available disk space before starting. This keeps image
+      # production independent of both hosted-runner KVM support and the
+      # retired Azure ARM build VM.
       #
       # Everything below needs no VM and is genuinely faster here.
       - name: Build Pi SD image and proxy closure
@@ -304,7 +301,7 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: p2-1-image-evidence
+          name: raspberrytimemachine-image-evidence
           path: artifacts/
           retention-days: 30
 

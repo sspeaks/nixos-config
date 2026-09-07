@@ -14,17 +14,12 @@ in
     nixpi4-bare = mkHost ../hosts/nixpi4-bare [ ];
     NixOS-WSL = mkHost ../hosts/nixosWSL [ ];
     NixOS-WSL-work = mkHost ../hosts/nixosWSL-work [ inputs.vscode-server.nixosModules.default ];
-    nixos-azure = mkHost ../hosts/nixos-azure [
-      inputs.disko.nixosModules.disko
-      ../hosts/nixos-azure/disko.nix
-    ];
-    pogbot = mkHost ../hosts/pogbot [ ];
-    # P2.1 replacement Azure edge: aarch64, Gen2 UEFI, specialized VHD.
+    # Public Azure edge: aarch64, Gen2 UEFI, specialized VHD.
     proxy = mkHost ../hosts/proxy [
       inputs.nixpkgs.nixosModules.notDetected
       "${inputs.nixpkgs}/nixos/modules/virtualisation/azure-image.nix"
     ];
-    # P2.2 `.106` Time Machine appliance. Note the attribute name differs from
+    # Pi 4 Time Machine appliance. Note the attribute name differs from
     # the host's own networking.hostName (`raspberrypi`) on purpose -- see the
     # continuity notes in hosts/raspberrytimemachine/default.nix.
     # sd-image-aarch64 is what provides config.system.build.sdImage; without it

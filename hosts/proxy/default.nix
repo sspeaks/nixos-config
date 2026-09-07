@@ -1,5 +1,5 @@
 { inputs, lib, config, outputs, ... }:
-# P2.1 — the replacement Azure edge.
+# Public Azure edge, built from a specialized Arm64 image.
 #
 # This is a SPECIALIZED image: the VHD is built here, uploaded, and booted
 # as-is. Azure does NOT provision it at first boot, and several settings below
@@ -89,13 +89,13 @@
   # (the udev-rule move, buildPythonPath, and the --argv0 wrapper) does not
   # run, and it re-implements the wrapper with wrapProgram instead.
   #
-  # It is nevertheless kept for now: waagent 2.15.0.1 is verified healthy under
-  # this overlay on BOTH pogbot and vid-stream (goal-state agent running,
-  # heartbeats clean), and AutoUpdate is disabled so the self-re-execution path
-  # the --argv0 handling protects is not exercised. Re-packaging the agent that
-  # provides our VMAccess recovery path, immediately before building the
-  # replacement edge, would add risk with no migration benefit. Dropping the
-  # overlay is a good standalone cleanup once the migration is done.
+  # The overlay was retained for provisioning after waagent 2.15.0.1 was
+  # verified healthy on the former Azure workload hosts (goal-state agent
+  # running, heartbeats clean), with AutoUpdate disabled so the self-re-execution
+  # path was not exercised. Those hosts are now retired, but proxy still relies
+  # on this package for VMAccess recovery. Remove the overlay only in a
+  # separate change that verifies the upstream package on the live edge;
+  # evaluation alone cannot prove the recovery agent works.
   services.waagent.settings = {
     Provisioning.Enable = false;
     ResourceDisk.Format = false;
@@ -114,15 +114,13 @@
     };
   };
 
-  # Serial console recovery. On this host it is not just a safety net: until
-  # DNS cutover there is no other route in if sshd or the firewall misbehaves.
+  # Serial console recovery remains available if sshd or the firewall misbehaves.
   #
-  # The rescue account ships LOCKED. This image has no sops identity yet --
-  # the host's SSH key, from which its age identity is derived, does not exist
-  # until the VM first boots. The plan sequences this deliberately: "locked
-  # rescue account" in the image, "final sops hash neededForUsers" afterwards.
-  # Once the proxy has booted, add its host key to .sops.yaml, create
-  # secrets/proxy.yaml, and set passwordHashFile to the decrypted secret.
+  # The initial image shipped with the rescue account LOCKED: it had no sops
+  # identity yet. The SSH key, from which its age identity is derived, does not
+  # exist until the VM first boots. Provisioning deliberately sequenced a locked
+  # account first, then a sops hash with neededForUsers after registering the
+  # host key. edge.nix now overrides this fallback with the decrypted hash.
   services.azureSerialConsole = {
     enable = true;
     passwordHashFile = null;
@@ -130,8 +128,7 @@
 
   # ----------------------------------------------------------- guardrails ---
   # No auto-upgrade. This host is deployed deliberately from a reviewed commit;
-  # an unattended rebuild of the public edge is exactly the class of surprise
-  # this migration is removing.
+  # an unattended rebuild of the public edge risks an unreviewed outage.
   system.autoUpgrade.enable = lib.mkForce false;
   # No swap on the root disk: E3 is 16 GiB, and swap would consume it while
   # adding write amplification to a disk billed per operation.

@@ -6,13 +6,14 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 
 | Host | Arch | Description |
 |------|------|-------------|
-| `nixpi` | aarch64-linux | Raspberry Pi 4 — travel router (hostapd AP, dnsmasq, nftables NAT, WireGuard) |
-| `nixpi4-bare` | aarch64-linux | Same Pi 4 as `nixpi`, minus the router — plain headless SSH box |
-| `nixpi5` | aarch64-linux | Raspberry Pi 5 — Authentik, Home Assistant, SnappyMail, Garage Monitor |
+| `nixpi` | aarch64-linux | Raspberry Pi 4 — alternate travel-router configuration (hostapd AP, dnsmasq, nftables NAT); not currently deployed |
+| `nixpi4-bare` | aarch64-linux | Deployed configuration of the same Pi 4 — Pogbot and Boggle over WireGuard |
+| `nixpi5` | aarch64-linux | Raspberry Pi 5 — Authentik (PostgreSQL 16), Home Assistant, go2rtc, SnappyMail |
 | `NixOS-WSL` | x86_64-linux | WSL dev environment |
 | `NixOS-WSL-work` | x86_64-linux | WSL dev environment (work) |
-| `nixos-azure` | x86_64-linux | Minimal Azure VM baseline |
-| `pogbot` | x86_64-linux | Azure VM service host — Pogbot, WireGuard, Boggle |
+| `proxy` | aarch64-linux | Public Azure edge — seven Caddy vhosts and the WireGuard listener |
+| `raspberrytimemachine` | aarch64-linux | Raspberry Pi 4 — Time Machine appliance with a USB backup disk; network hostname remains `raspberrypi` |
+| `vidbox` | x86_64-linux | Home Hyper-V VM — video streaming and AI coaching |
 | `vm` | x86_64-linux | Minimal test/dev VM |
 | `asahi` | aarch64-linux | Apple Silicon Mac — GNOME desktop workstation |
 
@@ -86,15 +87,22 @@ nix flake check
 
 The workflow [.github/workflows/host-build-cache.yml](.github/workflows/host-build-cache.yml) builds and caches:
 
-- `nixos-azure` on `x86_64-linux`
-- `pogbot` on `x86_64-linux`
 - `vidbox` on `x86_64-linux`
 - `nixpi` and `nixpi4-bare` on `aarch64-linux`
 - `nixpi5` on `aarch64-linux`
 - `asahi` on `aarch64-linux`
-- `proxy` on `aarch64-linux`, alongside the Pi SD image
+- `proxy` on `aarch64-linux`
+- `raspberrytimemachine` as a bootable SD image on `aarch64-linux` (including its system closure)
 
-It runs on pushes to `main` and can also be started manually via `workflow_dispatch`.
+The workflow runs on pushes to `main` and can also be started manually via `workflow_dispatch`.
+
+`NixOS-WSL`, `NixOS-WSL-work`, and `vm` remain flake configurations but are not
+part of this cache workflow. Both Pi 4 variants are built; they are alternatives
+for one physical machine, not two deployed hosts.
+
+The `proxyAzureImage` package is a separate Gen2 VHD output. It is not built by
+this workflow: image creation needs KVM, which the hosted ARM runner lacks.
+Build it on `nixpi5`, where `/dev/kvm` is available.
 
 Note: the aarch64 build jobs use the GitHub Actions ARM runner label `ubuntu-24.04-arm`. If ARM hosted runners are unavailable for your repository plan, switch those jobs to a self-hosted aarch64 runner.
 
@@ -112,7 +120,7 @@ If the secret is missing, the workflow fails fast before building.
 
 This pipeline intentionally performs build-only operations:
 
-- Builds `config.system.build.toplevel`
+- Builds system closures and the Pi installation image
 - Does not run `nixos-rebuild switch`
 - Does not run activation scripts
 

@@ -29,7 +29,7 @@ in
         publicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0=";
         allowedIPs = [ "0.0.0.0/0" "::/0" ];
         # NO ENDPOINT. The server this used to dial was the `nixos` Azure VM at
-        # 13.91.123.214, deleted 2026-09-04 in P3.3. Azure has taken that Basic
+        # 13.91.123.214, deleted 2026-09-04. Azure has taken that Basic
         # public IP back into its pool, so it can be reassigned to an unrelated
         # tenant; leaving the literal here would mean anyone flipping
         # enableWireguard to true would start sending handshakes to a stranger.

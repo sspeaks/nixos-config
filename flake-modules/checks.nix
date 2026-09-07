@@ -1,6 +1,6 @@
 {
   perSystem = { pkgs, lib, ... }: {
-    # P1.1 supply-chain fixture.
+    # Supply-chain fixture for incomplete-cache rejection.
     #
     # Purpose: prove that target-side `nix copy --from <cache>` fails CLOSED when
     # the cache is missing a referenced path, and that it fails *before* anything
@@ -24,7 +24,7 @@
     checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       nix-copy-fixture =
         let
-          marker = "p1-1-nix-copy-fixture-20260902";
+          marker = "incomplete-cache-nix-copy-fixture-20260902";
 
           leaf = pkgs.runCommand "${marker}-leaf" { } ''
             mkdir -p "$out"

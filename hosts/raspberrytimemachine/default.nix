@@ -1,26 +1,26 @@
 { inputs, lib, pkgs, outputs, ... }:
-# P2.2 — `.106` converted from Debian to NixOS, still serving Time Machine.
+# Pi 4 converted from Debian to NixOS, still serving Time Machine.
 #
 # THE CRITICAL CONSTRAINT: never format, partition, or otherwise write to the
-# USB disk holding the existing 593 GB of Time Machine backups. Only the SD
-# card is reimaged. The USB disk is mounted BY UUID with no format action, and
+# USB disk holding Time Machine backups during an OS reinstall. The OS boots
+# from the SD card. The USB disk is mounted BY UUID with no format action, and
 # the Pi must still boot to a usable SSH login if that disk is absent.
 #
 # TWO CONTINUITY DECISIONS, both of which exist so macOS does not decide this
-# is a NEW destination and start a 593 GB full backup from scratch:
+# is a NEW destination and start a full backup from scratch:
 #
 #   1. networking.hostName stays `raspberrypi`, NOT `raspberrytimemachine`.
 #      macOS identifies a Time Machine destination partly by the server's
-#      advertised name. The flake attribute is `raspberrytimemachine` because
-#      the migration plan names it that; the host's name on the network is
-#      deliberately unchanged. Do not "fix" this to match.
+#      advertised name. The flake attribute `raspberrytimemachine` describes
+#      its role; the host's name on the network is deliberately unchanged.
+#      Do not "fix" this to match.
 #   2. The share stays `[backups]` and the `timemachine` user keeps uid/gid
-#      1001, matching the Debian install exactly. The existing sparsebundle is
-#      owned by uid 1001; any other uid makes it unwritable.
+#      1001, matching the Debian install exactly. Backup files are owned by uid
+#      1001; any other uid makes them unwritable.
 #
-# Measured on the live Debian host 2026-09-02: sda2 ext4
-# UUID 0adbb212-cb0d-4371-b452-940540914211, 916 GB total, 593 GB used by
-# "Seth's MacBook Pro.sparsebundle", 277 GB free.
+# The Debian USB volume held 593 GB of backups before conversion. That history
+# was lost during the initial USB boot attempt described below; the current
+# filesystem UUID is in the fileSystems entry.
 {
   imports = [
     ../common/global
@@ -83,19 +83,17 @@
   };
 
   # ------------------------------------------------------- the USB data disk ---
-  # BOOT-FROM-USB LAYOUT.
+  # INSTALL HISTORY: the initial USB boot attempt, then the final SD layout.
   #
-  # The owner had no spare SD card and was remote, so the SD card is NOT
-  # reimaged. Instead the whole NixOS image is written to the USB disk and the
-  # Pi's EEPROM boot order is set to try USB before SD. That leaves the Debian
-  # SD card completely untouched and still bootable, so a USB that fails to
-  # boot simply falls through to Debian -- the pre-migration state -- with no
-  # physical access required.
+  # With no spare SD card and no physical access, the initial attempt wrote
+  # the NixOS image to the USB disk and set the Pi's EEPROM to try USB before
+  # SD. Keeping Debian on the SD card provided a fallback if USB boot failed,
+  # without needing physical access.
   #
   # Consequence: the 593 GB of Time Machine history that lived on the USB is
-  # gone -- the P2.2 boot image was written over its partition table. The owner
-  # explicitly accepted that loss: "I dont care if it's risky or causes time
-  # machine backup dataloss.. I can always do another backup".
+  # gone -- the NixOS boot image was written over its partition table. That
+  # one-time loss was accepted during installation, not permission for future
+  # rebuilds or reinstalls to overwrite the backup disk.
   #
   # The board ultimately boots from the SD card, and the USB has been
   # repartitioned as a single ext4 volume (label TIMEMACHINE) mounted at
@@ -185,9 +183,8 @@
     '';
   };
 
-  # Databases and dumps must NOT live on the shared USB spindle. vid-stream
-  # co-hosts here after P3.2, and putting PostgreSQL/SQLite on the same disk as
-  # Time Machine writes is exactly the contention the plan's load test targets.
+  # Keep databases and dumps off the USB spindle to avoid competing with Time
+  # Machine writes. The video workload runs on vidbox, not this appliance.
   # The Time Machine target lives on the USB spindle, not the SD card.
   #
   # This was briefly wrong in practice: the share pointed at /srv/timemachine
@@ -205,7 +202,7 @@
   # degrades to "share is empty" instead of "host is off the network".
   #
   # Matched by UUID rather than /dev/sda: device names reorder, and the USB
-  # previously carried a partition labelled NIXOS_SD (left by the P2.2 boot
+  # previously carried a partition labelled NIXOS_SD (left by the initial boot
   # image) which collided with the SD card's own root label.
   fileSystems."/srv/timemachine" = {
     device = "/dev/disk/by-uuid/7d1f6fce-dee0-49cc-bd47-98ed7dd4438e";
@@ -214,10 +211,9 @@
   };
 
   systemd.tmpfiles.rules = [
-    "d /var/lib/vid-stream 0750 root root -"
     "d /var/lib/samba/private 0700 root root -"
-    # Time Machine target lives on the expanded root now. uid/gid 1001 must
-    # match the restored Samba account or the share is unwritable.
+    # Mountpoint for the USB backup volume. uid/gid 1001 must match the
+    # restored Samba account or the share is unwritable.
     "d /srv/timemachine 0755 timemachine timemachine -"
   ];
 
@@ -226,7 +222,7 @@
   # Why this matters: macOS has the Time Machine password saved in its keychain
   # against this server. A fresh Samba install has an empty passdb, so backups
   # would fail authentication until someone re-entered credentials by hand --
-  # and a forgotten manual step here means G-TIME-MACHINE cannot pass.
+  # and a forgotten manual step here would leave Time Machine backups broken.
   # Restoring passdb.tdb/secrets.tdb preserves the EXISTING password and the
   # timemachine account's SID, so macOS reconnects with what it already knows.
   #
