@@ -76,6 +76,19 @@ readonly FLEET=(
   "proxy|20.83.103.87||THE public edge: all seven vhosts"
 )
 
+# Configurations that are deliberately NOT fleet-managed, with the reason.
+# Without this list every run warns about five perfectly healthy hosts, which
+# teaches the reader to ignore the warning -- and then a genuinely new server
+# that nobody is updating scrolls past unnoticed. Anything not in FLEET and not
+# here is flagged loudly, which is the whole point.
+readonly NOT_FLEET=(
+  "nixpi|travel-router variant of the SAME Pi 4 as nixpi4-bare; only one can be deployed at a time"
+  "vm|scratch VM, not a server"
+  "asahi|laptop, updated by hand when it is actually in use"
+  "NixOS-WSL|WSL instance on a desktop, not always-on"
+  "NixOS-WSL-work|WSL instance on a work machine, not always-on"
+)
+
 REPO="$REPO_DEFAULT"
 DO_UPDATE=true
 CHECK_ONLY=false
@@ -146,13 +159,16 @@ done
 [[ ${#NAMES[@]} -gt 0 ]] || die "no hosts selected"
 ok "host map agrees with the flake (${#NAMES[@]} selected of ${#FLEET[@]})"
 
-# Flake configurations that nothing in FLEET claims. Not an error: laptops, WSL
-# instances and images are legitimately not deployed by this script. Reported so
-# that a genuinely new server does not sit un-updated forever without anyone
-# noticing.
+# Flake configurations that nothing in FLEET claims. Known exclusions are noted
+# quietly; anything else is a genuine "should this be in the fleet?" question.
 for fh in "${FLAKE_HOSTS[@]}"; do
-  printf '%s\n' "${FLEET[@]}" | cut -d'|' -f1 | grep -qx "$fh" ||
-    warn "flake host not managed by this script: $fh"
+  printf '%s\n' "${FLEET[@]}" | cut -d'|' -f1 | grep -qx "$fh" && continue
+  if reason=$(printf '%s\n' "${NOT_FLEET[@]}" | grep "^$fh|" | cut -d'|' -f2-); then
+    [[ -n "$reason" ]] && say "    not fleet-managed: $(printf '%-16s %s' "$fh" "$reason")"
+  else
+    warn "UNKNOWN configuration '$fh' is in neither FLEET nor NOT_FLEET"
+    warn "  if it is a new always-on server it is not being updated by anyone"
+  fi
 done
 
 # One helper so the alias rule lives in exactly one place.
