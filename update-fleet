@@ -150,7 +150,13 @@ for entry in "${FLEET[@]}"; do
   IFS='|' read -r name target alias note <<<"$entry"
   if ! printf '%s\n' "${FLAKE_HOSTS[@]}" | grep -qx "$name"; then
     bad "fleet lists '$name' but the flake has no such nixosConfiguration"
-    bad "  it was probably renamed; update the FLEET table at the top of this script"
+    bad "  either the host was renamed -- update the FLEET table above -- or the"
+    bad "  flake being evaluated is not the one you think. Currently evaluating:"
+    bad "    branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    bad "    hosts:  $(printf '%s ' "${FLAKE_HOSTS[@]}")"
+    bad "  NOTE: 'nix eval .#' inside a LINKED git worktree evaluates the"
+    bad "  checked-out HEAD of the MAIN worktree, not this directory. If another"
+    bad "  branch is checked out over there, that is what you are looking at."
     exit 1
   fi
   selected "$name" || continue
@@ -195,11 +201,27 @@ for i in "${!NAMES[@]}"; do
 done
 [[ ${#LIVE_IDX[@]} -gt 0 ]] || die "no hosts reachable"
 
+# fleet_ssh can paper over a known_hosts entry stored under a NAME while we
+# connect by IP, using HostKeyAlias. ./deploy cannot: it has no such option and
+# runs with StrictHostKeyChecking. So a host that only works here because of an
+# alias will pass every check in this script and then fail inside deploy. Say so
+# up front rather than discovering it mid-run.
+for i in "${LIVE_IDX[@]}"; do
+  [[ -n "${ALIASES[$i]}" ]] || continue
+  if ! ssh-keygen -F "${TARGETS[$i]}" >/dev/null 2>&1; then
+    warn "${NAMES[$i]}: reachable only via HostKeyAlias=${ALIASES[$i]}"
+    warn "  ./deploy connects to ${TARGETS[$i]} directly and will fail host key checking"
+    warn "  fix once with: ssh-keyscan -H ${TARGETS[$i]} >> ~/.ssh/known_hosts"
+  fi
+done
+
 # ------------------------------------------------------------------- update ---
 if $DO_UPDATE && ! $CHECK_ONLY; then
   info "Updating flake inputs"
   before=$(git rev-parse HEAD)
-  nix flake update 2>&1 | tail -5
+  if ! nix flake update 2>&1 | tail -5; then
+    die "nix flake update failed; not interpreting an unchanged lock as 'no new inputs'"
+  fi
   if git diff --quiet flake.lock; then
     ok "flake.lock unchanged; nothing to publish"
   else
@@ -247,19 +269,42 @@ build there is not a slow success, it is an outage." >/dev/null || die "pr faile
       gh pr merge "$pr" --merge >/dev/null || die "merge failed"
       ok "merged PR #$pr"
     fi
-    git switch -q main && git pull -q --ff-only
+    # Unguarded, a failed fast-forward here leaves HEAD on the OLD main, and
+    # every later stage then agrees with itself: the old closures are cached,
+    # prefetch succeeds, deploy's ancestry check passes, and the run reports
+    # "already running this closure" for the whole fleet. The operator is told
+    # everything is up to date when nothing was updated.
+    git switch -q main || die "could not switch to main"
+    git pull -q --ff-only || die "main could not fast-forward; resolve local divergence and re-run with --no-update"
 
     info "Waiting for CI to build and publish closures"
-    sleep 15
-    run=$(gh run list --workflow=host-build-cache.yml --branch main --limit 1 --json databaseId -q '.[0].databaseId')
+    # Must be tied to the merge commit. `--limit 1` without a commit filter
+    # returns the PREVIOUS main run, which is already "completed success", so
+    # the wait would return instantly and satisfy itself against a build that
+    # predates the change.
+    head_sha=$(git rev-parse HEAD)
+    run=""
+    for _ in $(seq 1 20); do
+      run=$(gh run list --workflow=host-build-cache.yml --commit "$head_sha" \
+              --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
+      [[ -n "$run" ]] && break
+      sleep 15
+    done
+    [[ -n "$run" ]] || die "no closure-build run appeared for $head_sha"
+    ok "watching run $run for $head_sha"
+
+    build_done=false
     for _ in $(seq 1 60); do
       st=$(gh run view "$run" --json status,conclusion -q '"\(.status) \(.conclusion // "")"' 2>/dev/null)
       case "$st" in
-        "completed success") ok "closure build succeeded (run $run)"; break ;;
+        "completed success") ok "closure build succeeded (run $run)"; build_done=true; break ;;
         completed*)          die "closure build FAILED (run $run): $st" ;;
       esac
       sleep 30
     done
+    # Without this the loop could simply expire and fall through to the cache
+    # gate, which would then fail confusingly instead of saying what went wrong.
+    $build_done || die "timed out waiting for closure build (run $run)"
   fi
 fi
 
@@ -375,9 +420,31 @@ for k in "${!READY_IDX[@]}"; do
   # a rolling 600+ GB backup over SMB, and activation can restart services.
   # Interrupting a first backup means starting it again from zero.
   if [[ "$n" == "raspberrytimemachine" ]]; then
-    sessions=$(fleet_ssh "$i" 'sudo smbstatus -b 2>/dev/null | grep -c timemachine' 2>/dev/null || echo 0)
-    if [[ "${sessions:-0}" =~ ^[0-9]+$ ]] && [[ "${sessions:-0}" -gt 0 ]]; then
-      warn "a Time Machine client is connected right now"
+    # This interlock must FAIL CLOSED. The obvious spelling,
+    #   sessions=$(fleet_ssh ... 'smbstatus | grep -c timemachine' || echo 0)
+    # is wrong in a way that is easy to miss and dangerous in practice: any ssh
+    # timeout, dropped connection or missing binary collapses to "0", which is
+    # indistinguishable from a genuine "nobody is connected" and activates
+    # WITHOUT prompting. That is precisely the case the interlock exists to
+    # catch, and it is reachable -- this is a 1.8 GiB Pi under sustained SMB
+    # write load, being queried immediately after a closure copy.
+    # `grep -c` also exits 1 when it counts zero, so success and failure are
+    # not distinguishable by exit status either. Hence the explicit sentinel:
+    # only a well-formed OK:<n> is trusted, and anything else prompts.
+    probe=$(fleet_ssh "$i" 'c=$(sudo smbstatus -b 2>/dev/null | grep -c timemachine); echo "OK:${c:-unknown}"' 2>/dev/null)
+    if [[ "$probe" =~ ^OK:([0-9]+)$ ]]; then
+      sessions="${BASH_REMATCH[1]}"
+    else
+      sessions="unknown"
+    fi
+
+    if [[ "$sessions" == "unknown" ]]; then
+      warn "could not determine whether a Time Machine backup is running"
+      warn "  treating that as 'possibly running' rather than assuming it is safe"
+      read -r -p "  Activate anyway? [yes/NO] " reply
+      [[ "$reply" == "yes" ]] || { warn "skipped $n"; continue; }
+    elif [[ "$sessions" -gt 0 ]]; then
+      warn "$sessions Time Machine client session(s) connected right now"
       read -r -p "  Activating may interrupt a running backup. Continue? [yes/NO] " reply
       [[ "$reply" == "yes" ]] || { warn "skipped $n"; continue; }
     fi
