@@ -21,12 +21,20 @@
         "$mainMod, T, layoutmsg, togglesplit"
         "$mainMod, F, fullscreen,"
         "$mainMod SHIFT, L, exec, hyprlock"
-        "$mainMod, Escape, exec, wlogout"
-        ", Print, exec, grim -g \"$(slurp)\" - | wl-copy"
-        "SHIFT, Print, exec, grim - | wl-copy"
-        "$mainMod, Print, exec, grim -g \"$(slurp)\" ~/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S').png"
+        # Plate XIV ActionMenu replaces wlogout at Mod+Escape (Batch 5).
+        # ActionMenu owns lock/logout/shutdown/reboot/recording; wlogout stays
+        # installed and is invoked by ActionMenu's own logout entry.
+        "$mainMod, Escape, exec, qs ipc -c plate-xiv call actionMenu toggle"
+        # Screen recording toggle — MacBook-reachable, free in Hyprland default binds.
+        "$mainMod SHIFT, R, exec, plate-record-toggle"
+        # screenshot / OCR — Print for external keyboard, Mod+Shift+P/O for Apple keyboard
+        ", Print, exec, plate-screenshot"
+        "$mainMod SHIFT, P, exec, plate-screenshot"
+        "$mainMod SHIFT, Print, exec, plate-ocr"
+        "$mainMod SHIFT, O, exec, plate-ocr"
         "$mainMod, C, exec, cliphist list | wofi --dmenu | cliphist decode | wl-copy"
         "$mainMod SHIFT, C, exec, hyprpicker -a"
+        "$mainMod, N, exec, plate-nightlight-toggle"
         "$mainMod, left, movefocus, l"
         "$mainMod, right, movefocus, r"
         "$mainMod, up, movefocus, u"

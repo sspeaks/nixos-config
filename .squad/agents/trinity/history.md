@@ -25,3 +25,10 @@
 📌 Team update (2026-08-08T11:02:14.979-07:00): Batch 3 session integration (D33) APPROVED. Hyprland restored to sessionPackages. UPower daemon enabled. All 6 Fact Checker corrections applied to ControlCenter. Layer-shell audit complete (no compositor changes needed for visible-only polling). Greeter fallback + niri default verified. — decided by Morpheus, Tank, Trinity, Mouse, Fact Checker
 
 📌 Team update (2026-08-08T15:58:16.477-07:00): niri and Hyprland now share identical XF86 volume and brightness bindings, with brightness user intent persisted through an XDG runtime baseline. Hyprland remains the safe fallback. Live hardware/session validation remains. — decided by Trinity, Tank, Morpheus
+
+📌 Team update (2026-08-21T21:42:57.054-07:00): Batch 4 implementation — niri and Hyprland keybindings (Mod+C/Mod+Shift+Print/Mod+N for niri; identical mappings via $mainMod for Hyprland), both fire identical plate-* wrappers. Compositor consistency verified. All static gates PASS. Fact Checker APPROVED; live hardware validation next. — decided by Morpheus, Trinity, Tank, Switch
+
+📌 Team update (2026-08-21T22:42:13-07:00): Batch 5 implementation — niri and Hyprland bindings update
+- **By:** Trinity (compositor bindings)
+- **What:** In `niri/config.kdl.nix`: replaced `Mod+Escape { spawn "wlogout"; }` with `Mod+Escape { spawn "qs" "ipc" "-c" "plate-xiv" "call" "actionMenu" "toggle"; }` and added `Mod+Shift+R { spawn "plate-record-toggle"; }`. In `hyprland/keybindings.nix`: replaced `"$mainMod, Escape, exec, wlogout"` with actionMenu IPC toggle and added `"$mainMod SHIFT, R, exec, plate-record-toggle"`. Both compositors remain in sync. wlogout stays installed (called by ActionMenu's logout entry internally).
+- **Static gates:** PASS. — decided by Morpheus, Trinity, Tank, Switch, Fact Checker

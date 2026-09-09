@@ -127,6 +127,18 @@ in
     plate-wifi-configure
     plate-bluetooth-status
     plate-bluetooth-toggle
+    plate-screenshot
+    plate-ocr
+    plate-nightlight-toggle
+    plate-record-start
+    plate-record-stop
+    plate-record-toggle
+    plate-shutdown
+    plate-reboot
+    # wf-recorder: screen recording backend used by plate-record-*.
+    # wlr-screencopy-v1 + xdg-output-manager-v1 (both available on niri 26.04).
+    # Software encode only (libx264); no VAAPI on Asahi apple-dcp.
+    wf-recorder
     (where-is-my-sddm-theme.override {
       themeConfig.General = {
         background = asahiPaths.wallpaper;
@@ -165,6 +177,8 @@ in
         ../../home/features/niri
       ] ++ lib.optionals (builtins.pathExists ../../home/features/quickshell) [
         ../../home/features/quickshell
+      ] ++ lib.optionals (builtins.pathExists ../../home/features/nightlight) [
+        ../../home/features/nightlight
       ];
     };
 }

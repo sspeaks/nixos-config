@@ -181,6 +181,7 @@ in
           ;;
       esac
       plate_brightness_mutate plate-brightness-step "$value"
+      qs ipc -c plate-xiv call osd showBrightness 2>/dev/null || true
     '';
   };
 
@@ -239,6 +240,7 @@ in
           ;;
       esac
       plate_volume_mutate plate-volume-step "$value"
+      qs ipc -c plate-xiv call osd showVolume 2>/dev/null || true
     '';
   };
 
@@ -250,6 +252,184 @@ in
         echo "plate-volume-toggle-mute: wpctl set-mute failed" >&2
         exit 1
       }
+    '';
+  };
+
+  # ── Capture / OCR ───────────────────────────────────────────────────────────
+  plate-screenshot = mkCtl {
+    name = "plate-screenshot";
+    runtimeInputs = [
+      pkgs.grim
+      pkgs.slurp
+      pkgs.wl-clipboard
+    ];
+    text = ''
+      mkdir -p "$HOME/Pictures/Screenshots"
+      outfile="$HOME/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S').png"
+      region=$(slurp 2>/dev/null) || {
+        echo "plate-screenshot: slurp cancelled or failed" >&2
+        exit 1
+      }
+      grim -g "$region" - | tee "$outfile" | wl-copy
+    '';
+  };
+
+  plate-ocr = mkCtl {
+    name = "plate-ocr";
+    runtimeInputs = [
+      pkgs.grim
+      pkgs.slurp
+      pkgs.tesseract
+      pkgs.wl-clipboard
+    ];
+    text = ''
+      region=$(slurp 2>/dev/null) || {
+        echo "plate-ocr: slurp cancelled or failed" >&2
+        exit 1
+      }
+      grim -g "$region" - | tesseract stdin stdout 2>/dev/null | wl-copy
+    '';
+  };
+
+  # ── Night light ────────────────────────────────────────────────────────────
+  plate-nightlight-toggle = mkCtl {
+    name = "plate-nightlight-toggle";
+    runtimeInputs = [ pkgs.systemd ];
+    text = ''
+      if systemctl --user is-active --quiet wlsunset.service; then
+        systemctl --user stop wlsunset.service
+      else
+        systemctl --user start wlsunset.service
+      fi
+    '';
+  };
+
+  # ── Screen recording (wf-recorder, libx264, software-encode only) ──────────
+  #
+  # Stdout contracts:
+  #   plate-record-start  → prints absolute .mp4 path on success; exits non-zero on error
+  #                         or if already recording (PID file present + process alive).
+  #                         After wf-recorder starts, calls `qs ipc ... actionMenu recordingStarted`.
+  #   plate-record-stop   → sends SIGINT to stored PID; exits non-zero if not recording.
+  #                         After wf-recorder exits, calls `qs ipc ... actionMenu recordingStopped`.
+  #   plate-record-toggle → calls plate-record-stop if recording, plate-record-start otherwise.
+  #                         Intended for a single key binding.
+  #
+  # PID file: $XDG_RUNTIME_DIR/plate-recorder.pid
+  # Output:   ~/Videos/Recordings/YYYYMMDD_HHMMSS.mp4
+  # Codec:    libx264, 30 fps, no audio, full-compositor output (wf-recorder default).
+  # Notes:
+  #   - wf-recorder uses wlr-screencopy-v1 + xdg-output-manager-v1, both available on niri 26.04.
+  #   - No VAAPI encoder: Asahi apple-dcp DRM does not expose VAAPI encode.
+  #   - wf-recorder is launched in the background; SIGINT triggers graceful MP4 finalization.
+  #   - IPC calls use `|| true` so a missing Quickshell instance does not fail the wrapper.
+
+  plate-record-start = mkCtl {
+    name = "plate-record-start";
+    runtimeInputs = [ pkgs.wf-recorder pkgs.systemd ];
+    text = ''
+      if [ -z "''${XDG_RUNTIME_DIR:-}" ] || [ ! -d "$XDG_RUNTIME_DIR" ]; then
+        echo "plate-record-start: XDG_RUNTIME_DIR unavailable" >&2
+        exit 1
+      fi
+      pidfile="$XDG_RUNTIME_DIR/plate-recorder.pid"
+      if [ -f "$pidfile" ]; then
+        pid=$(cat "$pidfile")
+        if kill -0 "$pid" 2>/dev/null; then
+          echo "plate-record-start: already recording (pid $pid)" >&2
+          exit 1
+        fi
+        rm -f "$pidfile"
+      fi
+      mkdir -p "$HOME/Videos/Recordings"
+      outfile="$HOME/Videos/Recordings/$(date +'%Y%m%d_%H%M%S').mp4"
+      wf-recorder --codec libx264 --file "$outfile" &
+      recorder_pid=$!
+      echo "$recorder_pid" > "$pidfile"
+      printf '%s\n' "$outfile"
+      qs ipc -c plate-xiv call actionMenu recordingStarted 2>/dev/null || true
+    '';
+  };
+
+  plate-record-stop = mkCtl {
+    name = "plate-record-stop";
+    runtimeInputs = [ pkgs.systemd ];
+    text = ''
+      if [ -z "''${XDG_RUNTIME_DIR:-}" ] || [ ! -d "$XDG_RUNTIME_DIR" ]; then
+        echo "plate-record-stop: XDG_RUNTIME_DIR unavailable" >&2
+        exit 1
+      fi
+      pidfile="$XDG_RUNTIME_DIR/plate-recorder.pid"
+      if [ ! -f "$pidfile" ]; then
+        echo "plate-record-stop: not recording (no PID file)" >&2
+        exit 1
+      fi
+      pid=$(cat "$pidfile")
+      if ! kill -0 "$pid" 2>/dev/null; then
+        rm -f "$pidfile"
+        echo "plate-record-stop: recorder process $pid is no longer running" >&2
+        exit 1
+      fi
+      kill -INT "$pid"
+      # Poll until the process exits (max ~5 s) so MP4 finalization completes
+      # before we report success.  `wait` only works for child PIDs of this
+      # shell, so we use a poll loop instead.
+      for _ in 1 2 3 4 5 6 7 8 9 10; do
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 0.5
+      done
+      rm -f "$pidfile"
+      qs ipc -c plate-xiv call actionMenu recordingStopped 2>/dev/null || true
+    '';
+  };
+
+  plate-record-toggle = mkCtl {
+    name = "plate-record-toggle";
+    runtimeInputs = [ pkgs.wf-recorder pkgs.systemd ];
+    text = ''
+      if [ -z "''${XDG_RUNTIME_DIR:-}" ] || [ ! -d "$XDG_RUNTIME_DIR" ]; then
+        echo "plate-record-toggle: XDG_RUNTIME_DIR unavailable" >&2
+        exit 1
+      fi
+      pidfile="$XDG_RUNTIME_DIR/plate-recorder.pid"
+      if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
+        pid=$(cat "$pidfile")
+        kill -INT "$pid"
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+          kill -0 "$pid" 2>/dev/null || break
+          sleep 0.5
+        done
+        rm -f "$pidfile"
+        qs ipc -c plate-xiv call actionMenu recordingStopped 2>/dev/null || true
+      else
+        rm -f "$pidfile"
+        mkdir -p "$HOME/Videos/Recordings"
+        outfile="$HOME/Videos/Recordings/$(date +'%Y%m%d_%H%M%S').mp4"
+        wf-recorder --codec libx264 --file "$outfile" &
+        recorder_pid=$!
+        echo "$recorder_pid" > "$pidfile"
+        printf '%s\n' "$outfile"
+        qs ipc -c plate-xiv call actionMenu recordingStarted 2>/dev/null || true
+      fi
+    '';
+  };
+
+  # ── Power actions ──────────────────────────────────────────────────────────
+  # Simple wrappers called by ActionMenu entries.  systemctl poweroff/reboot
+  # are polkit-authorised for the active console seat on NixOS by default.
+  plate-shutdown = mkCtl {
+    name = "plate-shutdown";
+    runtimeInputs = [ pkgs.systemd ];
+    text = ''
+      systemctl poweroff
+    '';
+  };
+
+  plate-reboot = mkCtl {
+    name = "plate-reboot";
+    runtimeInputs = [ pkgs.systemd ];
+    text = ''
+      systemctl reboot
     '';
   };
 

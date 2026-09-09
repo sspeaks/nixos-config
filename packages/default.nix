@@ -30,6 +30,14 @@ let
         plate-wifi-configure
         plate-bluetooth-status
         plate-bluetooth-toggle
+        plate-screenshot
+        plate-ocr
+        plate-nightlight-toggle
+        plate-record-start
+        plate-record-stop
+        plate-record-toggle
+        plate-shutdown
+        plate-reboot
         ;
     } else { };
 in

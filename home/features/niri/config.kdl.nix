@@ -191,11 +191,25 @@ in
     // reused as-is under niri — same bind as Hyprland's Mod+Shift+L.
     Mod+Shift+L { spawn "hyprlock"; }
 
-    // Logout: opens the wlogout menu, matching Hyprland's Mod+Escape bind.
-    // wlogout's own button actions call Tank's compositor-detection
-    // wrappers (plate-dpms-on/off, plate-logout) internally (D24) — niri's
-    // bind only needs to launch the menu, not branch on compositor itself.
-    Mod+Escape { spawn "wlogout"; }
+    // Plate XIV ActionMenu replaces wlogout at Mod+Escape (Batch 5).
+    // ActionMenu owns lock, logout, shutdown, reboot, and screen-recording
+    // start/stop in a single focused overlay.  wlogout remains installed
+    // and is invoked by ActionMenu's own logout entry.
+    Mod+Escape { spawn "qs" "ipc" "-c" "plate-xiv" "call" "actionMenu" "toggle"; }
+
+    // Screen recording toggle — MacBook-reachable, free in niri v26.04 defaults.
+    // plate-record-toggle starts wf-recorder if idle, stops it (SIGINT) if active.
+    Mod+Shift+R { spawn "plate-record-toggle"; }
+
+    // ── Clipboard / capture / night-light ─────────────────────────────────
+    // Apple keyboard (no Print key): Mod+Shift+P = screenshot, Mod+Shift+O = OCR.
+    // External keyboard: Print = screenshot, Mod+Shift+Print = OCR.
+    Mod+C { spawn "sh" "-c" "cliphist list | wofi --dmenu | cliphist decode | wl-copy"; }
+    Print           { spawn "plate-screenshot"; }
+    Mod+Shift+P     { spawn "plate-screenshot"; }
+    Mod+Shift+Print { spawn "plate-ocr"; }
+    Mod+Shift+O     { spawn "plate-ocr"; }
+    Mod+N { spawn "plate-nightlight-toggle"; }
 
     Mod+Shift+E { quit; }
   }

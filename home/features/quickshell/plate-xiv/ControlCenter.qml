@@ -1,4 +1,4 @@
-// ControlCenter — Plate XIV status/quick-action panel
+// ControlCenter — Plate XIV status / system-control panel
 //
 // D23 groups this with the notification surfaces under one layer-shell
 // contract: layer Top, exclusiveZone 0, keyboardFocus None — positioned
@@ -115,6 +115,7 @@ PanelWindow {
     }
 
     function pollBluetooth(): void {
+        if (!root.visible) return;
         if (!btStatusProc.running) {
             btStatusProc.parsed = false;
             btStatusProc.running = true;
@@ -285,7 +286,7 @@ PanelWindow {
         running: false
         onExited: function(code, _status) {
             root.volumeActionFailed = code !== 0;
-            if (!volumeReadProc.running) volumeReadProc.running = true;
+            if (root.visible && !volumeReadProc.running) volumeReadProc.running = true;
         }
     }
 
@@ -337,7 +338,7 @@ PanelWindow {
         running: false
         onExited: function(code, _status) {
             root.wifiActionFailed = code !== 0;
-            root.pollWifi();
+            if (root.visible) root.pollWifi();
         }
     }
 
@@ -347,7 +348,7 @@ PanelWindow {
         running: false
         onExited: function(code, _status) {
             root.wifiActionFailed = code !== 0;
-            root.pollWifi();
+            if (root.visible) root.pollWifi();
         }
     }
 
@@ -374,7 +375,7 @@ PanelWindow {
         }
         onExited: function(code, _status) {
             if (code !== 0 || !parsed) root.btAvail = false;
-            if (root.btRepollPending && !btToggleProc.running) {
+            if (root.visible && root.btRepollPending && !btToggleProc.running) {
                 root.btRepollPending = false;
                 Qt.callLater(function() { root.pollBluetooth(); });
             }
@@ -390,10 +391,12 @@ PanelWindow {
         onExited: function(code, _status) {
             root.btFailed = code !== 0;
             Qt.callLater(function() {
-                if (btStatusProc.running) {
-                    root.btRepollPending = true;
-                } else {
-                    root.pollBluetooth();
+                if (root.visible) {
+                    if (btStatusProc.running) {
+                        root.btRepollPending = true;
+                    } else {
+                        root.pollBluetooth();
+                    }
                 }
             });
         }
@@ -813,77 +816,10 @@ PanelWindow {
                 }
             }
 
-            // ── Divider ───────────────────────────────────────────────────
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight:   Theme.border
-                color:            Theme.lineRule
-            }
-
-            // ── Quick actions ─────────────────────────────────────────────
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.spacingSm
-                spacing:          Theme.spacingSm
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: lockLabel.implicitHeight + Theme.spacingSm * 2
-                    color:          Theme.bgFill
-                    border.width:   Theme.border
-                    border.color:   Theme.lineEdge
-
-                    Text {
-                        id:               lockLabel
-                        anchors.centerIn: parent
-                        text:             "LOCK"
-                        font.family:      Theme.fontUi
-                        font.pointSize:   9
-                        color:            Theme.fgPrimary
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape:  Qt.PointingHandCursor
-                        onClicked: {
-                            // hyprlock is compositor-agnostic (ext-session-lock-v1,
-                            // D24) — same binary niri's own Mod+Shift+L bind calls.
-                            Quickshell.execDetached(["hyprlock"]);
-                            root.visible = false;
-                        }
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: logoutLabel.implicitHeight + Theme.spacingSm * 2
-                    color:          Theme.bgFill
-                    border.width:   Theme.border
-                    border.color:   Theme.lineEdge
-
-                    Text {
-                        id:               logoutLabel
-                        anchors.centerIn: parent
-                        text:             "LOGOUT"
-                        font.family:      Theme.fontUi
-                        font.pointSize:   9
-                        color:            Theme.fgPrimary
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape:  Qt.PointingHandCursor
-                        onClicked: {
-                            // wlogout owns the actual exit action (D24's
-                            // plate-logout wrapper is wired inside its
-                            // button, not duplicated here) — same binary
-                            // niri's own Mod+Escape bind calls.
-                            Quickshell.execDetached(["wlogout"]);
-                            root.visible = false;
-                        }
-                    }
-                }
-            }
+            // ── Quick actions removed ─────────────────────────────────────
+            // LOCK and LOGOUT moved to ActionMenu (Batch 5) which owns all
+            // session / power / recording actions exclusively.  ControlCenter
+            // retains only polling status + system-control sliders.
         }
     }
 }

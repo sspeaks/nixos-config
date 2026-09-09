@@ -1,12 +1,13 @@
 // Plate XIV — shell root
 //
 // Entry point loaded by `quickshell -c plate-xiv`.
-// Creates one Caption bar per attached screen, plus the three global
-// (single-instance, not per-screen) Batch 2 surfaces: Launcher,
-// NotificationHost, ControlCenter — each toggled via its own IPC target
-// (Launcher/ControlCenter) or driven passively by the notification
-// D-Bus service (NotificationHost). None of them anchor to a specific
-// screen; Quickshell falls back to its default/focused screen for
+// Creates one Caption bar per attached screen, plus the five global
+// (single-instance, not per-screen) surfaces: Launcher,
+// NotificationHost, ControlCenter, Osd, ActionMenu — each either toggled
+// via its own IPC target (Launcher/ControlCenter/Osd/ActionMenu) or
+// driven passively by the
+// notification D-Bus service (NotificationHost). None of them anchor to a
+// specific screen; Quickshell falls back to its default/focused screen for
 // unanchored PanelWindows, consistent with how Caption is the only
 // surface that needs explicit per-screen placement.
 //
@@ -34,7 +35,7 @@ ShellRoot {
         }
     }
 
-    // Global surfaces — one instance each, not per-screen (D22/D23).
+    // Global surfaces — one instance each, not per-screen.
     Launcher {}
 
     // ControlCenter is declared first and given an id so NotificationHost
@@ -56,4 +57,8 @@ ShellRoot {
             ? controlCenter.implicitHeight + Theme.spacingLg
             : 0
     }
+
+    Osd {}
+
+    ActionMenu {}
 }

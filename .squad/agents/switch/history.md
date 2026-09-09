@@ -38,3 +38,18 @@
 📌 Team update (2026-08-08T11:02:14.979-07:00): ControlCenter 5 system controls (D32) APPROVED after 3 revision cycles. All 6 Fact Checker corrections applied (Trinity R2, Tank R3). Visible-only polling, service guards, proper Process API, CLI wrappers verified. Live validation next. — decided by Morpheus, Tank, Trinity, Mouse, Fact Checker
 
 📌 Team update (2026-08-08T15:58:16.477-07:00): Control Center Bluetooth/Wi-Fi behavior and Wi-Fi CONFIGURE action landed. Rapid slider commands require a serialized queue; after Fact Checker rejection, Switch remained locked out and later revisions moved to Mouse then Tank. Final controls are APPROVED pending live hardware validation. — decided by Fact Checker, Mouse, Tank
+
+📌 Team update (2026-08-21T21:42:57.054-07:00): Batch 4 implementation — OSD (Osd.qml, IPC target "osd", showVolume/showBrightness functions), volume/brightness-step integration. All static gates PASS. Fact Checker APPROVED; live hardware validation next. — decided by Morpheus, Switch, Tank, Trinity
+
+📌 Team update (2026-08-21T22:42:13-07:00): Batch 5 implementation — ActionMenu QML component, ControlCenter cleanup
+- **By:** Switch (QML)
+- **What:** `ActionMenu.qml` (new, IPC target "actionMenu", functions toggle/show/hide/recordingStarted/recordingStopped), registered in `qmldir` and `shell.qml`. Removed LOCK/LOGOUT quick-actions section from `ControlCenter.qml` — those actions now owned exclusively by ActionMenu. No Launcher or ControlCenter responsibility duplicated.
+- **Design:** PanelWindow, WlrLayer.Overlay, WlrKeyboardFocus.OnDemand. Static `property var entries` array (no runtime JSON). Recording row dynamically swaps label/icon/command based on `recordingActive` bool set by IPC. REC badge in Theme.stateFail when active.
+- **Static gates:** PASS (nix fmt 0 changes, flake check all clear). — decided by Morpheus, Switch, Tank, Trinity, Fact Checker
+
+📌 GOVERNANCE CORRECTION (2026-08-21T23:09:40-07:00): Ralph role-boundary violation — ActionMenu.qml incorrectly authored by Work Monitor
+- **Violation:** Ralph (Work Monitor/director) wrote ActionMenu.qml and applied three QML implementation bug-fixes directly. Ralph is a coordinator, not a UI code owner. All Quickshell QML belongs to Switch.
+- **Prior FC approval (gen 211) was of a contract/static gate, not an ownership-correct artifact.**
+- **Remediation:** ActionMenu.qml routed to Switch for independent full review and ownership takeover. Switch found one real defect (missing Escape dismiss — Ralph had removed Keys/forceActiveFocus without replacement since PanelWindow is Window-based). Switch corrected it with FocusScope child + onVisibleChanged/Qt.callLater. Switch explicitly accepted ownership of ActionMenu.qml, shell.qml (ActionMenu integration), qmldir (ActionMenu entry), and ControlCenter.qml (lock/logout removal).
+- **Result:** Generation 212 deployed. Fact Checker independently reviewed Switch's artifact and APPROVED. Artifact hash: /nix/store/arqaib11zrdx0vfn49yp83iqpkh5ar82-quickshell-plate-xiv.
+- **Policy reinforced:** Ralph may not write, edit, or apply fixes to product code files. Only coordinate, track state, spawn the correct owner, and document decisions.
