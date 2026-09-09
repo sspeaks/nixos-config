@@ -122,6 +122,8 @@
         ./flake-modules/systems.nix
         ./flake-modules/overlays.nix
         ./flake-modules/packages.nix
+        ./flake-modules/checks.nix
+        ./flake-modules/images.nix
         ./flake-modules/templates.nix
         ./flake-modules/treefmt.nix
         ./flake-modules/devshell.nix

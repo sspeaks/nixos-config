@@ -3,14 +3,58 @@ keys:
     - &sspeaks age1ngm5476nk6y7vqqj0anwqsf3vr4yw6ppr0wn20prrp6zv96g4fuswqzrlv
   hosts:
     - &mbp age1m02wz3xqkg6z0fflpdhvph0psw0vavhdusz9lzg3daa5aammc5xsxtwzds
+    # Also covers the `nixpi4-bare` configuration: it runs on the same Pi 4 and
+    # the same SD card, so it presents the same /etc/ssh/ssh_host_ed25519_key
+    # and therefore the same age identity.
     - &nixpi age1nfquhf85wlt2ez7c4me0y8yqpcrnyn68vy7lkfu5tec873rad5gsmg2n3x
     - &nixosazure age1kw6rmz7v2v3p88tazheyv3a80ls55e2x8jy33svewu58q7w7gqzs2nuagp
     - &nixosWSLwork age1rq8j2df482hyksxcatvmvetcta9lkvuyhwz3h52037d7xele7udq24pe23
     - &nixosWSL age1tu7k447prh3229y00nq2makh6a6a5f9c558djm92amzyahnwvy9qa0jv3r
     - &asahi age1wdfa5rgtmpnf5v40gy0n0fr7sldjeqkqqgn74euqjy5nd4elq9asnfps6n
     - &nixpi5 age1q9khmexesfhl56c4ste9ur59fdcyfauy728jvmzlay2nhvlz74ssvh784j
+    - &proxy age15fp39am5ghay6hcrwrseyz3ksrhdqtjyehatrc3hxeyr0l08sp7s59pa62
     - &vidstream age1sxpm3la3wdl6k5qyrzrlky34tc9kk3ewrklu48nf99hr4dzwep3qvj9v6y
+    # P3.2 home replacement for vid-stream: a Hyper-V VM on the desktop.
+    # Derived from its host key with ssh-to-age after nixos-anywhere ran -- a
+    # host has no identity until it has been installed, which is why secrets
+    # always land on a SECOND deploy.
+    - &vidbox age16mhhzl87mdqmf2huek3anxqntzd9rt4rgr46tm64vr6xthvmxedqsgv8kj
 creation_rules:
+  # The client-certificate CA that guards home-assistant.sspeaks.net.
+  #
+  # Rescued from the old edge (blog VM), where /home/sspeaks/serverCerts/ca/
+  # held the ONLY copy -- that host has no restic, no borg and no Azure Backup
+  # VM extension, so P5.1 (delete the VM) and P5.2 (purge vault892) would have
+  # destroyed it permanently. Existing client certs would keep working, because
+  # the edge only needs the public hosts/proxy/myCA.pem, but no NEW client
+  # certificate could ever be issued without regenerating the CA and
+  # re-enrolling every device.
+  #
+  # Encrypted to sspeaks ONLY, deliberately: no host needs to decrypt this. The
+  # edge verifies clients with the public certificate; the private key is used
+  # offline, by a human, to sign new client certs. Granting any host access
+  # would mean compromising that host also compromises the CA.
+  #
+  # The key is additionally passphrase-protected at rest (PKCS#8 ENCRYPTED
+  # PRIVATE KEY), so sops is a second layer, not the only one. The passphrase
+  # itself is NOT stored here and must be recorded durably elsewhere -- without
+  # it this backup is inert.
+  - path_regex: secrets/client-ca\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
+  # P4: the replacement Azure edge.
+  - path_regex: secrets/proxy\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
+        - *proxy
+  # P3.2: the home host that takes vid-stream's workload off Azure.
+  - path_regex: secrets/vidbox\.yaml$
+    key_groups:
+      - age:
+        - *sspeaks
+        - *vidbox
   # Shared secrets: all hosts need these (user password, ssh key, etc.)
   - path_regex: secrets/common\.yaml$
     key_groups:
@@ -23,7 +67,9 @@ creation_rules:
         - *nixosWSL
         - *asahi
         - *nixpi5
+        - *proxy
         - *vidstream
+        - *vidbox
   # Azure-only secrets (pogbot, wireguard server)
   - path_regex: secrets/nixos-azure\.yaml$
     key_groups:
