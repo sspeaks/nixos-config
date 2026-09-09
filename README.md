@@ -83,6 +83,40 @@ nix fmt
 nix flake check
 ```
 
+## Updating the fleet
+
+`./update-fleet` updates every always-on machine in one run:
+
+```bash
+./update-fleet --check          # report only: reachability, cache state, drift
+./update-fleet                  # bump inputs, publish via CI, then activate
+./update-fleet --no-update      # redeploy current main without bumping inputs
+./update-fleet --only proxy     # restrict to one host (repeatable)
+./update-fleet --prefetch-only  # copy closures to the hosts, activate by hand
+```
+
+The rule it enforces is that **nothing ever builds on a target**. Most of this
+fleet cannot: `proxy` has 938 MiB of RAM and the two Pi 4s have 1.8 GiB, and the
+controller is `aarch64-darwin` with no Linux builder, so it cannot build for any
+of them either. Every closure is built once by CI, pushed to Cachix, and only
+substituted onto each host. The script refuses to deploy a host whose closure is
+not already in the cache rather than letting that host try to build it.
+
+Hosts are activated in ascending order of blast radius — Time Machine box,
+`vidbox`, `nixpi4-bare`, `nixpi5`, then the edge — and each is checked for
+failed units before the next is touched, so a bad closure stops the run instead
+of reaching `proxy`. Activation uses `--test`, keeping `./deploy`'s interactive
+dead-man rollback guard; `--switch` per host makes it permanent.
+
+Two known limitations it reports rather than hides:
+
+- `nixpi4-bare` cannot be evaluated on an `aarch64-darwin` controller at all.
+  Its Haskell workload uses import-from-derivation, which forces an
+  `aarch64-linux` build during evaluation. Deploy it from a machine of its own
+  architecture, or configure an `aarch64-linux` remote builder.
+- Configurations not in its table are listed as unmanaged, so a new server
+  cannot silently go un-updated.
+
 ## Host Cache Builds
 
 The workflow [.github/workflows/host-build-cache.yml](.github/workflows/host-build-cache.yml) builds and caches:

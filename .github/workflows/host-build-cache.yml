@@ -260,7 +260,7 @@ jobs:
       # retired Azure ARM build VM.
       #
       # Everything below needs no VM and is genuinely faster here.
-      - name: Build Pi SD image and proxy closure
+      - name: Build Pi SD image and Arm64 host closures
         run: |
           set -euo pipefail
           : > closures.txt
@@ -270,6 +270,13 @@ jobs:
           nix build --show-trace --print-build-logs --accept-flake-config \
             --no-link --print-out-paths \
             .#nixosConfigurations.proxy.config.system.build.toplevel >> closures.txt
+          # The SD image alone is only good for FIRST install. Without the
+          # system closure cached as well, this host cannot be updated the way
+          # every other machine is -- it has 1.8 GiB of RAM, so building its own
+          # closure is not a realistic fallback. Build the toplevel too.
+          nix build --show-trace --print-build-logs --accept-flake-config \
+            --no-link --print-out-paths \
+            .#nixosConfigurations.raspberrytimemachine.config.system.build.toplevel >> closures.txt
           cat closures.txt
 
       - name: Inspect and checksum the SD image
