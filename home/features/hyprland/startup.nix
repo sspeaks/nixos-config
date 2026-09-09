@@ -1,5 +1,11 @@
 { asahiPaths, pkgs, ... }:
 
+# Plate XIV startup slice — Hyprland only.
+# Wallpaper is sourced from the immutable store path provided by Tank;
+# the mutable-path watcher units (swaybg-refresh, swaybg-wallpaper path)
+# are removed. swaybg runs as a plain systemd service against a fixed path.
+# Quickshell is NOT launched here — it belongs in niri's spawn-at-startup
+# once the niri session is activated.
 let
   swaybgCommand = "${pkgs.swaybg}/bin/swaybg -i ${asahiPaths.wallpaper} -m fill";
 in
@@ -24,35 +30,6 @@ in
       ExecStart = swaybgCommand;
       Restart = "on-failure";
       RestartSec = 5;
-    };
-
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
-    };
-  };
-
-  systemd.user.services.swaybg-refresh = {
-    Unit = {
-      Description = "Refresh Hyprland wallpaper";
-      After = [ "swaybg.service" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-
-    Service = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.systemd}/bin/systemctl --user restart swaybg.service";
-    };
-  };
-
-  systemd.user.paths.swaybg-wallpaper = {
-    Unit = {
-      Description = "Watch Bing wallpaper changes";
-      PartOf = [ "graphical-session.target" ];
-    };
-
-    Path = {
-      PathChanged = [ asahiPaths.wallpaper ];
-      Unit = "swaybg-refresh.service";
     };
 
     Install = {

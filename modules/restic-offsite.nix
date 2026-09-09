@@ -4,14 +4,14 @@ let
   cfg = config.services.resticOffsite;
 in
 {
-  # P1.2 offsite backup to Azure Cool Blob.
+  # Offsite backup to Azure Cool Blob.
   #
-  # The point of this module is the RESTORE, not the backup. Old Azure VMs only
-  # become deletable once irreplaceable data has been demonstrably restored --
+  # The point of this module is the RESTORE, not the backup. A host can only be
+  # retired once its irreplaceable data has been demonstrably restored --
   # `restic check` alone is explicitly not sufficient, because it verifies
   # repository structure rather than that the bytes come back.
   #
-  # Two design constraints come from the migration plan:
+  # Two design constraints protect cost and recoverability:
   #
   #   * Backup and prune are SEPARATE jobs on different schedules. Cool-tier
   #     blobs have a 30-day minimum retention; pruning rewrites packs, so a

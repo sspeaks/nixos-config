@@ -4,7 +4,7 @@ let
   cfg = config.services.azureSerialConsole;
 in
 {
-  # P1.3 Azure lockout guard.
+  # Azure lockout recovery over the serial console.
   #
   # Azure has no physical console and no link-local rescue path. If a change
   # breaks sshd, the firewall, or networking, the ONLY remaining way in is the

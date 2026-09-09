@@ -1,5 +1,5 @@
 { inputs, config, lib, pkgs, ... }:
-# P3.1 — Boggle and pogbot, migrated off the Azure `nixos` VM.
+# Boggle and pogbot, migrated off the retired Azure `nixos` VM.
 #
 # Both were previously reached by Caddy at the VM's public hostname. They are
 # now behind the home-initiated tunnel, so the edge reaches them at
@@ -12,7 +12,7 @@ let
     sopsFile = ../../secrets/nixpi.yaml;
   };
 
-  # Carried over verbatim from hosts/pogbot/pogbot.nix. These overrides are not
+  # Carried over from the retired Azure workload host. These overrides are not
   # optional decoration: without them pogbot's Python closure fails to build.
   pythonOverrides = _: pythonPrev:
     {

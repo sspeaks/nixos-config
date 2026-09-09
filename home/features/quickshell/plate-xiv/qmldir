@@ -1,0 +1,10 @@
+singleton Theme 1.0 Theme.qml
+Caption 1.0 Caption.qml
+Clock 1.0 Clock.qml
+WorkspaceRibbon 1.0 WorkspaceRibbon.qml
+Launcher 1.0 Launcher.qml
+NotificationHost 1.0 NotificationHost.qml
+NotificationCard 1.0 NotificationCard.qml
+ControlCenter 1.0 ControlCenter.qml
+Osd 1.0 Osd.qml
+ActionMenu 1.0 ActionMenu.qml

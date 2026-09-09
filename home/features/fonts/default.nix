@@ -1,12 +1,14 @@
 { pkgs, ... }:
 {
-  # Nerd Fonts the theme uses: JetBrains Mono for the desktop UI (see
-  # theme/palette.nix `fonts.mono`), CaskaydiaCove (Cascadia Code, with
-  # ligatures) for the terminal (`fonts.terminal`, consumed by
-  # home/features/ghostty and alacritty).
+  # Plate XIV typography — Iosevka Nerd Font for mono/code (plate.type.mono),
+  # IosevkaTerm Nerd Font for the terminal emulator (plate.type.terminal).
+  # D17: JetBrainsMono and CaskaydiaCove retained as rollback path; retirement
+  # deferred to the batch that decommissions Hyprland.
   home.packages = [
-    pkgs.nerd-fonts.jetbrains-mono
-    pkgs.nerd-fonts.caskaydia-cove
+    pkgs.nerd-fonts.iosevka # "Iosevka Nerd Font"
+    pkgs.nerd-fonts.iosevka-term # "IosevkaTerm Nerd Font"
+    pkgs.nerd-fonts.jetbrains-mono # D17 rollback — do not remove in batch 1
+    pkgs.nerd-fonts.caskaydia-cove # D17 rollback — do not remove in batch 1
   ];
 
   fonts.fontconfig.enable = true;

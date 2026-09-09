@@ -231,7 +231,7 @@ if ! nix --extra-experimental-features nix-command path-info \
   die "Cachix has no top-level closure for this commit/host. Run the existing native CI host build for '$host' and wait for it to publish to '$CACHIX_CACHE_NAME'. This script will not build on the Apple Silicon laptop or on the target."
 fi
 
-# P1.1: completeness is enforced target-side by `nix-store --realise` with
+# Closure completeness is enforced target-side by `nix-store --realise` with
 # `--fallback false`, which errors rather than building when a reference cannot
 # be substituted from either pinned cache. That check runs before activation and
 # before the system profile is touched, so an incomplete publication cannot
@@ -265,10 +265,10 @@ cachix_public_key="$3"
 upstream_url="$4"
 upstream_public_key="$5"
 
-# P1.1: no-build, signature-verified, controller-stated trust set.
+# No-build, signature-verified deployment with a controller-stated trust set.
 #
-# The plan's literal text specified `nix copy --from <cachix>`. That is
-# unworkable as written, and the controller-side completeness check caught it
+# A single `nix copy --from <cachix>` is insufficient for this cache layout.
+# The controller-side completeness check caught this
 # before it ever reached a target: `nix copy --from` names exactly ONE source,
 # but a project cache does not mirror upstream nixpkgs. Real closures reference
 # paths like glibc-locales and pcre2 that live in cache.nixos.org, so a
@@ -276,7 +276,7 @@ upstream_public_key="$5"
 # would mean gigabytes per host per commit, which is not what a project cache
 # is for.
 #
-# This form keeps every property the plan actually wanted:
+# This form keeps all three deployment guarantees:
 #
 #   * NO BUILD PATH. `--max-jobs 0` forbids local builds, `--builders ""`
 #     forbids remote ones, and `--fallback false` stops Nix from deciding to
