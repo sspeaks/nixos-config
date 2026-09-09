@@ -3,6 +3,9 @@ set -euo pipefail
 
 readonly CACHIX_URL="https://sspeaks-nix.cachix.org"
 readonly CACHIX_KEY="sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o="
+readonly UPSTREAM_URL="https://cache.nixos.org"
+readonly UPSTREAM_KEY="cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+readonly GH_REPO="${FLEET_GH_REPO:-sspeaks/nixos-config}"
 readonly FLEET=(
   "raspberrytimemachine|192.168.5.106||Time Machine appliance"
   "vidbox|192.168.5.195||video and ai-coaching"
@@ -10,30 +13,17 @@ readonly FLEET=(
   "nixpi5|192.168.5.238||Authentik SSO and home services"
   "proxy|20.83.103.87||public edge"
 )
-readonly NOT_FLEET=(
-  "nixpi|alternate travel-router configuration of the same Pi 4 as nixpi4-bare"
-  "vm|scratch VM"
-  "asahi|laptop updated manually"
-  "NixOS-WSL|desktop WSL instance, not always-on"
-  "NixOS-WSL-work|work WSL instance, not always-on"
-)
 
 repo="${FLEET_DEFAULT_REPO:-$PWD}"
-deploy_command="${FLEET_DEPLOY:-deploy}"
-promotion_command="$deploy_command"
-if [[ -n "${FLEET_DEFAULT_REPO:-}" && -x "$FLEET_DEFAULT_REPO/deploy" ]]; then
-  promotion_command="$FLEET_DEFAULT_REPO/deploy"
-fi
-do_update=true
 check_only=false
 prefetch_only=false
-auto_merge=false
 only_hosts=()
 names=() targets=() aliases=() notes=() outcomes=() paths=() ready=()
 tmp=""
 phase="arguments"
 summary_enabled=false
 incomplete=false
+head_sha=""
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'ERROR [%s]: %s\n' "$phase" "$*" >&2; exit 1; }
@@ -41,32 +31,31 @@ usage() {
   printf '%s\n' \
     'Usage: ./update-fleet [options]' \
     '  --check          Inspect reachability, cache availability and drift.' \
-    '  --no-update      Use this reviewed checkout without GitHub operations.' \
     '  --only HOST      Select a fleet host (repeatable).' \
     '  --prefetch-only  Populate target stores; do not activate.' \
-    '  --auto-merge     Merge after passing PR checks without a merge prompt.' \
-    '  --repo PATH      Checkout to use (default: launcher checkout).' \
+    '  --repo PATH      Working checkout (does not select the deployed revision).' \
     '  -h, --help       Show help.' \
     '' \
-    'Nix supplies local tools; GitHub authentication and trusted SSH access' \
-    'must already be configured. Activation always needs a terminal.' \
-    'Check-only may fetch local tooling/metadata, but does not change Git or targets.' \
-    'Incomplete selected-host runs exit nonzero; drift alone in --check does not.' \
-    'Test activation leaves the boot default unchanged. Use the printed command to promote.'
+    'Deploys the latest successfully built main commit from CI to all reachable' \
+    'fleet hosts. Paths come from CI-published manifests; no flake inputs are' \
+    'updated and deployment never builds system closures.' \
+    'Activation is persistent (switch); hosts reboot automatically when needed.' \
+    '' \
+    'GitHub authentication, SSH access, and independently verified host keys must' \
+    'be configured. Incomplete or per-host-failed runs exit nonzero.' \
+    'Drift alone in --check does not fail. --check does not activate targets.'
 }
 finish() {
   local status=$? i
   trap - EXIT
   if $summary_enabled; then
     say ""
-    say "Selected-host results:"
+    say "Host results:"
     for i in "${!names[@]}"; do
       printf '  %-24s %s\n' "${names[$i]}" "${outcomes[$i]}"
     done
   fi
-  if [[ -n "$tmp" ]]; then
-    rm -rf -- "$tmp"
-  fi
+  [[ -z "$tmp" ]] || rm -rf -- "$tmp"
   if $incomplete && (( status == 0 )); then status=1; fi
   exit "$status"
 }
@@ -77,9 +66,11 @@ trap 'exit 143' TERM
 while (( $# )); do
   case "$1" in
     --check) check_only=true ;;
-    --no-update) do_update=false ;;
     --prefetch-only) prefetch_only=true ;;
-    --auto-merge) auto_merge=true ;;
+    --no-update)
+      printf 'WARNING: --no-update is deprecated and has no effect; fleet deploys from CI artifacts\n' >&2 ;;
+    --auto-merge)
+      die "--auto-merge is no longer supported; fleet update is driven by CI artifacts (no PR workflow)" ;;
     --only|--repo)
       (( $# >= 2 )) && [[ -n "$2" && "$2" != -* ]] || die "$1 requires a value"
       if [[ "$1" == --only ]]; then only_hosts+=("$2"); else repo="$2"; fi
@@ -90,9 +81,6 @@ while (( $# )); do
   shift
 done
 $check_only && $prefetch_only && die "--check and --prefetch-only are mutually exclusive"
-if $auto_merge && { $check_only || ! $do_update; }; then
-  die "--auto-merge requires update mode"
-fi
 contains() {
   local wanted="$1" item
   shift
@@ -114,70 +102,29 @@ for entry in "${FLEET[@]}"; do
 done
 
 phase=preflight
-for command in nix git ssh jq timeout mktemp date rm sleep; do
+for command in nix git ssh jq gh timeout mktemp rm sleep; do
   command -v "$command" >/dev/null || die "missing runtime command: $command; use the Nix launcher"
 done
-if ! $check_only; then
-  command -v "$deploy_command" >/dev/null || die "missing packaged deploy helper"
-fi
-if $do_update && ! $check_only; then
-  command -v gh >/dev/null || die "missing runtime command: gh; use the Nix launcher"
-  timeout 30 gh auth status ||
-    die "GitHub authentication is required; run gh auth login (README documents a temporary Nix shell)"
-fi
-if ! $check_only && ! $prefetch_only; then
-  [[ -t 0 && -t 1 ]] || die "activation requires a terminal; use --prefetch-only for unattended downloads"
-elif $do_update && ! $check_only && ! $auto_merge; then
-  [[ -t 0 && -t 1 ]] || die "merging requires a terminal or --auto-merge"
-fi
+timeout 30 gh auth status ||
+  die "GitHub authentication required; run: gh auth login"
 repo="$(cd "$repo" && pwd -P)" || die "cannot enter checkout: $repo"
 [[ -f "$repo/flake.nix" ]] || die "checkout has no flake.nix: $repo"
 git -C "$repo" rev-parse --is-inside-work-tree >/dev/null || die "not a Git checkout"
 cd "$repo"
-if ! $check_only; then
-  clean="$(git status --porcelain)" || die "could not inspect Git status"
-  [[ -z "$clean" ]] || die "checkout is dirty (including untracked files); commit/stash first"
-fi
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/update-fleet.XXXXXXXX")" || die "could not create private temporary directory"
 summary_enabled=true
 
-nix_eval() {
-  timeout 300 nix --extra-experimental-features "nix-command flakes" eval \
-    --read-only --accept-flake-config --no-update-lock-file --no-write-lock-file "$@"
-}
-if ! host_json="$(nix_eval --json ".#nixosConfigurations" --apply builtins.attrNames)"; then
-  die "could not evaluate host names in $repo"
-fi
-jq -e 'type == "array" and all(.[]; type == "string")' <<< "$host_json" >/dev/null ||
-  die "invalid host-name evaluation output"
-for entry in "${FLEET[@]}"; do
-  name="${entry%%|*}"
-  jq -e --arg name "$name" 'index($name) != null' <<< "$host_json" >/dev/null ||
-    die "fleet host $name is absent from the selected checkout $repo"
-done
-while IFS= read -r name; do
-  managed=false
-  for entry in "${FLEET[@]}"; do [[ "${entry%%|*}" == "$name" ]] && managed=true; done
-  $managed && continue
-  excluded=false
-  for entry in "${NOT_FLEET[@]}"; do
-    if [[ "${entry%%|*}" == "$name" ]]; then
-      say "Not fleet-managed: $name (${entry#*|})"
-      excluded=true
-      break
-    fi
-  done
-  $excluded || say "WARNING: unmanaged configuration: $name"
-done < <(jq -r '.[]' <<< "$host_json")
-
-fleet_ssh() {
-  local i="$1"
-  shift
+fleet_ssh_t() {
+  # fleet_ssh_t <timeout_secs> <host_index> [remote_cmd...]
+  local t="$1" i="$2"
+  shift 2
   local opts=(-o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=yes
     -o ServerAliveInterval=5 -o ServerAliveCountMax=2)
   [[ -z "${aliases[$i]}" ]] || opts+=(-o "HostKeyAlias=${aliases[$i]}")
-  timeout 30 ssh "${opts[@]}" "sspeaks@${targets[$i]}" "$@"
+  timeout "$t" ssh "${opts[@]}" "sspeaks@${targets[$i]}" "$@"
 }
+fleet_ssh() { fleet_ssh_t 30 "$@"; }
+
 skip() {
   outcomes[$1]="$2"
   incomplete=true
@@ -197,139 +144,78 @@ done
 (( ${#live[@]} )) || die "no selected hosts reachable; verify SSH access and host keys independently"
 
 phase=publication
-if $do_update && ! $check_only; then
-  timeout 120 git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main' ||
-    die "cannot refresh origin/main"
-  before="$(git rev-parse HEAD)" || die "cannot resolve HEAD"
-  main="$(git rev-parse refs/remotes/origin/main)" || die "cannot resolve origin/main"
-  [[ "$before" == "$main" ]] || die "start updates from current origin/main; reconcile your checkout first"
-  timeout 1800 nix --extra-experimental-features "nix-command flakes" flake update --accept-flake-config ||
-    die "input update failed; inspect the checkout before retrying"
-  if git diff --quiet --exit-code -- flake.lock; then
-    say "flake.lock unchanged; nothing to publish"
-  else
-    diff_status=$?
-    (( diff_status == 1 )) || die "cannot inspect lock changes"
-    branch="fleet-update-$(date +%Y%m%d-%H%M%S)-$$"
-    git switch -c "$branch" || die "cannot create update branch; lock changes retained"
-    git add -- flake.lock || die "cannot stage flake.lock"
-    git commit -m "Update flake inputs" || die "cannot commit; changes retained on $branch"
-    update_sha="$(git rev-parse HEAD)" || die "cannot resolve update commit"
-    timeout 120 git push --no-verify origin "HEAD:refs/heads/$branch" || die "cannot push $branch"
-    pr="$(timeout 60 gh pr create --base main --head "$branch" \
-      --title "Update flake inputs" \
-      --body "Routine fleet update. CI publishes signed closures; targets never build.")" ||
-      die "cannot create PR for $branch; inspect GitHub before retrying"
-    [[ -n "$pr" ]] || die "GitHub returned no PR URL"
-    say "Waiting for checks: $pr"
-    checks_passed=false
-    for (( attempt=0; attempt<40; attempt++ )); do
-      pr_head="$(timeout 30 gh pr view "$pr" --json headRefOid -q .headRefOid)" ||
-        die "cannot query $pr"
-      [[ "$pr_head" == "$update_sha" ]] || die "PR head changed; review the new commit manually"
-      # gh exits 8 for pending checks and 1 for failing or absent checks.
-      check_status=0
-      timeout 30 gh pr checks "$pr" --json name,bucket,workflow >"$tmp/checks.json" 2>"$tmp/checks.err" ||
-        check_status=$?
-      # Before Actions registers its first check, gh emits only this diagnostic.
-      if (( check_status == 1 )) && [[ ! -s "$tmp/checks.json" &&
-          "$(<"$tmp/checks.err")" == "no checks reported on the '$branch' branch" ]]; then
-        say "No PR checks reported yet; retrying in 30 seconds."
-        sleep 30
-        continue
-      fi
-      if ! jq -e 'type == "array" and all(.[]; (.name | type == "string") and (.bucket | type == "string"))' \
-          "$tmp/checks.json" >/dev/null 2>&1; then
-        die "cannot query PR checks: $(<"$tmp/checks.err")"
-      fi
-      (( check_status == 0 || check_status == 1 || check_status == 8 )) ||
-        die "PR check request failed (status $check_status): $(<"$tmp/checks.err")"
-      if jq -e 'any(.[]; .bucket == "fail" or .bucket == "cancel")' "$tmp/checks.json" >/dev/null; then
-        die "PR checks failed or were cancelled; inspect $pr"
-      fi
-      if (( check_status == 0 )) && jq -e \
-          'any(.[]; .workflow == "Flake Check" and .name == "check" and .bucket == "pass") and all(.[]; .bucket == "pass" or .bucket == "skipping")' \
-          "$tmp/checks.json" >/dev/null; then
-        checks_passed=true
-        break
-      fi
-      sleep 30
-    done
-    $checks_passed || die "timed out waiting for successful Flake Check on $update_sha"
-    if ! $auto_merge; then
-      read -r -p "Merge $pr and continue? [yes/NO] " reply || die "no merge confirmation received"
-      [[ "$reply" == yes ]] || die "merge declined; PR and branch retained"
-    fi
-    timeout 60 gh pr merge "$pr" --merge --match-head-commit "$update_sha" ||
-      die "merge failed; inspect $pr"
-    merged="$(timeout 30 gh pr view "$pr" --json state,mergeCommit)" || die "cannot resolve merged PR"
-    merge_sha="$(jq -er 'select(.state == "MERGED") | .mergeCommit.oid | select(test("^[0-9a-f]{40}$"))' <<< "$merged")" ||
-      die "PR has not merged to a known commit"
-    timeout 120 git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main' ||
-      die "cannot refresh merged main"
-    git merge-base --is-ancestor "$merge_sha" refs/remotes/origin/main ||
-      die "merge commit is not reachable from origin/main"
-    # Stay on the exact reviewed merge even if main advances during CI.
-    git switch --detach "$merge_sha" || die "cannot select merged commit; reconcile local changes"
-    say "Selected merged commit $merge_sha (detached HEAD)."
-    build_done=false
-    for (( attempt=0; attempt<80; attempt++ )); do
-      runs="$(timeout 30 gh run list --workflow host-build-cache.yml --commit "$merge_sha" \
-        --event push --limit 1 --json databaseId,status,conclusion,headSha)" ||
-        die "cannot query cache workflow for $merge_sha"
-      jq -e 'type == "array"' <<< "$runs" >/dev/null || die "malformed cache workflow response"
-      if [[ "$(jq 'length' <<< "$runs")" != 0 ]]; then
-        [[ "$(jq -r '.[0].headSha' <<< "$runs")" == "$merge_sha" ]] ||
-          die "cache workflow does not match selected commit"
-        if [[ "$(jq -r '.[0].status' <<< "$runs")" == completed ]]; then
-          [[ "$(jq -r '.[0].conclusion' <<< "$runs")" == success ]] ||
-            die "cache workflow failed: $(jq -c '.[0]' <<< "$runs")"
-          build_done=true
-          break
-        fi
-      fi
-      sleep 30
-    done
-    $build_done || die "timed out waiting for published closures for $merge_sha"
-  fi
+# CI supplies the paths so ARM import-from-derivation never runs on the Mac.
+runs_json="$(timeout 60 gh run list \
+  --repo "$GH_REPO" \
+  --workflow host-build-cache.yml \
+  --branch main \
+  --status success \
+  --event push \
+  --json databaseId,headSha,headBranch,status,conclusion,event \
+  --limit 1)" || die "cannot query CI workflow runs for $GH_REPO"
+jq -e 'type == "array" and all(.[];
+  (.databaseId | type == "number" and . > 0 and floor == .) and
+  (.headSha | type == "string" and test("^[0-9a-f]{40}$")) and
+  .headBranch == "main" and .status == "completed" and
+  .conclusion == "success" and .event == "push")' <<< "$runs_json" >/dev/null ||
+  die "malformed or ineligible CI run list response"
+[[ "$(jq 'length' <<< "$runs_json")" -gt 0 ]] ||
+  die "no successful host-build-cache.yml runs on main found; push to main and wait for CI"
+
+run_id="$(jq -r '.[0].databaseId' <<< "$runs_json")"
+manifest_sha="$(jq -r '.[0].headSha' <<< "$runs_json")"
+if ! timeout 120 gh run download "$run_id" --repo "$GH_REPO" \
+    --name fleet-host-paths --dir "$tmp/manifest-dl" >"$tmp/dl.log" 2>&1; then
+  printf '%s\n' "$(<"$tmp/dl.log")" >&2
+  die "cannot download fleet-host-paths artifact for latest successful CI run $run_id.
+Bootstrap: push to main, wait for host-build-cache.yml (with collect-paths job) to succeed,
+then retry.  If the workflow lacks a collect-paths job, update .github/workflows/host-build-cache.yml first."
 fi
 
-commit="$(git rev-parse --verify 'HEAD^{commit}')" || die "cannot resolve selected commit"
-assert_checkout() {
-  local current dirty
-  current="$(git rev-parse HEAD)" || die "cannot resolve checkout"
-  [[ "$current" == "$commit" ]] || die "checkout changed during the run; refusing a different commit"
-  if ! $check_only; then
-    dirty="$(git status --porcelain)" || die "cannot inspect checkout"
-    [[ -z "$dirty" ]] || die "checkout became dirty during the run"
-  fi
-}
+manifest_file="$tmp/manifest-dl/fleet-host-paths.json"
+[[ -f "$manifest_file" ]] || die "fleet-host-paths artifact has no fleet-host-paths.json"
+jq -e 'type == "object" and (.headSha | type == "string") and
+  (.paths | type == "object" and
+    keys == (["raspberrytimemachine","vidbox","nixpi4-bare","nixpi5","proxy"] | sort) and
+    all(.[]; type == "string" and test("^/nix/store/[a-z0-9]{32}-nixos-system-[A-Za-z0-9._+-]+$")))' \
+  "$manifest_file" >/dev/null || die "fleet-host-paths.json has unexpected structure; re-check CI collect-paths job"
+manifest_sha_check="$(jq -r '.headSha' "$manifest_file")"
+[[ "$manifest_sha_check" == "$manifest_sha" ]] ||
+  die "manifest headSha ($manifest_sha_check) does not match run headSha ($manifest_sha)"
+
+head_sha="$manifest_sha"
+say "Selected CI run $run_id (commit ${head_sha:0:12})"
+
 phase=cache
 for i in "${live[@]}"; do
-  assert_checkout
-  if ! path="$(nix_eval --raw ".#nixosConfigurations.${names[$i]}.config.system.build.toplevel" 2>"$tmp/eval.err")"; then
-    skip "$i" "evaluation failed (controller/IFD limitations may apply)"
-    printf '%s\n' "$(<"$tmp/eval.err")" >&2
+  name="${names[$i]}"
+  path="$(jq -r --arg h "$name" '.paths[$h] // empty' "$manifest_file")"
+  if [[ -z "$path" ]]; then
+    skip "$i" "no closure path in CI manifest for $name"
     continue
   fi
   [[ "$path" =~ ^/nix/store/[a-z0-9]{32}-nixos-system-[A-Za-z0-9._+-]+$ ]] ||
-    die "unexpected closure path for ${names[$i]}: $path"
+    die "unexpected closure path for $name: $path"
   if ! timeout 60 nix --extra-experimental-features nix-command path-info \
-      --store "$CACHIX_URL" --option trusted-public-keys "$CACHIX_KEY" \
-      --option require-sigs true "$path" >"$tmp/cache.log" 2>&1; then
+      --store "$CACHIX_URL" \
+      --option trusted-public-keys "$CACHIX_KEY" \
+      --option require-sigs true \
+      "$path" >"$tmp/cache.log" 2>&1; then
     skip "$i" "cache unavailable, missing or unverifiable toplevel"
     printf '%s\n' "$(<"$tmp/cache.log")" >&2
     continue
   fi
   paths[$i]="$path"
   ready+=("$i")
-  outcomes[$i]="cached toplevel; complete closure not yet fetched"
+  outcomes[$i]="cached toplevel verified"
 done
 (( ${#ready[@]} )) || die "no selected hosts have a verifiable cached closure"
 
 running_path() {
   local result
-  result="$(fleet_ssh "$1" 'readlink -f /run/current-system')" || return 1
+  # readlink -e: fails if the final path component does not exist, so a
+  # partial/missing store path cannot look like a valid running system.
+  result="$(fleet_ssh "$1" 'readlink -e /run/current-system')" || return 1
   [[ "$result" =~ ^/nix/store/[a-z0-9]{32}-nixos-system-[A-Za-z0-9._+-]+$ ]] || return 1
   printf '%s\n' "$result"
 }
@@ -344,6 +230,84 @@ REMOTE_HEALTH
   )" || return 1
   [[ "$result" == HEALTHY ]]
 }
+reboot_needed_probe() {
+  # Userspace-only changes do not require a reboot.
+  local i="$1" new_path="$2" reboot_args
+  printf -v reboot_args '%q' "$new_path"
+  fleet_ssh_t 30 "$i" \
+    "/run/current-system/sw/bin/bash -s -- $reboot_args" \
+    <<'REMOTE_REBOOT_CHECK'
+set -euo pipefail
+new_system="$1"
+# Require existing artifacts, not merely symlink targets.
+booted_k="$(readlink -e /run/booted-system/kernel)" \
+  || { printf 'ERR:booted-kernel\n'; exit 1; }
+booted_i="$(readlink -e /run/booted-system/initrd)" \
+  || { printf 'ERR:booted-initrd\n'; exit 1; }
+booted_m="$(readlink -e /run/booted-system/kernel-modules)" \
+  || { printf 'ERR:booted-modules\n'; exit 1; }
+new_k="$(readlink -e "$new_system/kernel")" \
+  || { printf 'ERR:new-kernel\n'; exit 1; }
+new_i="$(readlink -e "$new_system/initrd")" \
+  || { printf 'ERR:new-initrd\n'; exit 1; }
+new_m="$(readlink -e "$new_system/kernel-modules")" \
+  || { printf 'ERR:new-modules\n'; exit 1; }
+if [[ "$booted_k" != "$new_k" || "$booted_i" != "$new_i" || "$booted_m" != "$new_m" ]]; then
+  printf 'REBOOT\n'
+else
+  printf 'CURRENT\n'
+fi
+REMOTE_REBOOT_CHECK
+}
+schedule_and_verify_reboot() {
+  local i="$1"
+  say "${names[$i]}: reboot required (kernel/initrd/modules changed); scheduling..."
+
+  # Capture and validate the boot ID before triggering the reboot.  A valid
+  # /proc/sys/kernel/random/boot_id is always a lowercase UUID.
+  local boot_id_before=""
+  if ! boot_id_before="$(fleet_ssh "$i" 'cat /proc/sys/kernel/random/boot_id' 2>/dev/null)"; then
+    skip "$i" "failed to read boot ID before reboot"
+    return 1
+  fi
+  [[ "$boot_id_before" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || {
+    skip "$i" "boot ID before reboot has unexpected shape: $boot_id_before"
+    return 1
+  }
+
+  local reboot_status=0
+  fleet_ssh "$i" "sudo -n /run/current-system/sw/bin/systemctl reboot" \
+    >"$tmp/reboot.log" 2>&1 || reboot_status=$?
+  case "$reboot_status" in
+    0) ;;
+    124|255)
+      say "${names[$i]}: reboot connection interrupted; checking for a new boot" ;;
+    *)
+      printf '%s\n' "$(<"$tmp/reboot.log")" >&2
+      skip "$i" "reboot request failed (status $reboot_status)"
+      return 1 ;;
+  esac
+
+  # Poll for a *different* boot ID.  The host may still respond with the old
+  # ID for a brief window after the reboot command; only a freshly read ID that
+  # differs from boot_id_before proves the system has rebooted.
+  local attempt current_id remaining deadline=$((SECONDS + 300))
+  for (( attempt=1; attempt<=30; attempt++ )); do
+    sleep 10
+    remaining=$((deadline - SECONDS))
+    (( remaining > 0 )) || break
+    (( remaining <= 30 )) || remaining=30
+    if current_id="$(fleet_ssh_t "$remaining" "$i" 'cat /proc/sys/kernel/random/boot_id' 2>/dev/null)" \
+        && [[ "$current_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ &&
+              "$current_id" != "$boot_id_before" ]]; then
+      return 0
+    fi
+    say "${names[$i]}: waiting for reboot ($attempt/30)..."
+  done
+
+  skip "$i" "host did not return with a changed boot ID within 5 minutes"
+  return 1
+}
 if $check_only; then
   phase=inspection
   for i in "${ready[@]}"; do
@@ -355,46 +319,53 @@ if $check_only; then
       outcomes[$i]="update available"
     fi
   done
-  assert_checkout
   exit 0
 fi
 
-deploy_host() {
-  local i="$1" mode="$2"
-  local args=(--flake-dir "$repo" --ssh-target "sspeaks@${targets[$i]}"
-    --expected-commit "$commit" --expected-system-path "${paths[$i]}")
-  [[ -z "${aliases[$i]}" ]] || args+=(--host-key-alias "${aliases[$i]}")
-  "$deploy_command" "${args[@]}" "$mode" "${names[$i]}"
-}
 phase=prefetch
+prefetched=()
 for i in "${ready[@]}"; do
-  assert_checkout
-  if deploy_host "$i" --dry-run >"$tmp/prefetch.log" 2>&1; then
-    outcomes[$i]="prefetched"
-  else
-    outcomes[$i]="prefetch failed"
+  new_path="${paths[$i]}"
+  say "${names[$i]}: fetching closure..."
+  local_args=""
+  printf -v local_args '%q ' "$new_path" "$CACHIX_URL" "$CACHIX_KEY" "$UPSTREAM_URL" "$UPSTREAM_KEY"
+  if ! fleet_ssh_t 3600 "$i" \
+      "sudo -n /run/current-system/sw/bin/bash -s -- $local_args" \
+      <<'REMOTE_FETCH' >"$tmp/prefetch.log" 2>&1
+set -euo pipefail
+new_system="$1" cachix_url="$2" cachix_key="$3" upstream_url="$4" upstream_key="$5"
+exec nix-store --realise \
+  --max-jobs 0 --builders "" \
+  --option substituters "$cachix_url $upstream_url" \
+  --option trusted-public-keys "$cachix_key $upstream_key" \
+  --option require-sigs true --option fallback false \
+  "$new_system"
+REMOTE_FETCH
+  then
+    skip "$i" "prefetch failed"
     printf '%s\n' "$(<"$tmp/prefetch.log")" >&2
-    die "prefetch failed for ${names[$i]}; no hosts activated"
+    continue
   fi
+  outcomes[$i]="prefetched"
+  prefetched+=("$i")
 done
 $prefetch_only && exit 0
 
 phase=activation
-for i in "${ready[@]}"; do
-  assert_checkout
+for i in "${prefetched[@]}"; do
+  new_path="${paths[$i]}"
+
   if ! current="$(running_path "$i")"; then
-    outcomes[$i]="running-closure probe failed"
-    die "cannot inspect ${names[$i]}; stopping before later hosts"
+    skip "$i" "running-closure probe failed"
+    continue
   fi
-  if [[ "$current" == "${paths[$i]}" ]]; then
-    if healthy "$i"; then outcomes[$i]="already current and healthy"; continue; fi
-    outcomes[$i]="already current but health check failed"
-    die "${names[$i]} failed health checks; stopping"
-  fi
-  say "${names[$i]}: ${notes[$i]}"
-  if [[ "${names[$i]}" == raspberrytimemachine ]]; then
-    sessions=unknown
-    if probe="$(fleet_ssh "$i" "/run/current-system/sw/bin/bash -s" <<'REMOTE_SAMBA'
+
+  if [[ "$current" != "$new_path" ]]; then
+    say "${names[$i]}: activating (${notes[$i]})..."
+
+    # Backup activity is informational in unattended fleet mode.
+    if [[ "${names[$i]}" == raspberrytimemachine ]]; then
+      if samba_result="$(fleet_ssh "$i" "/run/current-system/sw/bin/bash -s" <<'REMOTE_SAMBA'
 set -euo pipefail
 status="$(sudo -n smbstatus -b)" || exit 1
 count=0
@@ -403,36 +374,83 @@ while IFS= read -r line; do
 done <<< "$status"
 printf 'OK:%s\n' "$count"
 REMOTE_SAMBA
-    )" && [[ "$probe" =~ ^OK:([0-9]+)$ ]]; then
-      sessions="${BASH_REMATCH[1]}"
-    fi
-    if [[ "$sessions" != 0 ]]; then
-      say "Time Machine sessions: $sessions. Activation may interrupt a backup."
-      if ! read -r -p "Activate anyway? [yes/NO] " reply || [[ "$reply" != yes ]]; then
-        skip "$i" "activation declined (backup safety)"
-        continue
+      )" && [[ "$samba_result" =~ ^OK:([0-9]+)$ ]]; then
+        n="${BASH_REMATCH[1]}"
+        (( n == 0 )) || say "${names[$i]}: $n Time Machine session(s) active; proceeding anyway"
+      else
+        say "${names[$i]}: note: could not probe Time Machine sessions; proceeding"
       fi
     fi
   fi
-  if deploy_host "$i" --test; then
-    outcomes[$i]="test activated and confirmed"
-  else
-    outcomes[$i]="activation or health confirmation failed; inspect rollback guard"
-    die "${names[$i]} failed; stopping before later hosts"
-  fi
-done
 
-phase=verification
-assert_checkout
-for i in "${ready[@]}"; do
-  [[ "${outcomes[$i]}" != "activation declined (backup safety)" ]] || continue
-  if current="$(running_path "$i")" && [[ "$current" == "${paths[$i]}" ]] && healthy "$i"; then
-    say "${names[$i]} verified; test activation still reverts on reboot."
-    printf 'To promote manually: %q --flake-dir %q --expected-commit %q --expected-system-path %q --switch --ssh-target %q ' \
-      "$promotion_command" "$repo" "$commit" "${paths[$i]}" "sspeaks@${targets[$i]}"
-    [[ -z "${aliases[$i]}" ]] || printf '%s %q ' --host-key-alias "${aliases[$i]}"
-    printf '%q\n' "${names[$i]}"
-  else
-    skip "$i" "final verification failed; investigate manually"
+  local_args=""
+  printf -v local_args '%q' "$new_path"
+  activate_result=""
+  if ! activate_result="$(fleet_ssh_t 300 "$i" \
+        "sudo -n /run/current-system/sw/bin/bash -s -- $local_args" \
+        <<'REMOTE_ACTIVATE' 2>"$tmp/activate.log"
+set -euo pipefail
+new_system="$1"
+upgrade_state="$(systemctl show --property=ActiveState --value nixos-upgrade.service)" || exit 1
+case "$upgrade_state" in
+  inactive|failed) ;;
+  *) printf 'UPGRADE_ACTIVE:%s\n' "$upgrade_state"; exit 0 ;;
+esac
+current="$(readlink -e /run/current-system)" || exit 1
+persistent="$(readlink -e /nix/var/nix/profiles/system)" || exit 1
+if [[ "$current" == "$new_system" && "$persistent" == "$new_system" ]]; then
+  printf 'CURRENT\n'
+  exit 0
+fi
+# A previous test activation also needs bootloader installation, not just a profile change.
+nix-env --profile /nix/var/nix/profiles/system --set "$new_system" || exit 1
+"$new_system/bin/switch-to-configuration" switch >&2 || exit 1
+printf 'ACTIVATED\n'
+REMOTE_ACTIVATE
+  )"; then
+    printf '%s\n' "$(<"$tmp/activate.log")" >&2
+    skip "$i" "activation failed"
+    continue
   fi
+
+  case "$activate_result" in
+    UPGRADE_ACTIVE:*)
+      skip "$i" "nixos-upgrade.service is active (${activate_result#UPGRADE_ACTIVE:}); try again later"
+      continue ;;
+    ACTIVATED) outcomes[$i]="activated (no reboot needed)" ;;
+    CURRENT) outcomes[$i]="already current and healthy" ;;
+    *)
+      skip "$i" "unexpected activation output"
+      continue ;;
+  esac
+
+  reboot_probe_result=""
+  if ! reboot_probe_result="$(reboot_needed_probe "$i" "$new_path")"; then
+    skip "$i" "reboot probe failed: $reboot_probe_result"
+    say "${names[$i]}: cannot determine if reboot is needed after activation; skipping host"
+    continue
+  fi
+  case "$reboot_probe_result" in
+    REBOOT)
+      if ! schedule_and_verify_reboot "$i"; then continue; fi
+      if [[ "$activate_result" == CURRENT ]]; then
+        outcomes[$i]="rebooted (boot change pending from prior switch)"
+      else
+        outcomes[$i]="activated and rebooted"
+      fi ;;
+    CURRENT) ;;
+    *)
+      skip "$i" "unexpected reboot probe result"
+      continue ;;
+  esac
+  # Post-activation/reboot verification
+  if ! current="$(running_path "$i")" || [[ "$current" != "$new_path" ]]; then
+    skip "$i" "post-activation path mismatch or probe failed"
+    continue
+  fi
+  if ! healthy "$i"; then
+    skip "$i" "post-activation health check failed"
+    continue
+  fi
+  say "${names[$i]}: verified (${outcomes[$i]})"
 done

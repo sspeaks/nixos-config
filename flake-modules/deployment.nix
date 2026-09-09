@@ -25,7 +25,6 @@
         name = "update-fleet";
         inherit runtimeInputs;
         text = ''
-          export FLEET_DEPLOY=${lib.getExe deploy}
           exec ${lib.getExe pkgs.bash} ${../scripts/update-fleet.sh} "$@"
         '';
       };

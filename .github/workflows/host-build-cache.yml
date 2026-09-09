@@ -46,13 +46,23 @@ jobs:
         run: |
           set -euo pipefail
           : > closures.txt
+          paths='{}'
           for host in vidbox; do
-            nix build --show-trace --print-build-logs --accept-flake-config \
+            path="$(nix build --show-trace --print-build-logs --accept-flake-config \
               --no-link --print-out-paths \
-              ".#nixosConfigurations.$host.config.system.build.toplevel" \
-              >> closures.txt
+              ".#nixosConfigurations.$host.config.system.build.toplevel")"
+            printf '%s\n' "$path" >> closures.txt
+            paths="$(jq --arg h "$host" --arg p "$path" '.[$h] = $p' <<< "$paths")"
           done
           cat closures.txt
+          jq -n --arg sha "$GITHUB_SHA" --argjson paths "$paths" \
+            '{"headSha": $sha, "paths": $paths}' > host-paths-x86.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: host-paths-x86
+          path: host-paths-x86.json
+          retention-days: 90
 
       - name: Publish to Cachix
         env:
@@ -91,13 +101,27 @@ jobs:
         run: |
           set -euo pipefail
           : > closures.txt
+          paths='{}'
           for host in nixpi nixpi4-bare; do
-            nix build --show-trace --print-build-logs --accept-flake-config \
+            path="$(nix build --show-trace --print-build-logs --accept-flake-config \
               --no-link --print-out-paths \
-              ".#nixosConfigurations.$host.config.system.build.toplevel" \
-              >> closures.txt
+              ".#nixosConfigurations.$host.config.system.build.toplevel")"
+            printf '%s\n' "$path" >> closures.txt
+            # Only nixpi4-bare is fleet-managed; nixpi is an alternate config.
+            case "$host" in
+              nixpi4-bare)
+                paths="$(jq --arg h "$host" --arg p "$path" '.[$h] = $p' <<< "$paths")" ;;
+            esac
           done
           cat closures.txt
+          jq -n --arg sha "$GITHUB_SHA" --argjson paths "$paths" \
+            '{"headSha": $sha, "paths": $paths}' > host-paths-nixpi4.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: host-paths-nixpi4
+          path: host-paths-nixpi4.json
+          retention-days: 90
 
       - name: Publish to Cachix
         env:
@@ -133,11 +157,19 @@ jobs:
       - name: Build host closure (no activation, no credential)
         run: |
           set -euo pipefail
-          nix build --show-trace --print-build-logs --accept-flake-config \
+          path="$(nix build --show-trace --print-build-logs --accept-flake-config \
             --no-link --print-out-paths \
-            .#nixosConfigurations.nixpi5.config.system.build.toplevel \
-            > closures.txt
+            .#nixosConfigurations.nixpi5.config.system.build.toplevel)"
+          printf '%s\n' "$path" > closures.txt
           cat closures.txt
+          jq -n --arg sha "$GITHUB_SHA" --arg path "$path" \
+            '{"headSha": $sha, "paths": {"nixpi5": $path}}' > host-paths-nixpi5.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: host-paths-nixpi5
+          path: host-paths-nixpi5.json
+          retention-days: 90
 
       - name: Publish to Cachix
         env:
@@ -222,14 +254,25 @@ jobs:
           nix build --show-trace --print-build-logs --accept-flake-config \
             --no-link --print-out-paths \
             .#packages.aarch64-linux.raspberrytimemachineImage >> closures.txt
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            --no-link --print-out-paths \
-            .#nixosConfigurations.proxy.config.system.build.toplevel >> closures.txt
+          # Capture fleet system closures with explicit per-host path tracking.
+          paths='{}'
+          for host in proxy raspberrytimemachine; do
+            path="$(nix build --show-trace --print-build-logs --accept-flake-config \
+              --no-link --print-out-paths \
+              ".#nixosConfigurations.$host.config.system.build.toplevel")"
+            printf '%s\n' "$path" >> closures.txt
+            paths="$(jq --arg h "$host" --arg p "$path" '.[$h] = $p' <<< "$paths")"
+          done
           # Cache the system closure too: subsequent updates do not use the image.
-          nix build --show-trace --print-build-logs --accept-flake-config \
-            --no-link --print-out-paths \
-            .#nixosConfigurations.raspberrytimemachine.config.system.build.toplevel >> closures.txt
           cat closures.txt
+          jq -n --arg sha "$GITHUB_SHA" --argjson paths "$paths" \
+            '{"headSha": $sha, "paths": $paths}' > host-paths-arm64.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: host-paths-arm64
+          path: host-paths-arm64.json
+          retention-days: 90
 
       - name: Inspect and checksum the SD image
         run: |
@@ -265,3 +308,41 @@ jobs:
           set -euo pipefail
           test -s closures.txt
           xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
+
+  collect-paths:
+    name: Publish fleet host-path manifest
+    # Runs only when all fleet-relevant build jobs succeed.  The artifact
+    # produced here is what update-fleet downloads to learn exact store paths
+    # without performing local nix evaluation.
+    needs: [build-x86-linux, build-nixpi, build-nixpi5, build-images]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all host-path fragments
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: host-paths-*
+          merge-multiple: true
+
+      - name: Merge path fragments into combined manifest
+        run: |
+          set -euo pipefail
+          jq -se \
+            --arg sha "$GITHUB_SHA" \
+            'if length != 4 or any(.[]; .headSha != $sha or (.paths | type != "object"))
+             then error("invalid fleet path fragments")
+             else {"headSha": $sha, "paths": ([.[].paths] | add)}
+             end
+             | if (.paths | keys) != (["raspberrytimemachine","vidbox","nixpi4-bare","nixpi5","proxy"] | sort)
+                  or any(.paths[]; type != "string" or
+                    (test("^/nix/store/[a-z0-9]{32}-nixos-system-[A-Za-z0-9._+-]+$") | not))
+               then error("invalid fleet host paths")
+               else .
+               end' \
+            host-paths-*.json > fleet-host-paths.json
+          cat fleet-host-paths.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fleet-host-paths
+          path: fleet-host-paths.json
+          retention-days: 90

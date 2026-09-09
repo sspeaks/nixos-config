@@ -15,7 +15,7 @@
           ];
         }
         ''
-          bash ${../tests}/update-fleet.sh ${../scripts/update-fleet.sh}
+          bash ${../tests}/update-fleet.sh ${../scripts/update-fleet.sh} ${../.github/workflows/host-build-cache.yml}
           bash ${../tests}/deploy.sh ${../scripts/deploy.sh}
           touch "$out"
         '';
