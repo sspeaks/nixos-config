@@ -5,17 +5,17 @@ let
     sopsFile = ../../secrets/vidbox.yaml;
   };
 in
-# `vidbox` -- the home Hyper-V VM that takes over vid-stream's workload from
-  # Azure, retiring the last expensive VM in the estate.
+# `vidbox` -- the home Hyper-V VM running the former Azure video workload.
   #
   # ---------------------------------------------------------------------------
-  # PASS TWO IS NOW ACTIVE. The history matters, so it is recorded here.
+  # Bootstrap the account before enabling secrets. The install history matters.
   #
   # A freshly installed host has no sops identity. sops-nix derives its age key
   # from /etc/ssh/ssh_host_ed25519_key, which does not exist until the installer
   # has run, so its public half cannot be in .sops.yaml beforehand and the host
   # cannot decrypt secrets/common.yaml on first boot. The proxy hit exactly this
-  # in P4.1 and shipped with its rescue account locked for the same reason.
+  # during provisioning and shipped with its rescue account locked for the same
+  # reason.
   #
   # Pass one therefore ran WITHOUT ../common/users/sspeaks -- that module declares
   # sops secrets (sspeaks-password with neededForUsers, the github ssh key, three
@@ -23,14 +23,14 @@ in
   # taking user creation down with it and leaving an unloginable machine. The user
   # was defined inline instead, key-only with a locked password.
   #
-  # Pass two, done: the host key was scanned, converted with ssh-to-age to
-  # age16mhhzl87..., added to .sops.yaml under hosts and to the common.yaml rule,
-  # and common.yaml was re-encrypted (10 recipients -> 11). The inline user has
-  # been replaced by the shared module below.
+  # After installation the host key was scanned, converted with ssh-to-age,
+  # added to .sops.yaml under hosts and to the common.yaml rule, and common.yaml
+  # was re-encrypted. The inline user was then replaced by the shared module
+  # below.
   #
-  # `determinate` is back too. It follows this flake's nixpkgs, so it is NOT in
-  # Determinate's own cache -- but hosts/vid-stream already imports it, so CI has
-  # been publishing that exact x86_64 derivation to sspeaks-nix all along. The
+  # `determinate` follows this flake's nixpkgs, so it is NOT in Determinate's
+  # own cache. The retired Azure video host also imported it, so CI had already
+  # published that exact x86_64 derivation to sspeaks-nix during installation. The
   # installer only ever rebuilt it (wasmtime, via rustc) because the live ISO had
   # no access to that cache. The installed system does.
   # ---------------------------------------------------------------------------
@@ -101,9 +101,9 @@ in
   };
 
   # -------------------------------------------------------------- backups ---
-  # Deleting the vid-stream resource group removes the only host that was
-  # backing this data up, and after the migration these 41 GB exist in exactly
-  # one place. This must be live BEFORE that deletion, not after.
+  # These jobs replaced the Azure video host's backups before its resource
+  # group was deleted. The 41 GB of recordings and ai-coaching data now live
+  # on this host, so it must keep backing them up independently.
   #
   # The container is deliberately still "vid-stream", and the restic password
   # was carried across unchanged in secrets/vidbox.yaml, so this host opens the
@@ -137,9 +137,9 @@ in
   };
 
   # ----------------------------------------------------------- wireguard ---
-  # Home hosts DIAL OUT to the edge; the edge listens. That inversion is P2.3,
-  # and it is what keeps the residential address out of every configuration on
-  # the Azure side. persistentKeepalive is not optional for an outbound-only
+  # Home hosts DIAL OUT to the edge; the edge listens. That keeps the
+  # residential address out of every Azure-side configuration.
+  # persistentKeepalive is not optional for an outbound-only
   # tunnel: without it the home NAT mapping expires and the edge can no longer
   # reach back to deliver traffic.
   #
@@ -164,7 +164,7 @@ in
   };
 
   # --------------------------------------------------------- vid-streamer ---
-  # Ported verbatim from hosts/vid-stream. The edge reverse-proxies
+  # Ported from the retired Azure video host. The edge reverse-proxies
   # streams.sspeaks.net to :8080 (aiCoaching's caddy), and vid-streamer serves
   # on :8081, exactly as in Azure.
   systemd.tmpfiles.rules = [

@@ -1,8 +1,7 @@
 { lib, ... }:
 # Hardware for `vidbox`: a Gen2 (UEFI) Hyper-V guest on the Windows desktop.
 #
-# Deliberately NOT importing nixpkgs' azure-common.nix, which is what
-# hosts/nixos-azure/hardware-configuration.nix pulls in. That module exists to
+# Deliberately NOT importing nixpkgs' azure-common.nix. That module exists to
 # integrate with the Azure fabric -- waagent provisioning, and taking the
 # hostname from Azure rather than from configuration -- none of which applies to
 # a VM on a desktop in the house. The two platforms share a hypervisor, not a
@@ -23,8 +22,8 @@
 # system would have been fine -- it just could never get there.
 #
 # nixos-generate-config would normally detect these. This file was written by
-# hand, so they are set explicitly, matching nixpkgs' azure-common.nix, which is
-# precisely why hosts/nixos-azure boots on the same hypervisor.
+# hand, so they are set explicitly, matching the guest drivers supplied by
+# nixpkgs' azure-common.nix without importing its Azure control-plane settings.
 {
   boot.initrd.kernelModules = [
     "hv_vmbus"
@@ -42,8 +41,8 @@
   swapDevices = [{ device = "/swapfile"; size = 8192; }];
 
   networking = {
-    # Static, unlike nixos-azure which deliberately leaves this empty to inherit
-    # the name from the Azure fabric. Nothing hands this VM a name.
+    # Static, unlike Azure guests that leave this empty to inherit the name
+    # from the Azure fabric. Nothing hands this VM a name.
     hostName = "vidbox";
     useDHCP = lib.mkDefault true;
     enableIPv6 = false;

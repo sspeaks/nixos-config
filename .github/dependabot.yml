@@ -1,7 +1,7 @@
 version: 2
 
 updates:
-  # P1.1 requirement: every Action is pinned to a full 40-character commit SHA.
+  # Every Action is pinned to a full 40-character commit SHA.
   # Dependabot is what keeps those pins from silently rotting into unpatched
   # versions -- it opens a PR with the new SHA and the version comment updated,
   # so the pin stays reviewable instead of becoming a mutable tag again.

@@ -28,7 +28,7 @@
     # mode) so the Pi is still reachable without an Ethernet cable.
     ../nixpi/networking/wlan.nix
     inputs.home-manager.nixosModules.home-manager
-    # P3.1 workloads migrated off the Azure `nixos` VM.
+    # Workloads migrated off the retired Azure `nixos` VM.
     inputs.boggle.nixosModules.default
     ./workloads.nix
   ];
@@ -49,12 +49,11 @@
   };
 
 
-  # P2.3 — home-initiated tunnel to the Azure edge.
+  # Home-initiated tunnel to the Azure edge.
   #
-  # Needed before P3.1: Caddy currently reaches Boggle and pogbot at the Azure
-  # VM's public hostname. Once those workloads live here, the edge must be able
-  # to reach THIS host -- and it must do so without the home network accepting
-  # any inbound connection, hence the outbound-dialled tunnel.
+  # Caddy reaches Boggle and pogbot on this host over the overlay, not the
+  # retired Azure VM's public hostname. The home network must not accept
+  # inbound connections, hence the outbound-dialled tunnel.
   #
   # allowedIPs is the edge's single overlay address, never a LAN prefix, so the
   # Azure edge cannot route into 192.168.5.0/24.
@@ -77,7 +76,7 @@
         persistentKeepalive = 25;
       }
       {
-        # P4.1 replacement edge -- see the note in hosts/nixpi5/default.nix.
+        # Public edge -- see the note in hosts/nixpi5/default.nix.
         # Both edges are carried at once so DNS is the only cutover switch.
         publicKey = "Sbm2/JkGPNO9LEsrI2oJSHZNIxoOCsf/2l8jwm6AtHM=";
         endpoint = "20.83.103.87:51820";

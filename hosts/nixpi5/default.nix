@@ -8,7 +8,6 @@
     inputs.home-manager.nixosModules.home-manager
     ./hardware-configuration.nix
     inputs.determinate.nixosModules.default
-    #    ../../modules/postgresql.nix
     ./authentik.nix
     ./home-assistant.nix
     ./go2rtc.nix
@@ -58,7 +57,7 @@
   };
 
 
-  # P2.3 — home-initiated tunnel to the old Azure edge.
+  # Home-initiated tunnel to the old Azure edge.
   #
   # This INVERTS the previous topology. Before, `blog` dialled OUT to a
   # residential endpoint, which meant the old edge depended on the home IP
@@ -78,15 +77,14 @@
   };
 
   # ------------------------------------------------------------- backups ---
-  # Until now this host had NO backups of any kind: no restic, no borg, and
-  # restic-offsite was enabled on exactly one machine in the estate,
-  # hosts/vid-stream. That is the wrong host to be the only one -- it is the one
-  # slated to move home and then be deleted -- and it left the Authentik
-  # database unprotected, which is the SSO that gates auth.sspeaks.net,
-  # home-assistant.sspeaks.net and streams.sspeaks.net through oauth2-proxy.
+  # Back up this host independently of the video workload. Before these jobs
+  # were added, only the now-retired Azure video host had offsite backups,
+  # leaving the Authentik database unprotected. Authentik is the SSO that gates
+  # auth.sspeaks.net, home-assistant.sspeaks.net and streams.sspeaks.net through
+  # oauth2-proxy.
   #
-  # The `nixpi5` blob container already existed; it was created in P1.2
-  # alongside the others and never used.
+  # The `nixpi5` blob container was provisioned alongside the video backup
+  # container and is deliberately a separate repository.
   #
   # The restic password here is deliberately NOT the same as vid-stream's, so
   # that compromising this host cannot decrypt vid-stream's repository. The
@@ -134,7 +132,7 @@
       "/var/lib/private"
       "/var/lib/snappymail"
       # The Samba passdb and Debian fstab/smb.conf carried across during the
-      # P2.2 .106 conversion. Small, and not reproducible if lost.
+      # Time Machine Pi's conversion to NixOS. Small, and not reproducible if lost.
       "/var/lib/migration-seed"
     ];
 
@@ -164,14 +162,14 @@
         publicKey = "gTkLAa4pN+STVJDde9wWI4QDi4AFBn/ArTx6ul/PFAU=";
         endpoint = "40.86.75.95:51820";
         # Only the edge's own overlay address. NOT a LAN prefix: the edge must
-        # never be able to route into 192.168.5.0/24, which is what the P1.4
-        # narrowing of the old tunnel was about.
+        # never be able to route into 192.168.5.0/24. This preserves the reduced
+        # exposure of the old tunnel.
         allowedIPs = [ "10.10.0.1/32" ];
         persistentKeepalive = 25;
       }
       {
-        # P4.1 replacement edge. Carried alongside the old one deliberately:
-        # both edges must be reachable at once so the P4.2 DNS cutover is the
+        # Public edge. Carried alongside the old one deliberately:
+        # both edges must be reachable at once so the DNS cutover is the
         # only thing that switches, and so it can be reversed without touching
         # the tunnel. The new edge has its own overlay address because
         # WireGuard cannot have two peers sharing allowedIPs.
@@ -199,4 +197,3 @@
   #  services.xserver.displayManager.gdm.enable = true;
   nixpkgs.hostPlatform = "aarch64-linux";
 }
-

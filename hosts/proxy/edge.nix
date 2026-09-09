@@ -1,5 +1,5 @@
 { lib, config, ... }:
-# P4.1 — everything the replacement edge has to actually serve.
+# Public edge services.
 #
 # Three concerns live here: the WireGuard listener the home hosts dial into,
 # Caddy's public vhosts, and the `devops` account that Azure Pipelines uses to
@@ -14,18 +14,17 @@ let
   # certificates. Staging has effectively no rate limit, so a botched rehearsal
   # cannot burn the production 5-failures-per-hour-per-hostname budget.
   #
-  # NOW FALSE. The P4.2 canary is done: mycatsonfire.com was moved to this host
-  # at GoDaddy and Caddy issued a staging certificate for it on the first
+  # Production certificates are active. The DNS rehearsal moved mycatsonfire.com
+  # to this host at GoDaddy and Caddy issued a staging certificate on the first
   # attempt ("(STAGING) Baloney Bulgur YE2"), serving byte-identical content to
   # the old edge. That proves the whole path end to end -- NSG, port 80, the
   # http-01 challenge and the vhost -- so staging has nothing left to tell us,
   # and every minute it stays on is a browser warning for a live site.
   #
-  # ORDERING: this must reach the target BEFORE the six Azure DNS records move.
-  # ./deploy pulls a prebuilt closure from Cachix, so the build has to happen in
-  # CI first; pre-fetch with `./deploy proxy --dry-run`, move DNS, then
-  # `--switch`. Switching while the six still resolve to the old edge would make
-  # Caddy fail production challenges for them and burn the failure budget.
+  # For any future edge move, build in CI and pre-fetch the closure with
+  # `./deploy proxy --dry-run`, then move DNS before `--switch` activates
+  # production ACME. Activating while DNS still resolves to another edge makes
+  # Caddy fail production challenges and burns the failure budget.
   useStagingACME = false;
 
   # Old edge -> new edge. The pipelines write to the /usr/share names, which do
@@ -51,14 +50,13 @@ in
     lib.mkForce config.sops.secrets.serial-rescue-password-hash.path;
 
   # ----------------------------------------------------------- wireguard ---
-  # The edge is the LISTENER; both home hosts dial out (P2.3 tunnel
-  # inversion). That is what keeps the residential address out of every config
-  # on this machine.
+  # The edge is the LISTENER; the home hosts dial out. That is what keeps the
+  # residential address out of every config on this machine.
   networking.wireguard.enable = true;
   networking.wireguard.interfaces.wg-edge = {
     # 10.10.0.4, NOT 10.10.0.1, even though this replaces the host that holds
-    # .1. During the P4.2 overlap both edges are peers of the same home hosts
-    # at the same time, and WireGuard cannot have two peers sharing an
+    # .1. During the DNS cutover overlap both edges are peers of the same home
+    # hosts at the same time, and WireGuard cannot have two peers sharing an
     # allowedIPs entry. Keeping a distinct address means DNS is the only thing
     # the cutover switches, and rolling back does not touch the tunnel.
     ips = [ "10.10.0.4/32" ];
@@ -76,11 +74,10 @@ in
         allowedIPs = [ "10.10.0.3/32" ];
       }
       {
-        # vidbox — P3.2 home replacement for the vid-stream Azure VM.
-        # Added BEFORE the streams.sspeaks.net vhost is repointed, deliberately:
-        # this entry alone changes no traffic, so the tunnel can be brought up
-        # and proven end to end while vid-stream is still serving. The cutover
-        # is then a one-line change to the reverse_proxy target below.
+        # vidbox — home replacement for the retired Azure video VM.
+        # This peer was added and tested before the streams.sspeaks.net target
+        # changed. Adding a peer alone redirects no traffic, so the tunnel can
+        # be proven end to end before changing a reverse_proxy target.
         publicKey = "jTa6Da0QXwj7tg9nE2MM99CYIl6AufCztXCwTTR11x8=";
         allowedIPs = [ "10.10.0.5/32" ];
       }
@@ -148,10 +145,9 @@ in
         '';
       })
       {
-        # P3.2 COMPLETE: streams now terminates at vidbox over the overlay
-        # rather than at the vid-stream Azure VM's public IP. Rollback is this
-        # one line -- put back `reverse_proxy 20.236.57.191:8080` and redeploy,
-        # which is why the peer was added in a separate, earlier change.
+        # Streams terminates at vidbox over the overlay. The former Azure
+        # video VM and its public IP were deleted; they are not a rollback
+        # target. Keep traffic on the home host's private overlay address.
         "streams.sspeaks.net".extraConfig = ''
           reverse_proxy 10.10.0.5:8080
         '';
