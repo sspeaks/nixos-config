@@ -46,14 +46,6 @@
     options = "--delete-older-than 14d";
   };
 
-  services.journald.extraConfig = ''
-    SystemMaxUse=512M
-    SystemKeepFree=256M
-    SystemMaxFileSize=64M
-    MaxRetentionSec=90d
-    Compress=yes
-  '';
-
   boot.tmp.cleanOnBoot = true;
 
   system.stateVersion = "23.05";
