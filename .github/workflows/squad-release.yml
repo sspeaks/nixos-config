@@ -23,8 +23,15 @@ jobs:
         run: node --test test/*.test.cjs
 
       - name: Validate version consistency
+        id: release_metadata
         run: |
-          VERSION=$(node -e "console.log(require('./package.json').version)")
+          VERSION=$(node -e "process.stdout.write(require('./package.json').version || '')")
+          if [ -z "$VERSION" ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ No package.json version found — skipping release."
+            exit 0
+          fi
+          echo "release=true" >> "$GITHUB_OUTPUT"
           if ! grep -q "## \[$VERSION\]" CHANGELOG.md 2>/dev/null; then
             echo "::error::Version $VERSION not found in CHANGELOG.md — update CHANGELOG.md before release"
             exit 1
@@ -32,6 +39,7 @@ jobs:
           echo "✅ Version $VERSION validated in CHANGELOG.md"
 
       - name: Read version from package.json
+        if: steps.release_metadata.outputs.release == 'true'
         id: version
         run: |
           VERSION=$(node -e "console.log(require('./package.json').version)")
@@ -40,6 +48,7 @@ jobs:
           echo "📦 Version: $VERSION (tag: v$VERSION)"
 
       - name: Check if tag already exists
+        if: steps.release_metadata.outputs.release == 'true'
         id: check_tag
         run: |
           if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
