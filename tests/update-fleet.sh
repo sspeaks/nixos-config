@@ -7,6 +7,7 @@ export TEST_REAL_GIT
 TEST_REAL_GIT="$(command -v git)"
 test_dir="$(mktemp -d)"
 trap 'rm -rf -- "$test_dir"' EXIT
+test_dir="$(cd "$test_dir" && pwd -P)"
 mkdir -p "$test_dir/bin" "$test_dir/repo"
 printf '{}\n' > "$test_dir/repo/flake.nix"
 export FLEET_DEFAULT_REPO="$test_dir/repo"
@@ -101,9 +102,17 @@ case "$cmd" in
         if [[ "$TEST_SCENARIO" == wrong-head ]]; then echo bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
         else echo "$TEST_COMMIT"; fi ;;
       "pr checks "*)
+        if [[ "$TEST_SCENARIO" == checks-missing ||
+            ( "$TEST_SCENARIO" == checks-delayed && "$(grep -c '^gh pr checks ' "$TEST_LOG")" == 1 ) ]]; then
+          branch="$(sed -n 's/^git switch -c //p' "$TEST_LOG")"
+          printf "no checks reported on the '%s' branch\n" "$branch" >&2
+          exit 1
+        fi
         case "$TEST_SCENARIO" in
           checks-fail) echo '[{"name":"check","bucket":"fail","workflow":"Flake Check"}]'; exit 1 ;;
-          checks-missing) echo '[]'; exit 1 ;;
+          checks-empty-array) echo '[]'; exit 1 ;;
+          checks-empty) exit 1 ;;
+          checks-malformed) echo 'not JSON'; exit 1 ;;
           checks-pending) echo '[{"name":"check","bucket":"pending","workflow":"Flake Check"}]'; exit 8 ;;
           checks-wrong-workflow) echo '[{"name":"check","bucket":"pass","workflow":"Other Workflow"}]' ;;
           checks-api) echo 'API error' >&2; exit 1 ;;
@@ -197,10 +206,29 @@ run_case auth-fail 1 --prefetch-only --auto-merge --only vidbox
 reject_log 'flake update'
 run_case unchanged 0 --prefetch-only --auto-merge --only vidbox
 reject_log 'gh pr create'
-for scenario in wrong-head checks-fail checks-missing checks-pending checks-api checks-wrong-workflow; do
+for scenario in wrong-head checks-fail checks-pending checks-wrong-workflow; do
   run_case "$scenario" 1 --prefetch-only --auto-merge --only vidbox
   reject_log 'gh pr merge'
 done
+for scenario in checks-missing checks-empty-array; do
+  run_case "$scenario" 1 --prefetch-only --auto-merge --only vidbox
+  assert_output 'timed out waiting for successful Flake Check'
+  [[ "$(grep -c '^gh pr checks ' "$TEST_LOG")" == 40 ]]
+  reject_log 'gh pr merge'
+done
+for scenario in checks-api checks-empty checks-malformed; do
+  run_case "$scenario" 1 --prefetch-only --auto-merge --only vidbox
+  assert_output 'cannot query PR checks'
+  [[ "$(grep -c '^gh pr checks ' "$TEST_LOG")" == 1 ]]
+  reject_log 'gh pr merge'
+  reject_log 'sleep '
+done
+run_case checks-delayed 0 --prefetch-only --auto-merge --only vidbox
+assert_output 'No PR checks reported yet'
+[[ "$(grep -c '^gh pr checks ' "$TEST_LOG")" == 2 ]]
+assert_log 'sleep 30'
+assert_log "gh pr merge .*--match-head-commit $TEST_COMMIT"
+assert_output 'prefetched'
 for scenario in build-fail wrong-build build-missing; do
   run_case "$scenario" 1 --prefetch-only --auto-merge --only vidbox
   reject_log 'deploy '

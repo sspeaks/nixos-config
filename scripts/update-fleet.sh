@@ -231,6 +231,13 @@ if $do_update && ! $check_only; then
       check_status=0
       timeout 30 gh pr checks "$pr" --json name,bucket,workflow >"$tmp/checks.json" 2>"$tmp/checks.err" ||
         check_status=$?
+      # Before Actions registers its first check, gh emits only this diagnostic.
+      if (( check_status == 1 )) && [[ ! -s "$tmp/checks.json" &&
+          "$(<"$tmp/checks.err")" == "no checks reported on the '$branch' branch" ]]; then
+        say "No PR checks reported yet; retrying in 30 seconds."
+        sleep 30
+        continue
+      fi
       if ! jq -e 'type == "array" and all(.[]; (.name | type == "string") and (.bucket | type == "string"))' \
           "$tmp/checks.json" >/dev/null 2>&1; then
         die "cannot query PR checks: $(<"$tmp/checks.err")"
