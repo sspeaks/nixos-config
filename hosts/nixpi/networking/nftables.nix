@@ -15,17 +15,13 @@
         table inet filter {
           chain output {
             type filter hook output priority 0; policy accept;
-            # log
             accept
           };
           chain input {
             type filter hook input priority 0; policy drop;
 
-            # meta nftrace set 1
-
             iifname { "br-lan" } accept comment "Allow local network to access the router"
             iifname "wlan0" ct state { established, related } accept comment "Allow established traffic"
-            #iifname "wlan0" accept comment "meant for use in home network to allow ssh"
             iifname "wlan0" icmp type { echo-request, destination-unreachable, time-exceeded } counter accept comment "Allow select ICMP"
             iifname "wg0" ct state { established, related } accept comment "Allow established wireguard traffic"
             iifname "wlan0" udp dport $wg_port accept comment "Accept wireguard traffic incoming"
@@ -35,8 +31,7 @@
           chain forward {
             type filter hook forward priority filter; policy drop;
 
-            tcp flags syn tcp option maxseg size set 1260 # Needed for iOS devices... Not sure why?
-            # meta nftrace set 1
+            tcp flags syn tcp option maxseg size set 1260 # iOS connectivity workaround; root cause unconfirmed.
             iifname { "br-lan" } oifname { "wlan0", "wg0" } accept comment "Allow trusted LAN to WAN"
             iifname { "wlan0", "wg0" } oifname { "br-lan" } ct state { established, related } accept comment "Allow established back to LAN" 
           }
@@ -47,11 +42,9 @@
           chain postrouting {
             type nat hook postrouting priority 100; policy accept;
             iifname { "br-lan" } oifname { "wlan0", "wg0" } masquerade
-            #oifname { "wg0" } masquerade
           }
         }
       '';
     };
   };
 }
-

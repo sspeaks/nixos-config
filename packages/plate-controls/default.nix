@@ -1,47 +1,21 @@
-# Plate XIV — Batch 3 system-control backend wrappers (D32)
+# Plate XIV system-control helpers. Query stdout schemas are documented beside
+# each helper; setters/toggles report success via exit status, not stdout.
+# Missing hardware, unavailable backends, and failed mutations return non-zero
+# with stderr diagnostics.
 #
-# Five small shell scripts with stable stdout/exit contracts for use as
-# Quickshell Process call targets.  All are query-first: they read current
-# state and emit it on stdout; callers parse stdout, not exit codes (except
-# for the set-* mutators whose only meaningful output is success/failure).
-#
-# Host facts (D32):
-#   Wi-Fi:      iwd daemon, iwctl CLI.  NOT NetworkManager / nmcli.
+# Backends:
+#   Wi-Fi:      iwd/iwctl on wlan0, not NetworkManager.
 #   Brightness: brightnessctl, device "apple-panel-bl" (Asahi backlight).
 #   Volume:     WirePlumber, wpctl CLI.
 #   Bluetooth:  BlueZ, bluetoothctl CLI.
 #   Battery:    UPower, upower CLI.
-#
-# Stdout contracts (machine-readable, one value per line):
-#   plate-battery-status  → "PERCENTAGE STATE"  (e.g. "87 charging")
-#   plate-brightness-get  → "CURRENT MAX"        (e.g. "420 800")
-#   plate-brightness-set  → (no stdout; exits 0 on success)
-#   plate-brightness-step → (no stdout; arg: "up" | "down")
-#   plate-volume-get      → "VOLUME MUTED"       (e.g. "0.72 0")
-#   plate-volume-set      → (no stdout; exits 0 on success)
-#   plate-volume-step     → (no stdout; arg: "up" | "down")
-#   plate-volume-toggle-mute → (no stdout; exits 0 on success)
-#   plate-wifi-status     → "POWERED STATE SSID" (e.g. "1 connected Home Net"
-#                                                  or "0 disconnected none")
-#   plate-wifi-toggle     → (no stdout; exits 0 on success)
-#   plate-wifi-configure  → (launches iwgtk; exits with iwgtk)
-#   plate-bluetooth-status → "POWERED CONNECTED"  (e.g. "1 0")
-#   plate-bluetooth-toggle → (no stdout; exits 0 on success)
-#
-# All scripts:
-#   - Exit non-zero with a descriptive message on stderr on failure.
-#   - Do NOT silently no-op: if the hardware/daemon is absent, say so.
-#   - Are designed for poll intervals (2 s) or one-shot mutation calls.
-#
-# Ownership: Tank (packages/plate-controls/default.nix)
 
 { pkgs }:
 
 let
   lib = pkgs.lib;
 
-  # Shared helper: writeShellApplication wraps the script in strict bash
-  # (-e -u -o pipefail) and validates runtimeInputs are on PATH.
+  # writeShellApplication enables strict Bash and adds runtimeInputs to PATH.
   mkCtl =
     { name
     , runtimeInputs
@@ -113,7 +87,7 @@ in
 {
   # ── Battery ────────────────────────────────────────────────────────────────
   # stdout: "<percentage_int> <state_lowercase>"
-  # state is one of: charging discharging fully-charged unknown
+  # State is passed through from UPower, e.g. charging or discharging.
   plate-battery-status = mkCtl {
     name = "plate-battery-status";
     runtimeInputs = [ pkgs.upower ];
@@ -147,8 +121,7 @@ in
     '';
   };
 
-  # stdin: percentage integer 0-100 as first argument
-  # usage: plate-brightness-set <pct>
+  # usage: plate-brightness-set <integer_0-100>
   plate-brightness-set = mkCtl {
     name = "plate-brightness-set";
     runtimeInputs = [ pkgs.brightnessctl ];
@@ -186,8 +159,8 @@ in
   };
 
   # ── Volume ─────────────────────────────────────────────────────────────────
-  # stdout: "<volume_float_0-1> <muted_0_or_1>"
-  # e.g.   "0.72 0"  or  "0.50 1"
+  # stdout: "<volume_float> <muted_0_or_1>", e.g. "0.72 0".
+  # Reads are not clamped; setters limit volume to 1.0.
   plate-volume-get = mkCtl {
     name = "plate-volume-get";
     runtimeInputs = [ pkgs.wireplumber ];
@@ -304,25 +277,16 @@ in
     '';
   };
 
-  # ── Screen recording (wf-recorder, libx264, software-encode only) ──────────
-  #
-  # Stdout contracts:
-  #   plate-record-start  → prints absolute .mp4 path on success; exits non-zero on error
-  #                         or if already recording (PID file present + process alive).
-  #                         After wf-recorder starts, calls `qs ipc ... actionMenu recordingStarted`.
-  #   plate-record-stop   → sends SIGINT to stored PID; exits non-zero if not recording.
-  #                         After wf-recorder exits, calls `qs ipc ... actionMenu recordingStopped`.
-  #   plate-record-toggle → calls plate-record-stop if recording, plate-record-start otherwise.
-  #                         Intended for a single key binding.
+  # ── Screen recording ─────────────────────────────────────────────────────
+  # Start prints the absolute .mp4 path after launching wf-recorder; an existing
+  # live PID is an error. Stop sends SIGINT, waits up to ~5 s, then clears state;
+  # a missing/dead PID is an error. Toggle chooses either path by PID liveness.
   #
   # PID file: $XDG_RUNTIME_DIR/plate-recorder.pid
   # Output:   ~/Videos/Recordings/YYYYMMDD_HHMMSS.mp4
-  # Codec:    libx264, 30 fps, no audio, full-compositor output (wf-recorder default).
-  # Notes:
-  #   - wf-recorder uses wlr-screencopy-v1 + xdg-output-manager-v1, both available on niri 26.04.
-  #   - No VAAPI encoder: Asahi apple-dcp DRM does not expose VAAPI encode.
-  #   - wf-recorder is launched in the background; SIGINT triggers graceful MP4 finalization.
-  #   - IPC calls use `|| true` so a missing Quickshell instance does not fail the wrapper.
+  # libx264 software encoding is required because apple-dcp has no VAAPI encoder.
+  # SIGINT requests graceful MP4 finalization. Best-effort ActionMenu IPC must
+  # not fail recording when Quickshell is absent.
 
   plate-record-start = mkCtl {
     name = "plate-record-start";
@@ -371,9 +335,7 @@ in
         exit 1
       fi
       kill -INT "$pid"
-      # Poll until the process exits (max ~5 s) so MP4 finalization completes
-      # before we report success.  `wait` only works for child PIDs of this
-      # shell, so we use a poll loop instead.
+      # Give MP4 finalization up to ~5 s; wait cannot reap another shell's child.
       for _ in 1 2 3 4 5 6 7 8 9 10; do
         kill -0 "$pid" 2>/dev/null || break
         sleep 0.5
@@ -415,8 +377,7 @@ in
   };
 
   # ── Power actions ──────────────────────────────────────────────────────────
-  # Simple wrappers called by ActionMenu entries.  systemctl poweroff/reboot
-  # are polkit-authorised for the active console seat on NixOS by default.
+  # Active-seat power actions use systemd's polkit authorization.
   plate-shutdown = mkCtl {
     name = "plate-shutdown";
     runtimeInputs = [ pkgs.systemd ];
@@ -485,8 +446,6 @@ in
     '';
   };
 
-  # Toggle: if powered off → on; if on → off (uses iwctl device property).
-  # Quickshell reads plate-wifi-status to decide which direction to show.
   plate-wifi-toggle = mkCtl {
     name = "plate-wifi-toggle";
     runtimeInputs = [ pkgs.iwd ];
@@ -514,6 +473,7 @@ in
     '';
   };
 
+  # Launch iwgtk and return its exit status.
   plate-wifi-configure = mkCtl {
     name = "plate-wifi-configure";
     runtimeInputs = [ pkgs.iwgtk ];
@@ -528,8 +488,6 @@ in
 
   # ── Bluetooth ───────────────────────────────────────────────────────────────
   # stdout: "<powered_0_or_1> <connected_count_int>"
-  # e.g.   "1 2"  (adapter on, 2 devices connected)
-  #         "0 0"  (adapter off)
   plate-bluetooth-status = mkCtl {
     name = "plate-bluetooth-status";
     runtimeInputs = [ pkgs.bluez ];

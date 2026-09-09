@@ -4,26 +4,10 @@ let
   cfg = config.services.azureSerialConsole;
 in
 {
-  # Azure lockout recovery over the serial console.
-  #
-  # Azure has no physical console and no link-local rescue path. If a change
-  # breaks sshd, the firewall, or networking, the ONLY remaining way in is the
-  # Azure Serial Console -- and that only helps if the guest was already
-  # configured to talk to ttyS0 and to offer a login there. Configuring it
-  # after you are locked out is not possible.
-  #
-  # Three things must all be true, which is why they live together here:
-  #
-  #   1. The kernel must emit to ttyS0, or the console shows nothing.
-  #   2. A getty must run on ttyS0, or there is nothing to log into.
-  #   3. A local account with a PASSWORD must exist. SSH keys are useless over
-  #      a serial line, and the normal admin account is key-only, so without a
-  #      dedicated password-bearing rescue account the console is a read-only
-  #      spectator to your own outage.
-  #
-  # The bootloader is also made serial-visible so a bad kernel or a bad
-  # generation can be escaped by picking a previous entry from the boot menu,
-  # which a running-system timer cannot help with.
+  # Provision serial recovery before a networking or SSH failure: ttyS0 needs
+  # kernel output, a getty, and a password-bearing account (SSH keys cannot
+  # authenticate a serial login). The serial boot menu also allows recovery
+  # from a broken kernel or generation.
   options.services.azureSerialConsole = {
     enable = lib.mkEnableOption "Azure Serial Console recovery path";
 
@@ -37,15 +21,10 @@ in
       type = lib.types.nullOr lib.types.path;
       default = null;
       description = ''
-        Path to a file containing the rescue account's password hash. Must be
-        available before users are created, so the corresponding sops secret
-        needs `neededForUsers = true`.
-
-        May be null, which creates the account LOCKED. That is the correct
-        state for a freshly built specialized image: the host's SSH key does
-        not exist until it first boots, so sops cannot yet decrypt anything for
-        it. The account is created locked in the image and the real hash is
-        deployed once the host key is known and added to `.sops.yaml`.
+        File containing the rescue account's password hash. Set
+        `neededForUsers = true` on its sops secret so it exists before user creation.
+        Null keeps the account locked for image builds; deploy the hash after
+        first boot, once the host's key is registered in `.sops.yaml`.
       '';
     };
 
@@ -53,27 +32,24 @@ in
       type = lib.types.int;
       default = 10;
       description = ''
-        Seconds the boot menu waits. Must be long enough to actually attach the
-        Azure Serial Console and press a key; the default of 0-5 is unusable in
-        practice because the console takes several seconds to connect.
+        Seconds the boot menu waits. Allow enough time to attach the Azure
+        Serial Console and select a generation.
       '';
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # mkBefore so these are the first console= arguments the kernel sees.
+    # Put serial output before other console parameters.
     boot.kernelParams = lib.mkBefore [
       "console=ttyS0,115200n8"
       "earlyprintk=ttyS0,115200"
     ];
 
-    # Azure's serial console is ttyS0. Without an explicit getty there is
-    # nothing listening even though the kernel is emitting.
+    # Kernel output alone does not provide a login prompt.
     systemd.services."serial-getty@ttyS0" = {
       enable = true;
       wantedBy = [ "getty.target" ];
-      # Survive the console being detached and reattached, which is normal
-      # when connecting from the portal.
+      # Allow detaching and reconnecting through the Azure portal.
       serviceConfig.Restart = "always";
     };
 
@@ -83,15 +59,11 @@ in
     } // (
       if cfg.passwordHashFile != null
       then { hashedPassword = lib.mkForce null; hashedPasswordFile = cfg.passwordHashFile; }
-      # "!" is an invalid hash, so password auth always fails: the account
-      # exists and is ready, but cannot be logged into until a real hash is
-      # deployed. This is deliberate for an image that has no sops identity yet.
+      # Keep password login locked until the image has a sops identity.
       else { hashedPassword = "!"; }
     );
 
-    # Keep a few generations selectable from the boot menu. A boot-time failure
-    # is outside any running timer's reach, so the previous generation in the
-    # menu is the actual recovery mechanism.
+    # Previous boot entries cover failures that a running rollback timer cannot.
     boot.loader.timeout = lib.mkForce cfg.bootMenuTimeout;
 
     boot.loader.grub = lib.mkIf config.boot.loader.grub.enable {

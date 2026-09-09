@@ -1,27 +1,16 @@
 #!/usr/bin/env bash
 #
-# Deploy a pre-built NixOS closure from the public Cachix cache. This script
-# evaluates the flake on the controller only; the target never evaluates it.
-# This is deliberately not plain `nixos-rebuild --target-host`: that command's
-# default build phase can realize a foreign closure on the Mac. Here, only the
-# target performs no-build cache realization, so an aarch64-darwin controller
-# works for both aarch64-linux and x86_64-linux cache hits without a local
-# Linux builder.
-#
-# Install this file in the nixos-config checkout (for example as ./deploy).
+# Evaluate on the controller; realize a signed cached closure on the target.
+# Unlike nixos-rebuild's build phase, target realization permits no builders.
 
 set -euo pipefail
 
-# Verified from nixos-config's host-build-cache.yml and flake.nix at
-# 6f9de162e47fa3e2c94000cf2fb48523683b2d67.
+# Keep project cache settings aligned with flake.nix and host-build-cache.yml.
 readonly CACHIX_CACHE_NAME="sspeaks-nix"
 readonly CACHIX_URL="https://sspeaks-nix.cachix.org"
 readonly CACHIX_PUBLIC_KEY="sspeaks-nix.cachix.org-1:Umjs3o8MgvHklkotM8S4XBfTz+zEQCnyr8TFpIC9x+o="
-# Upstream nixpkgs substituter. Pinned here, on the controller, rather than
-# inherited from the target's own nix.conf, so the trust set this script grants
-# is stated in one reviewable place. A project cache does not mirror nixpkgs,
-# so upstream references must come from somewhere; naming it explicitly is
-# better than silently accepting whatever the target happens to trust.
+# The project cache does not mirror nixpkgs. Pin upstream trust here too,
+# rather than inheriting the target's substituters and keys.
 readonly UPSTREAM_URL="https://cache.nixos.org"
 readonly UPSTREAM_PUBLIC_KEY="cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
 readonly DEFAULT_ROLLBACK_MINUTES=10
@@ -42,10 +31,9 @@ Usage:
   ./deploy [options] <nixosConfiguration>
 
 Options:
-  --dry-run                    Fetch the signed cached closure and show its
-                               diff, but do not activate it. It may populate
-                               the target Nix store; it never changes the
-                               running or booted configuration.
+  --dry-run                    Fetch the signed closure and show its diff.
+                               Populates the target store without changing
+                               the running configuration or boot default.
   --test                       Activate with switch-to-configuration test
                                (default). The target reboots to its current
                                boot default if the rollback guard fires.
@@ -64,10 +52,10 @@ The host argument names a flake output, for example:
 
 The SSH target defaults to the same name, so configure a safe OpenSSH alias
 for each host. If the NixOS configuration and SSH alias differ:
-  ./deploy --ssh-target proxy nixpi5
+  ./deploy --ssh-target nixpi5-lan nixpi5
 
-This script deliberately contains no `nix build` command. A missing Cachix
-closure is an error: build and publish the exact reviewed commit in CI first.
+Cache-only: build and publish the exact reviewed commit in CI first.
+Missing or incorrectly signed references stop deployment before activation.
 USAGE
 }
 
@@ -231,17 +219,9 @@ if ! nix --extra-experimental-features nix-command path-info \
   die "Cachix has no top-level closure for this commit/host. Run the existing native CI host build for '$host' and wait for it to publish to '$CACHIX_CACHE_NAME'. This script will not build on the Apple Silicon laptop or on the target."
 fi
 
-# Closure completeness is enforced target-side by `nix-store --realise` with
-# `--fallback false`, which errors rather than building when a reference cannot
-# be substituted from either pinned cache. That check runs before activation and
-# before the system profile is touched, so an incomplete publication cannot
-# result in a half-applied system.
-#
-# We deliberately do NOT assert the whole closure against Cachix here. Cachix
-# holds the project-specific paths; upstream references legitimately live in
-# cache.nixos.org, so a recursive Cachix-only assertion would fail on every
-# healthy deployment. The top-level check above is the meaningful controller-side
-# signal: it proves CI actually published this commit's system closure.
+# Check only the toplevel in Cachix; dependencies may come from cache.nixos.org.
+# Target-side realization requires the complete closure before activation or
+# profile changes, with builds and fallback disabled.
 notice "Top-level closure present in '$CACHIX_CACHE_NAME'."
 
 ssh_options=(
@@ -265,31 +245,9 @@ cachix_public_key="$3"
 upstream_url="$4"
 upstream_public_key="$5"
 
-# No-build, signature-verified deployment with a controller-stated trust set.
-#
-# A single `nix copy --from <cachix>` is insufficient for this cache layout.
-# The controller-side completeness check caught this
-# before it ever reached a target: `nix copy --from` names exactly ONE source,
-# but a project cache does not mirror upstream nixpkgs. Real closures reference
-# paths like glibc-locales and pcre2 that live in cache.nixos.org, so a
-# single-source copy fails. Forcing CI to publish entire closures into Cachix
-# would mean gigabytes per host per commit, which is not what a project cache
-# is for.
-#
-# This form keeps all three deployment guarantees:
-#
-#   * NO BUILD PATH. `--max-jobs 0` forbids local builds, `--builders ""`
-#     forbids remote ones, and `--fallback false` stops Nix from deciding to
-#     build when a substitute is unavailable. A missing path is an error, not
-#     a compile.
-#   * TRUST STATED BY THE CONTROLLER. Both substituters and both public keys
-#     are passed explicitly on this command line. The target's own
-#     configuration is NOT consulted, so the trust set is not target-local.
-#   * SIGNATURES MANDATORY. `--require-sigs true` rejects unsigned or
-#     wrongly-signed paths from either source.
-#
-# A missing reference therefore still fails HERE, before activation and before
-# the system profile is touched.
+# Use both pinned caches: a single-source copy cannot supply all dependencies.
+# Disable local/remote builders and build fallback; require trusted signatures.
+# Any missing reference must fail before activation or profile changes.
 exec /run/current-system/sw/bin/nix-store --realise \
   --max-jobs 0 \
   --builders "" \

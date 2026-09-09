@@ -21,14 +21,8 @@ in
   programs.dconf.enable = true;
   programs.hyprland.enable = true;
 
-  # D33 (Batch 3 gate): niri is now the configured default session, but
-  # Hyprland must remain installed AND selectable as a safe fallback.
-  # Both sessions are registered here. The hand-rolled hyprland-sessions
-  # derivation is kept to strip the broken uwsm variant (original D-batch-1
-  # rationale — `hyprland.desktop` from programs.hyprland.enable brings an
-  # uwsm-wrapped entry that fails without uwsm units). pkgs.niri ships
-  # niri.desktop natively (providedSessions = ["niri"]; verified via
-  # `nix eval nixpkgs#niri.providedSessions`).
+  # Keep Hyprland selectable as a fallback to niri. Copy only its standalone
+  # desktop entry: the uwsm variant cannot start without uwsm units.
   services.displayManager.sessionPackages = lib.mkForce [
     pkgs.niri
     (pkgs.runCommand "hyprland-sessions"
@@ -40,24 +34,8 @@ in
     '')
   ];
 
-  # niri binary/niri-session must be resolvable on PATH for the greeter to
-  # exec the niri.desktop entry's `Exec=niri-session`. home-manager's
-  # `wayland.windowManager.niri` module (Trinity's D20, enable=true) already
-  # adds `pkgs.niri` to `home.packages`, but that is scoped to the user's
-  # home-manager profile activation; `pkgs.niri` is also added to the
-  # `environment.systemPackages` list below (mirroring upstream nixpkgs' own
-  # `programs.niri` module, which sets BOTH `environment.systemPackages` and
-  # `sessionPackages` to `[ cfg.package ]` — verified by reading nixpkgs
-  # `nixos/modules/programs/wayland/niri.nix`) so the greeter's session
-  # picker has no ordering dependency on home-manager activation.
-
-  # D21 (Batch 2): per-desktop portal routing, not a single shared `common`
-  # block. `xdg-desktop-portal-gnome` is added for niri — this matches
-  # niri's own upstream-shipped portal preference (verified empirically:
-  # `pkgs.niri`'s `share/xdg-desktop-portal/niri-portals.conf` ships
-  # `default=gnome;gtk;`) and the nixpkgs `programs.niri` module's own
-  # `xdg.portal.config.niri` block, both independently confirming the
-  # gnome-over-wlr choice. `xdg-desktop-portal-wlr` is not added.
+  # Own portal routing here, not in Home Manager. Use each compositor's
+  # capture backend; niri's niri-portals.conf prefers GNOME, not wlr.
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
@@ -91,7 +69,7 @@ in
     noto-fonts
   ];
 
-  # D32: UPower required for Quickshell Services.UPower / ControlCenter battery row.
+  # Quickshell's battery display requires UPower.
   services.upower.enable = true;
 
   environment.systemPackages = with pkgs; [
@@ -104,16 +82,14 @@ in
       ln -s ${pkgs.vscodium}/bin/codium $out/bin/code
     '')
     gnumake
-    # D19: niri on system PATH so `Exec=niri-session` resolves at the
-    # greeter regardless of home-manager activation ordering (see above).
+    # The greeter must resolve Exec=niri-session before Home Manager activation.
     niri
-    # D24: compositor-detection wrappers — see packages/plate-wrappers.
+    # Compositor-aware DPMS and logout; see packages/plate-wrappers.
     plate-dpms-on
     plate-dpms-off
     plate-logout
-    # D32: system-control backend wrappers for Quickshell ControlCenter.
-    # All must be on system PATH (not just HM profile) so Quickshell's
-    # Process calls resolve regardless of home-manager activation order.
+    # Put Quickshell's control helpers on the system PATH so Process calls
+    # do not depend on Home Manager activation order.
     plate-battery-status
     plate-brightness-get
     plate-brightness-set
@@ -135,9 +111,7 @@ in
     plate-record-toggle
     plate-shutdown
     plate-reboot
-    # wf-recorder: screen recording backend used by plate-record-*.
-    # wlr-screencopy-v1 + xdg-output-manager-v1 (both available on niri 26.04).
-    # Software encode only (libx264); no VAAPI on Asahi apple-dcp.
+    # plate-record-* uses software encoding (libx264); apple-dcp has no VAAPI.
     wf-recorder
     (where-is-my-sddm-theme.override {
       themeConfig.General = {
@@ -171,8 +145,6 @@ in
         ../../home/features/wlogout
         ../../home/features/fonts
         ./waybar.nix
-        # Plate XIV compositor / shell — dormant until Trinity/Switch land the files.
-        # builtins.pathExists avoids evaluation errors while agents run concurrently.
       ] ++ lib.optionals (builtins.pathExists ../../home/features/niri) [
         ../../home/features/niri
       ] ++ lib.optionals (builtins.pathExists ../../home/features/quickshell) [

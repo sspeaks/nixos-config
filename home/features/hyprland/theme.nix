@@ -1,7 +1,5 @@
 { pkgs, ... }:
 
-# D16: GTK/icons/cursor migrated to neutral Plate XIV packages (aarch64 verified).
-# adw-gtk3 dark, Papirus-Dark, Bibata-Modern-Classic size 36.
 {
   # hyprpaper crashes on Asahi Linux due to a null monitor description; swaybg is used instead.
   services.hyprpaper.enable = false;

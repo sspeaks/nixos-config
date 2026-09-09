@@ -5,7 +5,7 @@
     inputs.nixos-apple-silicon.nixosModules.apple-silicon-support
   ];
 
-  # Let jemalloc auto-detect page size at build time (fixes 16K page Asahi kernels)
+  # Optional jemalloc workaround: auto-detect page size for 16 KiB Asahi kernels.
   # nixpkgs.overlays = [
   #   (final: prev: {
   #     jemalloc = prev.jemalloc.overrideAttrs (old: {
@@ -22,10 +22,8 @@
   };
   boot.loader.efi.canTouchEfiVariables = false;
 
-  # The apple-silicon-support peripheral-firmware module now expects
-  # peripheralFirmwareDirectory to contain a ready-made firmware.cpio rather than
-  # the installer's all_firmware.tar.gz. Regenerate firmware.cpio from the
-  # committed tarball with asahi-fwextract so we keep shipping the same firmware.
+  # The support module expects firmware.cpio, not the installer's tarball.
+  # Convert the bundled firmware with asahi-fwextract.
   hardware.asahi.peripheralFirmwareDirectory =
     pkgs.runCommand "asahi-peripheral-firmware-cpio"
       { nativeBuildInputs = [ config.hardware.asahi.pkgs.asahi-fwextract ]; }

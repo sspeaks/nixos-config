@@ -1,16 +1,6 @@
 { ... }:
-# Disk layout and bootloader for `vidbox`, the home Hyper-V VM that takes over
-# vid-stream's workload.
-#
-# Uses the same layout as a Gen2 Azure guest: an Azure VM IS a Hyper-V VM,
-# so the guest presents the same way -- a Gen2/UEFI machine with its
-# boot disk on the SCSI controller at /dev/sda. Both were verified on the live
-# installer before this was written: /sys/firmware/efi exists, and lsblk shows a
-# single 512 G sda.
-#
-# Injected only into the `vidbox` nixosConfiguration via extraModules in
-# flake-modules/hosts.nix, so nothing importing this host inherits disko or the
-# bootloader choice.
+# Gen2/UEFI Hyper-V layout; verify /dev/sda is the intended OS disk before install.
+# flake-modules/hosts.nix adds this only to vidbox, not to importers of the host.
 {
   boot.loader.grub.enable = false;
   boot.loader.systemd-boot.enable = true;

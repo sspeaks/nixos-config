@@ -1,35 +1,17 @@
 { lib, config, ... }:
-# Public edge services.
-#
-# Three concerns live here: the WireGuard listener the home hosts dial into,
-# Caddy's public vhosts, and the `devops` account that Azure Pipelines uses to
-# publish static content.
+# Public edge: WireGuard ingress, Caddy vhosts, and the static-content publisher.
 let
   sopsFileLocation = {
     format = "yaml";
     sopsFile = ../../secrets/proxy.yaml;
   };
 
-  # Flip to true for a Let's Encrypt STAGING rehearsal, back to false for real
-  # certificates. Staging has effectively no rate limit, so a botched rehearsal
-  # cannot burn the production 5-failures-per-hour-per-hostname budget.
-  #
-  # Production certificates are active. The DNS rehearsal moved mycatsonfire.com
-  # to this host at GoDaddy and Caddy issued a staging certificate on the first
-  # attempt ("(STAGING) Baloney Bulgur YE2"), serving byte-identical content to
-  # the old edge. That proves the whole path end to end -- NSG, port 80, the
-  # http-01 challenge and the vhost -- so staging has nothing left to tell us,
-  # and every minute it stays on is a browser warning for a live site.
-  #
-  # For any future edge move, build in CI and pre-fetch the closure with
-  # `./deploy proxy --dry-run`, then move DNS before `--switch` activates
-  # production ACME. Activating while DNS still resolves to another edge makes
-  # Caddy fail production challenges and burns the failure budget.
+  # Use staging for ACME rehearsals, production for browser-trusted certificates.
+  # Before moving an edge, build in CI, prefetch the closure, and point DNS here
+  # before activation starts production ACME challenges.
   useStagingACME = false;
 
-  # Old edge -> new edge. The pipelines write to the /usr/share names, which do
-  # not exist on NixOS; the real roots are these, and compatibility symlinks
-  # are created below so no pipeline has to change.
+  # Symlinks below preserve the pipelines' /usr/share/caddy{,2,3} upload paths.
   webroots = {
     "sspeaks.net" = "/var/www/sspeaks.net";
     "mycatsonfire.com" = "/var/www/mycatsonfire.com";
@@ -37,28 +19,20 @@ let
   };
 in
 {
-  # ------------------------------------------------------------- secrets ---
   sops.secrets.proxy-wg-private-key = sopsFileLocation;
   sops.secrets.serial-rescue-password-hash = sopsFileLocation // {
     neededForUsers = true;
   };
 
-  # The image shipped with the rescue account LOCKED because a freshly built
-  # specialized image has no sops identity. The proxy has booted and its host
-  # key is now registered in .sops.yaml, so the real hash can be wired up.
+  # Override the locked bootstrap fallback with the SOPS-provided rescue hash.
   services.azureSerialConsole.passwordHashFile =
     lib.mkForce config.sops.secrets.serial-rescue-password-hash.path;
 
-  # ----------------------------------------------------------- wireguard ---
-  # The edge is the LISTENER; the home hosts dial out. That is what keeps the
-  # residential address out of every config on this machine.
+  # Home hosts dial out, so the edge needs no residential IP address.
   networking.wireguard.enable = true;
   networking.wireguard.interfaces.wg-edge = {
-    # 10.10.0.4, NOT 10.10.0.1, even though this replaces the host that holds
-    # .1. During the DNS cutover overlap both edges are peers of the same home
-    # hosts at the same time, and WireGuard cannot have two peers sharing an
-    # allowedIPs entry. Keeping a distinct address means DNS is the only thing
-    # the cutover switches, and rolling back does not touch the tunnel.
+    # Keep a distinct overlay address from the .1 edge: peers cannot share
+    # allowedIPs, and parallel tunnels allow DNS-only cutover and rollback.
     ips = [ "10.10.0.4/32" ];
     listenPort = 51820;
     privateKeyFile = config.sops.secrets.proxy-wg-private-key.path;
@@ -74,25 +48,15 @@ in
         allowedIPs = [ "10.10.0.3/32" ];
       }
       {
-        # vidbox — home replacement for the retired Azure video VM.
-        # This peer was added and tested before the streams.sspeaks.net target
-        # changed. Adding a peer alone redirects no traffic, so the tunnel can
-        # be proven end to end before changing a reverse_proxy target.
+        # vidbox — video and ai-coaching
         publicKey = "jTa6Da0QXwj7tg9nE2MM99CYIl6AufCztXCwTTR11x8=";
         allowedIPs = [ "10.10.0.5/32" ];
       }
     ];
   };
 
-  # -------------------------------------------------------- deploy account ---
-  # Azure Pipelines (org marialith191, projects sspeaks.net / mycatsonfire /
-  # Chordplay) publishes over SSH via CopyFilesOverSSH@0 as this user. The
-  # service connections address the host as ssh://sspeaks.net:22, so DNS
-  # cutover repoints them automatically -- provided the account, its keys and
-  # the target paths all exist here first.
-  #
-  # Password is LOCKED, exactly as on the old edge: authentication is by key
-  # only. sshd already has PasswordAuthentication = false.
+  # Azure Pipelines publishes static content over SSH as this key-only user.
+  # Preserve the account, keys, and upload paths when moving the edge.
   users.groups.devops.gid = 1001;
   users.users.devops = {
     isNormalUser = true;
@@ -111,29 +75,18 @@ in
     "d ${webroots."mycatsonfire.com"} 2775 devops caddy -"
     "d ${webroots."chordplay.sspeaks.net"} 2775 devops caddy -"
 
-    # Compatibility shims. The pipelines target /usr/share/caddy{,2,3}; NixOS
-    # has no /usr/share at all. Symlinking rather than editing three
-    # azure-pipelines.yml files decouples the DNS cutover from three separate
-    # repo changes -- deploys keep working whichever lands first.
     "d /usr/share 0755 root root -"
     "L+ /usr/share/caddy - - - - ${webroots."sspeaks.net"}"
     "L+ /usr/share/caddy2 - - - - ${webroots."mycatsonfire.com"}"
     "L+ /usr/share/caddy3 - - - - ${webroots."chordplay.sspeaks.net"}"
   ];
 
-  # --------------------------------------------------------------- caddy ---
   services.caddy = {
     enable = true;
     acmeCA = lib.mkIf useStagingACME
       "https://acme-staging-v02.api.letsencrypt.org/directory";
 
-    # Bound the access logs. The NixOS module gives every vhost a
-    # `log { output file ... }` block by default, and Caddy's own defaults for
-    # a file logger are roll_size 100MiB with roll_keep 10 -- about 1.1 GB per
-    # vhost, so ~7.7 GB across these seven, against 9.7 GB free on a 15 GiB
-    # disk. A busy week could fill the edge's root filesystem. The old
-    # hand-written Caddyfile wrote no access logs at all, so this is a
-    # regression introduced purely by moving to the module.
+    # Bound per-vhost logs to protect the small root filesystem.
     virtualHosts = lib.mapAttrs
       (host: vhost: vhost // {
         logFormat = ''
@@ -145,9 +98,7 @@ in
         '';
       })
       {
-        # Streams terminates at vidbox over the overlay. The former Azure
-        # video VM and its public IP were deleted; they are not a rollback
-        # target. Keep traffic on the home host's private overlay address.
+        # Reach vidbox over the private overlay, not a public backend address.
         "streams.sspeaks.net".extraConfig = ''
           reverse_proxy 10.10.0.5:8080
         '';
@@ -191,14 +142,7 @@ in
           file_server
         '';
 
-        # The old edge sent /boggle/* through a Node 10.11.0 cors-anywhere
-        # container: it rewrote the path to /http://10.10.0.3:8081/<board> and
-        # proxied that to localhost:8080, which re-fetched it. The frontend calls
-        # a RELATIVE URL (fetch(`boggle/${board}`)), so it was always same-origin
-        # and the CORS hop was a pure forwarder. handle_path strips the prefix
-        # and reaches the same backend directly; verified byte-identical
-        # (sha256 81c5879f...) against the live path before removal. That
-        # retires an EOL-since-2019 Node runtime from the public edge.
+        # Boggle uses a same-origin URL; strip its prefix and proxy directly.
         "sspeaks.net".extraConfig = ''
           encode zstd gzip
           root * ${webroots."sspeaks.net"}

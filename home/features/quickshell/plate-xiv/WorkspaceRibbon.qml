@@ -1,13 +1,5 @@
-// WorkspaceRibbon — left section of Caption
-//
-// Shows the active workspace index/name ribbon followed by the focused window
-// title.  Uses standard Quickshell protocols only:
-//   - Quickshell.WindowManager (ext-workspace-v1) for workspace list
-//   - Quickshell.Wayland ToplevelManager (wlr-foreign-toplevel-management)
-//     for the active window title
-//
-// If either protocol is unavailable on the compositor the section degrades
-// gracefully: workspaces show empty, title shows empty string.
+// Workspace list via ext-workspace-v1; focused title via
+// wlr-foreign-toplevel-management. Unavailable protocols leave sections empty.
 
 pragma ComponentBehavior: Bound
 
@@ -33,7 +25,6 @@ Item {
 
         // ── Workspace ribbon ───────────────────────────────────────────────
         Repeater {
-            // Filter to only displayable windowsets and sort by first coordinate.
             model: ScriptModel {
                 values: {
                     const ws = [...WindowManager.windowsets].filter(w => w.shouldDisplay)
@@ -54,7 +45,6 @@ Item {
                 implicitHeight: root.implicitHeight
                 Layout.fillHeight: true
 
-                // Active workspace highlight — accent underline, not background
                 Rectangle {
                     anchors {
                         bottom: parent.bottom
@@ -88,7 +78,6 @@ Item {
             font.family:         Theme.fontUi
             font.pointSize:      9
             color:               Theme.fgSecondary
-            // Title is empty when nothing is focused — no placeholder shown.
         }
     }
 }

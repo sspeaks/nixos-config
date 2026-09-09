@@ -21,11 +21,8 @@
         "$mainMod, T, layoutmsg, togglesplit"
         "$mainMod, F, fullscreen,"
         "$mainMod SHIFT, L, exec, hyprlock"
-        # Plate XIV ActionMenu replaces wlogout at Mod+Escape (Batch 5).
-        # ActionMenu owns lock/logout/shutdown/reboot/recording; wlogout stays
-        # installed and is invoked by ActionMenu's own logout entry.
+        # Requires a manually started Plate Quickshell instance in Hyprland.
         "$mainMod, Escape, exec, qs ipc -c plate-xiv call actionMenu toggle"
-        # Screen recording toggle — MacBook-reachable, free in Hyprland default binds.
         "$mainMod SHIFT, R, exec, plate-record-toggle"
         # screenshot / OCR — Print for external keyboard, Mod+Shift+P/O for Apple keyboard
         ", Print, exec, plate-screenshot"

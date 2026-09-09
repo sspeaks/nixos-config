@@ -5,8 +5,7 @@
       settings.hooks = {
         treefmt.enable = true;
 
-        # Run `nix flake check` on `git push` (not on every commit). Evaluates
-        # all host configs + builds the flake `checks` (treefmt, pre-commit).
+        # Reserve flake evaluation/build checks for pushes, not every commit.
         nix-flake-check = {
           enable = true;
           name = "nix flake check";
@@ -14,8 +13,7 @@
           language = "system";
           pass_filenames = false;
           always_run = true;
-          # pre-commit hides a passing hook's output; without this the
-          # obsolescence warnings emitted by a successful check are swallowed.
+          # Show obsolescence warnings even when the check passes.
           verbose = true;
           stages = [ "pre-push" ];
         };

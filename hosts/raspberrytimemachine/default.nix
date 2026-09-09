@@ -1,49 +1,17 @@
 { inputs, lib, pkgs, outputs, ... }:
-# Pi 4 converted from Debian to NixOS, still serving Time Machine.
+# Time Machine appliance: the OS boots from SD; backups belong on USB.
+# Never format, repartition, or write an OS image to the USB backup disk.
+# Mount it by UUID and keep SSH reachable when it is absent.
 #
-# THE CRITICAL CONSTRAINT: never format, partition, or otherwise write to the
-# USB disk holding Time Machine backups during an OS reinstall. The OS boots
-# from the SD card. The USB disk is mounted BY UUID with no format action, and
-# the Pi must still boot to a usable SSH login if that disk is absent.
-#
-# TWO CONTINUITY DECISIONS, both of which exist so macOS does not decide this
-# is a NEW destination and start a full backup from scratch:
-#
-#   1. networking.hostName stays `raspberrypi`, NOT `raspberrytimemachine`.
-#      macOS identifies a Time Machine destination partly by the server's
-#      advertised name. The flake attribute `raspberrytimemachine` describes
-#      its role; the host's name on the network is deliberately unchanged.
-#      Do not "fix" this to match.
-#   2. The share stays `[backups]` and the `timemachine` user keeps uid/gid
-#      1001, matching the Debian install exactly. Backup files are owned by uid
-#      1001; any other uid makes them unwritable.
-#
-# THREE NAMES: the flake attribute/directory is `raspberrytimemachine`, the
-# guest hostname is deliberately `raspberrypi`, and the home router publishes
-# `raspberrytimemachine.bs.home` through a manually maintained DHCP reservation.
-# That router mapping lives outside this repository and is not derived from
-# the flake attribute. Keep the repository name aligned with that external
-# alias; changing the guest hostname would risk Time Machine destination
-# continuity rather than fixing the naming difference.
-#
-# The NixOS conversion regenerated SSH host keys. A client's known_hosts may
-# still hold the pre-conversion key under `raspberrytimemachine` even when its
-# entry for the IP address is current. This is client state, not a Nix setting:
-# independently verify the live key, remove the stale alias with
-# `ssh-keygen -R raspberrytimemachine`, then record the verified replacement.
-# Do not disable host-key checking or rename the machine to work around it.
-#
-# The Debian USB volume held 593 GB of backups before conversion. That history
-# was lost during the initial USB boot attempt described below; the current
-# filesystem UUID is in the fileSystems entry.
+# Preserve hostname `raspberrypi`, share `backups`, and timemachine uid/gid
+# 1001 for destination identity and existing file ownership. The flake name
+# `raspberrytimemachine` is deliberately different from the guest hostname.
 {
   imports = [
     ../common/global
     ../common/users/sspeaks
     ../common/users/sspeaks/authorized-keys.nix
-    # NOTE: deliberately NOT importing ../nixpi/hardware-config.nix (which
-    # pulls in nixos-hardware's raspberry-pi-4 profile). See the boot-path
-    # note below -- that profile is what broke booting here.
+    # Use stock sd-image-aarch64 firmware, not nixpi's raspberry-pi-4 profile.
     inputs.home-manager.nixosModules.home-manager
   ];
 
@@ -53,72 +21,21 @@
     config.allowUnfree = lib.mkDefault true;
   };
 
-  # BOOT PATH: the stock nixpkgs sd-image-aarch64 chain, deliberately.
-  #
-  # This host previously also imported nixos-hardware's raspberry-pi-4 profile
-  # (via ../nixpi/hardware-config.nix). That profile claims
-  # `sdImage.populateFirmwareCommands` with lib.mkForce
-  # (raspberry-pi/common/firmware.nix), so sd-image-aarch64's own firmware
-  # population never ran, and two separate failures followed:
-  #
-  #   1. Its config.txt tracks the Raspberry Pi OS pi-gen file and carries no
-  #      `kernel=` line, so the firmware had no bootloader to load and halted
-  #      with the green-LED "kernel image not found" code (7 short flashes).
-  #   2. Enabling its uboot option fixed that, but it copies the ENTIRE vendor
-  #      firmware set -- every start*.elf variant is 22 MiB by itself, plus 28
-  #      device trees and 371 overlays -- which overflowed the firmware
-  #      partition. The flashed card came back 100% full, 2.0K free, with a
-  #      stranded start_db.elf.tmp.3148182: a copy that died mid-write. The
-  #      board got an incomplete boot partition and never reached stage-1.
-  #
-  # The stock sd-image-aarch64 path copies a SELECTIVE set of device trees
-  # plus armstub8-gic.bin and writes a config.txt with `kernel=u-boot.bin`,
-  # which is what the NixOS wiki documents and what nixpi4-bare -- the same Pi
-  # 4 model -- was originally flashed with and still boots from.
-  #
-  # The trade is the vendor linux-rpi kernel for the mainline one. That is
-  # what the official aarch64 image uses on this board, and it costs nothing
-  # this appliance needs. Getting a reachable system first is worth more than
-  # the vendor kernel; nixos-hardware can be reintroduced later over SSH,
-  # where a failed boot is recoverable instead of another trip to the machine.
-  #
-  # ZFS stays off: profiles/base.nix enables it, it is not wanted on a
-  # single-purpose appliance, and it only adds build time and image size.
+  # The stock SD image supplies U-Boot and a selective firmware set.
+  # The raspberry-pi-4 profile overrides firmware population; combining them
+  # risks a missing bootloader or an overflowing firmware partition.
+  # ZFS adds image size and build work without serving this appliance.
   boot.supportedFilesystems.zfs = lib.mkForce false;
 
-  # Headroom over the 30 MiB default. The stock firmware set fits, but it was
-  # a full partition that silently truncated the last build, and the cost of
-  # over-sizing here is zero -- the image is expanded on first boot anyway.
+  # Leave headroom for firmware growth.
   sdImage.firmwareSize = 256;
 
 
   networking = {
-    hostName = "raspberrypi"; # continuity decision 1 -- see header
+    hostName = "raspberrypi";
     useDHCP = lib.mkDefault true;
   };
 
-  # ------------------------------------------------------- the USB data disk ---
-  # INSTALL HISTORY: the initial USB boot attempt, then the final SD layout.
-  #
-  # With no spare SD card and no physical access, the initial attempt wrote
-  # the NixOS image to the USB disk and set the Pi's EEPROM to try USB before
-  # SD. Keeping Debian on the SD card provided a fallback if USB boot failed,
-  # without needing physical access.
-  #
-  # Consequence: the 593 GB of Time Machine history that lived on the USB is
-  # gone -- the NixOS boot image was written over its partition table. That
-  # one-time loss was accepted during installation, not permission for future
-  # rebuilds or reinstalls to overwrite the backup disk.
-  #
-  # The board ultimately boots from the SD card, and the USB has been
-  # repartitioned as a single ext4 volume (label TIMEMACHINE) mounted at
-  # /srv/timemachine -- see the fileSystems entry below. It is deliberately NOT
-  # labelled NIXOS_SD: the leftover image on it carried that label, which
-  # collides with the SD card's own root label and could mount the wrong disk.
-  #
-  # Ownership must be uid/gid 1001 so the restored Samba account can write.
-
-  # Must match the Debian install exactly -- continuity decision 2.
   users.groups.timemachine.gid = 1001;
   users.users.timemachine = {
     isNormalUser = true;
@@ -128,7 +45,6 @@
     createHome = true;
   };
 
-  # ------------------------------------------------------------ Time Machine ---
   services.samba = {
     enable = true;
     openFirewall = true;
@@ -136,8 +52,7 @@
       global = {
         "server string" = "raspberrypi";
         "security" = "user";
-        # LAN only. This share must never be reachable through the Azure edge;
-        # the tunnel carries no SMB by design.
+        # LAN only; never expose SMB through the public edge.
         "hosts allow" = "192.168.5. 127.0.0.1 localhost";
         "hosts deny" = "0.0.0.0/0";
       };
@@ -146,26 +61,15 @@
         "path" = "/srv/timemachine";
         "valid users" = "timemachine";
         "read only" = "no";
-        # vfs_fruit advertises the Time Machine capability. Without
-        # `fruit:time machine = yes` macOS will not offer this share as a
-        # backup destination at all.
+        # Advertise this share as a Time Machine destination.
         "vfs objects" = "catia fruit streams_xattr";
         "fruit:time machine" = "yes";
       };
     };
   };
 
-  # Avahi advertises the share so macOS discovers it. LAN only.
-  #
-  # The extraServiceFiles block is NOT optional decoration -- it is copied from
-  # the working Debian install and is what makes macOS treat this as a Time
-  # Machine destination at all:
-  #   _adisk._tcp with adVN=backups,adVF=0x82  -> "this host offers a Time
-  #     Machine volume named `backups`". Without it macOS may never offer the
-  #     destination in System Settings even though the share mounts fine.
-  #   _device-info._tcp model=TimeCapsule8,119 -> macOS shows it as a Time
-  #     Capsule rather than a generic file server.
-  # NixOS' samba/avahi modules do not publish these records on their own.
+  # LAN discovery needs explicit _adisk records for the `backups` volume.
+  # _device-info identifies it as a Time Capsule in macOS.
   services.avahi = {
     enable = true;
     nssmdns4 = true;
@@ -198,27 +102,10 @@
     '';
   };
 
-  # Keep databases and dumps off the USB spindle to avoid competing with Time
-  # Machine writes. The video workload runs on vidbox, not this appliance.
-  # The Time Machine target lives on the USB spindle, not the SD card.
-  #
-  # This was briefly wrong in practice: the share pointed at /srv/timemachine
-  # on the expanded root while the USB was detached, so macOS happily began
-  # backing up to the 59 GB SD card (reporting 54 GB free, which is what gave
-  # it away). The SD cannot hold a Mac's backup and it is the wrong medium for
-  # sustained write load.
-  #
-  # `nofail` is REQUIRED and is not decoration. The original Debian install on
-  # this machine had
-  #     /dev/sda2  /home/pi/tmbackup/data  ext4  defaults  0  2
-  # with no nofail and fsck pass 2, so with the USB absent systemd stopped at
-  # an emergency shell before networking came up and the box was unreachable
-  # without physical access. `nofail` plus pass 0 means a missing or dead USB
-  # degrades to "share is empty" instead of "host is off the network".
-  #
-  # Matched by UUID rather than /dev/sda: device names reorder, and the USB
-  # previously carried a partition labelled NIXOS_SD (left by the initial boot
-  # image) which collided with the SD card's own root label.
+  # Reserve USB for Time Machine, not databases or video workloads (vidbox).
+  # Backups must not fall through to the SD-backed mountpoint when USB is absent.
+  # nofail and a bounded device wait keep the host reachable without the disk.
+  # UUID matching avoids device reordering and duplicate SD/USB root labels.
   fileSystems."/srv/timemachine" = {
     device = "/dev/disk/by-uuid/7d1f6fce-dee0-49cc-bd47-98ed7dd4438e";
     fsType = "ext4";
@@ -227,22 +114,11 @@
 
   systemd.tmpfiles.rules = [
     "d /var/lib/samba/private 0700 root root -"
-    # Mountpoint for the USB backup volume. uid/gid 1001 must match the
-    # restored Samba account or the share is unwritable.
     "d /srv/timemachine 0755 timemachine timemachine -"
   ];
 
-  # Restore the Samba credential database captured from the Debian install.
-  #
-  # Why this matters: macOS has the Time Machine password saved in its keychain
-  # against this server. A fresh Samba install has an empty passdb, so backups
-  # would fail authentication until someone re-entered credentials by hand --
-  # and a forgotten manual step here would leave Time Machine backups broken.
-  # Restoring passdb.tdb/secrets.tdb preserves the EXISTING password and the
-  # timemachine account's SID, so macOS reconnects with what it already knows.
-  #
-  # Runs once: it refuses to overwrite an existing passdb, so a later
-  # password change made on this host is never clobbered by a redeploy.
+  # Restore the existing password and SID so macOS can reuse saved credentials.
+  # Never overwrite an existing passdb or subsequent local password changes.
   systemd.services.samba-passdb-restore = {
     description = "Restore Samba passdb captured from the Debian install";
     wantedBy = [ "multi-user.target" ];
@@ -285,7 +161,6 @@
   };
 
   time.timeZone = "America/Los_Angeles";
-  # hosts/common/global already sets 23.05; these are new hosts so a newer
-  # stateVersion is correct, but it must override rather than conflict.
+  # Preserve this host's initial state version over the shared default.
   system.stateVersion = lib.mkForce "25.11";
 }

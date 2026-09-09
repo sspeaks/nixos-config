@@ -1,42 +1,25 @@
 { inputs, lib, config, ... }:
 
-# Bare-bones sibling of `nixpi`: the same Raspberry Pi 4 (same SD card, same
-# SSH host key, therefore the same sops age identity), but without the travel
-# router. Build this generation when the Pi is just a headless box sitting on
-# somebody else's network:
-#
-#   sudo nixos-rebuild switch --flake .#nixpi4-bare   # plain server
-#   sudo nixos-rebuild switch --flake .#nixpi         # travel router
-#
-# Reboot after switching in either direction: the two generations use different
-# network stacks (scripted dhcpcd here vs. systemd-networkd there), and a live
-# switch can leave the old `br-lan` bridge and its addresses behind.
-#
-# Dropped relative to `nixpi`: hostapd (AP mode), dnsmasq, the nftables NAT
-# ruleset, the systemd-networkd bridge/WireGuard setup, the router helper
-# scripts, and the full home-manager profile. Kept: the user, its SSH keys,
-# known Wi-Fi networks, and sshd.
+# Server variant of `nixpi`: same Pi 4, SD card, SSH key and SOPS identity,
+# without the travel-router AP, NAT, bridge or full home-manager profile.
+# Reboot when switching variants: dhcpcd and systemd-networkd can otherwise
+# leave the old br-lan bridge and addresses behind.
 {
   imports = [
     ../common/global
     ../common/users/sspeaks
     ../common/users/sspeaks/authorized-keys.nix
-    # Shared with `nixpi` so the SD card's disk layout and the rpi4 kernel
-    # workaround only ever live in one place.
+    # Share the disk layout and Pi 4 kernel workaround with nixpi.
     ../nixpi/hardware-config.nix
-    # Plain wpa_supplicant client for the same known networks as `nixpi` (no AP
-    # mode) so the Pi is still reachable without an Ethernet cable.
+    # Keep Wi-Fi client access without enabling the router's AP.
     ../nixpi/networking/wlan.nix
     inputs.home-manager.nixosModules.home-manager
-    # Workloads migrated off the retired Azure `nixos` VM.
     inputs.boggle.nixosModules.default
     ./workloads.nix
   ];
 
   networking = {
     hostName = "nixpi4-bare";
-    # `nixpi` replaces this with systemd-networkd; here stock scripted
-    # networking + DHCP on every interface is exactly what we want.
     useDHCP = lib.mkDefault true;
   };
 
@@ -49,14 +32,8 @@
   };
 
 
-  # Home-initiated tunnel to the Azure edge.
-  #
-  # Caddy reaches Boggle and pogbot on this host over the overlay, not the
-  # retired Azure VM's public hostname. The home network must not accept
-  # inbound connections, hence the outbound-dialled tunnel.
-  #
-  # allowedIPs is the edge's single overlay address, never a LAN prefix, so the
-  # Azure edge cannot route into 192.168.5.0/24.
+  # Dial out so Caddy reaches the workloads without residential port forwarding.
+  # allowedIPs contains only edge addresses, never a route to the home LAN.
   sops.secrets.wg-edge-private-key = {
     format = "yaml";
     sopsFile = ../../secrets/nixpi.yaml;
@@ -76,8 +53,7 @@
         persistentKeepalive = 25;
       }
       {
-        # Public edge -- see the note in hosts/nixpi5/default.nix.
-        # Both edges are carried at once so DNS is the only cutover switch.
+        # Parallel edge tunnels permit DNS-only cutover/rollback.
         publicKey = "Sbm2/JkGPNO9LEsrI2oJSHZNIxoOCsf/2l8jwm6AtHM=";
         endpoint = "20.83.103.87:51820";
         allowedIPs = [ "10.10.0.4/32" ];

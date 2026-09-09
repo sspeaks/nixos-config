@@ -13,14 +13,6 @@ in
     features/starship
     features/zsh
   ];
-  # nix.settings.trusted-public-keys = [
-  #   "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-  #   "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
-  # ];
-  # nix.settings.substituters = [
-  #   "https://cache.nixos.org"
-  #   "https://cache.iog.io"
-  # ];
   nix.settings.builders-use-substitutes = true;
   home = {
     packages = with pkgs; [
@@ -37,8 +29,6 @@ in
       gac
       comma
       squad-cli
-      # cabal-install
-      # haskell-language-server
     ];
     sessionVariables = {
       EDITOR = "vim";

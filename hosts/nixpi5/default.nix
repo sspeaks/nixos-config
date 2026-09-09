@@ -13,7 +13,7 @@
     ./go2rtc.nix
     ./webmailclient.nix
     ../../modules/restic-offsite.nix
-    # garage-monitor input is currently disabled — uncomment in flake.nix to restore
+    # Restore the garage-monitor input in flake.nix before enabling these.
     # inputs.garage-monitor.nixosModules.default
     # ./garage-monitor.nix
   ];
@@ -26,18 +26,11 @@
 
   environment.systemPackages = [
     pkgs.libraspberrypi
-    #    pkgs.docker-compose
-    #    pkgs.linuxPackages_rpi5.v4l2loopback
-    /*     pkgs.linuxPackages.v4l2loopback */
   ];
 
   nix.settings.trusted-users = [ "sspeaks" "root" ];
   nix.settings.lazy-trees = true;
 
-  # networking.wireless.iwd = {
-  #   enable = true;
-  #   settings.General.EnableNetworkConfiguration = true;
-  # };
   system.autoUpgrade = {
     enable = true;
     operation = "boot";
@@ -57,18 +50,7 @@
   };
 
 
-  # Home-initiated tunnel to the old Azure edge.
-  #
-  # This INVERTS the previous topology. Before, `blog` dialled OUT to a
-  # residential endpoint, which meant the old edge depended on the home IP
-  # staying reachable: a router reboot or an ISP address change broke the
-  # fallback path, and the residential address had to be written into the
-  # edge's config. Now the Pi dials the edge's STATIC Azure address, so the
-  # home address is never needed anywhere and can change freely.
-  #
-  # persistentKeepalive is what makes an outbound-only tunnel survive NAT:
-  # without it the home NAT mapping expires and the edge can no longer reach
-  # back to deliver traffic.
+  # Dial static edge addresses from home; keepalives preserve the NAT mapping.
   sops.secrets.wg-edge-private-key = {
     format = "yaml";
     sopsFile = ../../secrets/nixpi5.yaml;
@@ -76,19 +58,8 @@
     owner = "root";
   };
 
-  # ------------------------------------------------------------- backups ---
-  # Back up this host independently of the video workload. Before these jobs
-  # were added, only the now-retired Azure video host had offsite backups,
-  # leaving the Authentik database unprotected. Authentik is the SSO that gates
-  # auth.sspeaks.net, home-assistant.sspeaks.net and streams.sspeaks.net through
-  # oauth2-proxy.
-  #
-  # The `nixpi5` blob container was provisioned alongside the video backup
-  # container and is deliberately a separate repository.
-  #
-  # The restic password here is deliberately NOT the same as vid-stream's, so
-  # that compromising this host cannot decrypt vid-stream's repository. The
-  # Azure environment file is shared, because it is the same storage account.
+  # Keep this host's backup repository and password independent of vidbox's,
+  # even though both use the same Azure storage account.
   sops.secrets.restic-password = {
     format = "yaml";
     sopsFile = ../../secrets/nixpi5.yaml;
@@ -108,31 +79,21 @@
     enable = true;
     container = "nixpi5";
 
-    # Authentik keeps its real state in postgres, so it is dumped rather than
-    # copied: /var/lib/authentik is 0 bytes. /var/lib/postgresql is deliberately
-    # NOT in `paths` -- copying a live cluster directory yields a torn,
-    # unrestorable snapshot, which is exactly what pg_dump avoids.
+    # Dump Authentik's database; copying a live PostgreSQL directory is unsafe.
     postgresDatabases = [ "authentik" ];
 
-    # Home Assistant's recorder database. `.backup` is required rather than a
-    # file copy: Home Assistant runs SQLite in WAL mode, so a plain copy can
-    # miss the -wal contents and restore torn state. No -wal sidecar happened
-    # to be present when this was written, which only means it had just been
-    # checkpointed; it is not a reason to copy the file directly.
+    # SQLite .backup includes WAL state that a plain file copy can miss.
     sqliteDatabases = {
       home-assistant = "/var/lib/hass/home-assistant_v2.db";
     };
 
     paths = [
-      # Automations, blueprints, custom components, the device registry, and
-      # the .storage tree that holds every entity's configuration.
+      # Home Assistant configuration and registries, beyond the recorder DB.
       "/var/lib/hass"
-      # systemd DynamicUser state. Holds authentik's media and certificates,
-      # which are NOT in the database, plus ntfy-sh.
+      # DynamicUser state, including Authentik media/certificates and ntfy-sh.
       "/var/lib/private"
       "/var/lib/snappymail"
-      # The Samba passdb and Debian fstab/smb.conf carried across during the
-      # Time Machine Pi's conversion to NixOS. Small, and not reproducible if lost.
+      # Irreplaceable Time Machine recovery seed, including the Samba passdb.
       "/var/lib/migration-seed"
     ];
 
@@ -143,15 +104,8 @@
     ];
   };
 
-  # Deliberately NOT backed up:
-  #   /var/lib/garage-monitor  2.0 GB, and the module is currently commented out
-  #     of the imports above, so this is stale data from when it last ran. It is
-  #     1.2 GB of downloadable ML model-cache plus 849 MB of camera JPEGs -- a
-  #     monitoring stream, not irreplaceable state.
-  #   /var/lib/docker, /var/lib/containers  image layers, refetchable. The
-  #     docker volumes that would matter total 100 KB and snappymail's real
-  #     configuration lives in /var/lib/snappymail, which IS included.
-  #   /var/lib/rspamd, /var/lib/tor  regenerable service state.
+  # Intentionally omit model/image caches, camera monitoring frames, and
+  # regenerable rspamd/tor state. Add persistent container data explicitly.
 
   networking.wireguard.enable = true;
   networking.wireguard.interfaces.wg-edge = {
@@ -161,18 +115,13 @@
       {
         publicKey = "gTkLAa4pN+STVJDde9wWI4QDi4AFBn/ArTx6ul/PFAU=";
         endpoint = "40.86.75.95:51820";
-        # Only the edge's own overlay address. NOT a LAN prefix: the edge must
-        # never be able to route into 192.168.5.0/24. This preserves the reduced
-        # exposure of the old tunnel.
+        # Edge addresses only, never a route to the home LAN.
         allowedIPs = [ "10.10.0.1/32" ];
         persistentKeepalive = 25;
       }
       {
-        # Public edge. Carried alongside the old one deliberately:
-        # both edges must be reachable at once so the DNS cutover is the
-        # only thing that switches, and so it can be reversed without touching
-        # the tunnel. The new edge has its own overlay address because
-        # WireGuard cannot have two peers sharing allowedIPs.
+        # Parallel edge tunnels permit DNS-only cutover/rollback; each peer
+        # needs a distinct allowedIPs address.
         publicKey = "Sbm2/JkGPNO9LEsrI2oJSHZNIxoOCsf/2l8jwm6AtHM=";
         endpoint = "20.83.103.87:51820";
         allowedIPs = [ "10.10.0.4/32" ];
@@ -184,16 +133,11 @@
   security.sudo.wheelNeedsPassword = false;
   services.openssh.settings.X11Forwarding = true;
 
-  #  virtualisation.docker.enable = true;
-
   time.timeZone = "America/Los_Angeles";
   console = {
     font = "ter-i24b";
     packages = with pkgs; [ terminus_font ];
     earlySetup = true;
   };
-  #  services.xserver.enable = true;
-  #  programs.sway.enable = true;
-  #  services.xserver.displayManager.gdm.enable = true;
   nixpkgs.hostPlatform = "aarch64-linux";
 }

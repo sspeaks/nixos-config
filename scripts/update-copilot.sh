@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Re-exec inside a nix shell with required tools when not already wrapped.
-# Uses the flake registry instead of <nixpkgs>, which is unset on flake-only setups.
+# Use the flake registry because flake-only setups may not define <nixpkgs>.
 if [ -z "${_UPDATE_COPILOT_WRAPPED:-}" ]; then
   export _UPDATE_COPILOT_WRAPPED=1
   exec nix shell nixpkgs#bash nixpkgs#curl nixpkgs#jq nixpkgs#nix nixpkgs#perl --command bash "$0" "$@"
@@ -14,7 +13,6 @@ NIX_FILE="$SCRIPT_DIR/../packages/github-copilot-cli.nix"
 release_json=$(mktemp)
 trap 'rm -f "$release_json"' EXIT
 
-# Fetch latest release metadata from GitHub.
 curl -fsSL https://api.github.com/repos/github/copilot-cli/releases/latest -o "$release_json"
 latest=$(jq -r '.tag_name | sub("^v"; "")' "$release_json")
 current=$(grep 'version = ' "$NIX_FILE" | head -1 | sed 's/.*"\(.*\)".*/\1/')
@@ -55,7 +53,6 @@ replace_file() {
 hashes_file=$(mktemp)
 trap 'rm -f "$release_json" "$hashes_file"' EXIT
 
-# Read published GitHub asset digests for all platforms.
 for platform in "${platforms[@]}"; do
   system="${platform%% *}"
   suffix="${platform#* }"
@@ -76,7 +73,6 @@ for platform in "${platforms[@]}"; do
   echo "  $system: $hash"
 done
 
-# Update the version
 if [ "$current" != "$latest" ]; then
   if ! CURRENT="$current" LATEST="$latest" replace_file perl -0pe '
     BEGIN { $updated = 0 }
@@ -89,7 +85,6 @@ if [ "$current" != "$latest" ]; then
   fi
 fi
 
-# Update each platform hash
 while IFS=' ' read -r system suffix new_hash; do
   source_name="github-copilot-\${version}-${suffix}"
   if ! SOURCE_NAME="$source_name" NEW_HASH="$new_hash" replace_file perl -0pe '

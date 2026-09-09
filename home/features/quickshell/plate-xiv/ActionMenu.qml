@@ -4,12 +4,8 @@
 //   toggle()             — show or hide the menu
 //   show()               — show unconditionally
 //   hide()               — hide unconditionally
-//   recordingStarted()   — called by plate-record-start after wf-recorder launches
-//   recordingStopped()   — called by plate-record-stop after SIGINT completes
-//
-// Distinct from:
-//   Launcher      — searchable DesktopEntries app picker (D22)
-//   ControlCenter — polling status + system-control sliders (D23/D32)
+//   recordingStarted()   — called by plate-record-* after launching wf-recorder
+//   recordingStopped()   — called after SIGINT and a bounded wait for exit
 //
 // Layer-shell: Overlay, keyboard OnDemand, exclusiveZone 0, centered on the
 // focused screen. Escape dismiss is handled by a focused child item rather than
@@ -36,8 +32,7 @@ PanelWindow {
     implicitHeight: entryList.implicitHeight + Theme.spacingLg * 2
     color:          "transparent"
 
-    // Tracks whether wf-recorder is running — updated via IPC by
-    // plate-record-start and plate-record-stop on success.
+    // Last state reported by plate-record-*; not a live process check.
     property bool recordingActive: false
 
     onVisibleChanged: {
@@ -74,9 +69,7 @@ PanelWindow {
     }
 
     // ── Entries ───────────────────────────────────────────────────────────
-    // Static JS array binding — no runtime JSON parsing or in-place mutation.
-    // When recordingActive flips, QML reevaluates this binding to a fresh array,
-    // which is enough for Repeater to rebuild the recording row.
+    // Replacing the array when recordingActive changes refreshes the Repeater.
     readonly property var entries: [
         {
             label:   root.recordingActive ? "Stop recording" : "Start recording",
@@ -117,7 +110,6 @@ PanelWindow {
                 }
                 spacing: 0
 
-                // Header
                 RowLayout {
                     Layout.fillWidth:    true
                     Layout.bottomMargin: Theme.spacingSm
@@ -153,7 +145,6 @@ PanelWindow {
                     }
                 }
 
-                // Divider
                 Rectangle {
                     Layout.fillWidth:    true
                     implicitHeight:      Theme.border
@@ -161,11 +152,7 @@ PanelWindow {
                     Layout.bottomMargin: Theme.spacingSm
                 }
 
-                // Entry rows
                 Repeater {
-                    // Binding the model to root.entries is sufficient here:
-                    // recordingActive produces a new array value, so the
-                    // Repeater re-models without manual invalidation.
                     model: root.entries
 
                     delegate: Rectangle {

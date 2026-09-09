@@ -15,14 +15,10 @@
           inherit system;
           overlays = [ rust-overlay.overlays.default ];
         };
-        # Single pinned toolchain (change `stable.latest` to a channel, a
-        # version like `stable."1.85.0"`, or `nightly.latest`). `rust-src` and a
-        # matched `rust-analyzer` are bundled so std completion works without
-        # setting RUST_SRC_PATH.
+        # Matching rust-src and rust-analyzer enable standard-library completion.
         toolchain = pkgs.rust-bin.stable.latest.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
-          # Cross targets, e.g. to build x86_64 binaries (runnable here via the
-          # host's binfmt emulation):
+          # Additional compilation targets; running them may require emulation.
           # targets = [ "x86_64-unknown-linux-gnu" ];
         };
       in

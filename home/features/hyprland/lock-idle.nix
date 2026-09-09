@@ -1,18 +1,6 @@
 { ... }:
 
 let
-  # D26 — hyprlock label/input-field re-themed from palette.nix/mocha to
-  # plate.nix tokens. The `background` (screenshot blur) block is left
-  # untouched (out of scope for D26).
-  #
-  # services.hypridle: the idle timers/lock/suspend logic stays untouched.
-  # Only the two DPMS action strings are rewired (review follow-up, closing
-  # a D24 integration gap) to call Tank's plate-dpms-on/off wrapper binaries
-  # (packages/plate-wrappers, already landed and on PATH via
-  # environment.systemPackages) instead of hardcoded `hyprctl dispatch dpms
-  # ...`, so hypridle keeps working unmodified once niri is active. This
-  # file only changes the call sites; the wrapper contract itself remains
-  # Tank's file, untouched here.
   plate = import ../theme/plate.nix;
   dimmingSentinel = "$XDG_RUNTIME_DIR/hypridle-dimming";
 in
@@ -94,13 +82,7 @@ in
       general = {
         lock_cmd = "pidof hyprlock || hyprlock";
         before_sleep_cmd = "loginctl lock-session";
-        # D24 wrapper-call swap (review follow-up): DPMS actions now call
-        # Tank's compositor-detection wrapper (packages/plate-wrappers)
-        # instead of hardcoding hyprctl, so this same hypridle config keeps
-        # working unmodified once niri is the active session. The wrapper
-        # branches on $NIRI_SOCKET / $HYPRLAND_INSTANCE_SIGNATURE and exits
-        # 1 with a clear stderr message if neither is set — no silent
-        # no-op, no guessed fallback.
+        # packages/plate-wrappers selects niri or Hyprland for DPMS actions.
         after_sleep_cmd = "plate-dpms-on";
       };
 

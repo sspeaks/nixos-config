@@ -1,18 +1,6 @@
-// NotificationCard — single notification surface, Plate XIV chrome
-//
-// D9/D23 geometry: opaque bgRaised fill, 1px border, radius 0 — this is
-// new chrome authored fresh under Plate XIV's zero-radius rule, so unlike
-// dunst's unresolved corner_radius exception (D26/D29 #4) there is nothing
-// to preserve here; sharp corners are simply correct from day one.
-//
-// Border color keys off urgency: Low -> lineRule (quietest), Normal ->
-// lineEdge, Critical -> stateFail (D25 token — vermilion, no new hue).
-//
-// Auto-expiry: Notification.expireTimeout is informational only — the
-// client (this file) is responsible for calling expire() once it elapses.
-// expireTimeout < 0 means "no server-suggested timeout"; this card falls
-// back to a fixed 8s so nothing lingers forever without becoming "sticky"
-// on purpose (resident notifications are left alone).
+// Notification card. expireTimeout is informational: this component must
+// call expire(). Non-resident notifications use an 8 s fallback when the
+// supplied timeout is non-positive; resident notifications persist.
 
 pragma ComponentBehavior: Bound
 
@@ -40,8 +28,6 @@ Rectangle {
     border.width:   Theme.border
     border.color:   borderColorFor(notification.urgency)
 
-    // Resident notifications (e.g. media controls) are meant to persist
-    // until explicitly dismissed — only auto-expire non-resident ones.
     Timer {
         running: !root.notification.resident
         interval: root.notification.expireTimeout > 0
@@ -83,7 +69,6 @@ Rectangle {
                 elide:          Text.ElideRight
             }
 
-            // Dismiss — explicit, no ambiguity about swipe/timeout gestures.
             Text {
                 text:           "×"
                 font.family:    Theme.fontUi

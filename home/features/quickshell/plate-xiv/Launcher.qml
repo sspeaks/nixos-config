@@ -1,26 +1,11 @@
-// Launcher — Plate XIV application launcher overlay
+// Application launcher for niri; Hyprland uses wofi.
 //
-// D22: Quickshell-native launcher for the niri session, replacing wofi.
-// wofi stays the Hyprland-session fallback (D22, no re-theme required).
-//
-// IPC contract (D10, reused per D22): target "launcher", function
-// toggle(): void.  Client bind order:
+// IPC: launcher.toggle(). Client command:
 //   qs ipc -c plate-xiv call launcher toggle
 // (`-c` belongs to the `ipc` subcommand, not `call`).
 //
-// D9 layer-shell contract: layer Overlay, no anchors (floats, centred by
-// the compositor), exclusiveZone 0, keyboardFocus OnDemand — the only
-// Plate XIV surface that takes keyboard focus, and only while open.
-//
-// App model: DesktopEntries singleton (Quickshell/DesktopEntries 0.0,
-// present in the 0.3.0 nixpkgs build — verified via quickshell-core.qmltypes).
-// .applications.values → QObjectList of DesktopEntry; each has .name,
-// .genericName, .keywords, .noDisplay, .id, .execute().
-// Matching is case-insensitive across name + genericName + keywords.
-// Selection resets to first result on every query change.
-// Enter launches the highlighted entry; Escape closes; Up/Down navigate.
-// Falls back to raw shell command when no app matches (raw-cmd workflow
-// preserved from D22).
+// Requests keyboard focus only while open; reserves no screen space.
+// With no matching DesktopEntry, Enter executes the input as a shell command.
 
 pragma ComponentBehavior: Bound
 
@@ -52,7 +37,6 @@ PanelWindow {
     }
     color: "transparent"
 
-    // Maximum number of result rows shown before the list scrolls.
     readonly property int maxVisible: 6
 
     // Index of the keyboard-selected result row; -1 = nothing selected.
@@ -102,7 +86,7 @@ PanelWindow {
         root.visible = false;
     }
 
-    // ── D10/D22 IPC contract ────────────────────────────────────────────────
+    // ── IPC ────────────────────────────────────────────────────────────────
     IpcHandler {
         target: "launcher"
 
@@ -137,7 +121,6 @@ PanelWindow {
                 margins: Theme.spacingLg
             }
 
-            // Input row
             RowLayout {
                 width:  contentCol.width
                 height: Theme.captionHeight
@@ -192,7 +175,6 @@ PanelWindow {
                 }
             }
 
-            // Divider — only visible when a query is active
             Rectangle {
                 width:   contentCol.width
                 height:  Theme.border
@@ -200,7 +182,6 @@ PanelWindow {
                 visible: input.text.trim().length > 0
             }
 
-            // "No matches" row
             Text {
                 width:             contentCol.width
                 height:            Theme.captionHeight
@@ -229,7 +210,6 @@ PanelWindow {
 
                     width:  resultsList.width
                     height: Theme.captionHeight
-                    // Vermilion fill on the selected row; inset fill otherwise.
                     color: root.selectionIndex === rowRect.index
                         ? Theme.accentPrimary
                         : Theme.bgFill
@@ -245,7 +225,6 @@ PanelWindow {
                         text:           rowRect.modelData.name
                         font.family:    Theme.fontMono
                         font.pointSize: 11
-                        // White on vermilion; primary-fg on fill.
                         color: root.selectionIndex === rowRect.index
                             ? Theme.accentOn
                             : Theme.fgPrimary

@@ -21,12 +21,12 @@ in
     inherit asahiPaths;
   };
 
-  # Enable x86_64 emulation via QEMU for cross-platform builds
+  # Support cross-platform builds through emulation.
   boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
 
   security.sudo.wheelNeedsPassword = false;
 
-  # Zram swap - compresses RAM, better than disk swap on flash storage
+  # Use compressed RAM to reduce flash-backed swap writes.
   zramSwap = {
     enable = true;
     memoryPercent = 50;
@@ -36,4 +36,3 @@ in
 
   time.timeZone = "America/Los_Angeles";
 }
-

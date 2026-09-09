@@ -1,74 +1,47 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#!
 #
-# Update every always-on machine in the fleet, in one run.
+# Update always-on hosts using CI-published closures, never target builds.
+# ./deploy requires a clean commit reachable from origin/main and a complete,
+# signed closure from pinned caches. Missing or unverifiable hosts are skipped;
+# a prefetch or activation failure stops the run.
 #
-# WHY THIS EXISTS, AND THE ONE RULE IT ENFORCES
-# ---------------------------------------------
-# Most of this fleet physically cannot build its own system closure:
+# USAGE
+#   ./update-fleet [options]
 #
-#     proxy                 938 MiB RAM   aarch64   Azure edge
-#     nixpi4-bare           1.8 GiB RAM   aarch64   Pi 4
-#     raspberrytimemachine  1.8 GiB RAM   aarch64   Pi 4
-#     nixpi5                7.8 GiB RAM   aarch64   Pi 5, marginal
-#     vidbox                  8 GiB RAM   x86_64    the only comfortable builder
-#
-# and the controller is aarch64-darwin with no Linux builder configured, so it
-# cannot build for ANY of them. A 938 MiB Azure VM asked to compile a system
-# closure does not fail fast and politely; it thrashes, and on a host that is
-# also the public edge that is an outage.
-#
-# So the rule this script enforces is: NOTHING EVER BUILDS. Every closure is
-# built once by CI on a real runner, pushed to the Cachix binary cache, and
-# merely SUBSTITUTED onto each target. This script refuses to deploy a host
-# whose closure is not already in the cache, rather than letting the target
-# discover the hard way that it has to build it.
-#
-# That is also why the flow below insists on going through main and CI rather
-# than deploying straight from a working tree: ./deploy will only activate a
-# commit reachable from origin/main, and CI only publishes closures for main.
+# OPTIONS
+#   --check          Report reachability, cache availability and running versions.
+#   --no-update      Skip input updates/PR publication; use the current checkout.
+#   --only HOST      Select one host (repeatable).
+#   --prefetch-only  Populate target stores, then stop without activation.
+#   --auto-merge     Merge the update PR after checks without a merge prompt;
+#                    activation still requires interactive confirmation.
+#   --repo PATH      Checkout to use (default: $HOME/Projects/nixos-config).
+#   -h, --help       Show this help.
 #
 # PHASES
 #   preflight  reachability, git hygiene, host map vs flake
-#   update     nix flake update, commit, push, open PR      (skip: --no-update)
+#   update     update inputs, commit, push, open PR        (skip: --no-update)
 #   publish    wait for the PR check, merge, wait for the closure build
 #   prefetch   substitute each closure onto its target, non-interactively
-#   activate   per host, interactive, in ascending order of blast radius
+#   activate   interactive per-host test activation, lower-impact hosts first
 #
-# The first four phases change nothing on any machine and are safe to re-run.
-# Only `activate` touches a running system, and it deliberately keeps ./deploy's
-# interactive dead-man rollback guard rather than working around it.
-#
-# USAGE
-#   ./update-fleet --check          report only: reachability, cache, versions
-#   ./update-fleet                  full run, interactive activation
-#   ./update-fleet --no-update      redeploy current main without bumping inputs
-#   ./update-fleet --only proxy     restrict to one host (repeatable)
-#   ./update-fleet --prefetch-only  stop after substituting; activate by hand
+# Update/publish modify Git and CI; prefetch writes to target Nix stores.
+# No running configuration changes before activate. Activation retains
+# ./deploy's rollback guard and fresh-SSH checks; verify services before
+# disarming it. Test activations revert on reboot; use ./deploy --switch
+# separately after validation to make them persistent.
 set -uo pipefail
 
-readonly REPO_DEFAULT="$HOME/Projects/nixos-config"
+readonly REPO_DEFAULT="$(pwd)"
 readonly CACHIX_HOST="https://sspeaks-nix.cachix.org"
 
-# Deployment order is ascending blast radius, and it is not arbitrary. A bad
-# closure should be discovered on the Time Machine box, whose failure nobody
-# notices for a day, rather than on the edge that terminates all seven public
-# vhosts.
-#
-# Fields:  name | ssh-target | known-hosts-alias | note
-#
-# The alias field exists because this laptop's known_hosts is not uniform: some
-# of these hosts were first reached by IP and some by name, so a blanket
-# HostKeyAlias breaks exactly the hosts it is not needed for. Empty means "use
-# the target as-is". This is deliberately explicit rather than guessed.
+# Lower-impact hosts first; leave shared SSO and the public edge until last.
+# Fields: name | ssh-target | known-hosts-alias | note
+# An empty alias uses the target's own known_hosts entry.
 readonly FLEET=(
-  # Reached by IP, not by name, on purpose. The router publishes this box as
-  # raspberrytimemachine.bs.home, but the laptop's known_hosts entry under that
-  # name still holds the PRE-CONVERSION key: reimaging the SD card for NixOS
-  # regenerated the host keys, and the old entry was never refreshed. The entry
-  # under the IP matches the live key. Clean the stale one with
-  #   ssh-keygen -R raspberrytimemachine
-  # and this can use the name again. Note the machine calls itself `raspberrypi`
-  # regardless -- that is deliberate, for Time Machine continuity.
+  # Verify any replacement SSH target's host key independently.
+  # The guest hostname remains raspberrypi for Time Machine continuity.
   "raspberrytimemachine|192.168.5.106||Time Machine appliance; nothing else depends on it"
   "vidbox|192.168.5.195||video + ai-coaching; serves only streams.sspeaks.net"
   "nixpi4-bare|192.168.5.16|nixpi4-bare|pogbot and boggle"
@@ -76,11 +49,7 @@ readonly FLEET=(
   "proxy|20.83.103.87||THE public edge: all seven vhosts"
 )
 
-# Configurations that are deliberately NOT fleet-managed, with the reason.
-# Without this list every run warns about five perfectly healthy hosts, which
-# teaches the reader to ignore the warning -- and then a genuinely new server
-# that nobody is updating scrolls past unnoticed. Anything not in FLEET and not
-# here is flagged loudly, which is the whole point.
+# Explicit exclusions distinguish unmanaged configurations from forgotten hosts.
 readonly NOT_FLEET=(
   "nixpi|travel-router variant of the SAME Pi 4 as nixpi4-bare; only one can be deployed at a time"
   "vm|scratch VM, not a server"
@@ -136,9 +105,7 @@ for c in nix git gh ssh curl; do
 done
 gh auth status >/dev/null 2>&1 || die "gh is not authenticated; run: gh auth login"
 
-# The host map is hand-maintained but VALIDATED against the flake, so a host
-# renamed or removed in the repo shows up here as a mismatch instead of failing
-# silently halfway through a deployment.
+# Validate the hand-maintained host map before contacting targets.
 mapfile -t FLAKE_HOSTS < <(
   nix eval --json ".#nixosConfigurations" --apply 'builtins.attrNames' 2>/dev/null |
     tr -d '[]"' | tr ',' '\n' | sed '/^$/d'
@@ -165,8 +132,7 @@ done
 [[ ${#NAMES[@]} -gt 0 ]] || die "no hosts selected"
 ok "host map agrees with the flake (${#NAMES[@]} selected of ${#FLEET[@]})"
 
-# Flake configurations that nothing in FLEET claims. Known exclusions are noted
-# quietly; anything else is a genuine "should this be in the fleet?" question.
+# Warn about configurations absent from both the fleet and its exclusions.
 for fh in "${FLAKE_HOSTS[@]}"; do
   printf '%s\n' "${FLEET[@]}" | cut -d'|' -f1 | grep -qx "$fh" && continue
   if reason=$(printf '%s\n' "${NOT_FLEET[@]}" | grep "^$fh|" | cut -d'|' -f2-); then
@@ -177,7 +143,6 @@ for fh in "${FLAKE_HOSTS[@]}"; do
   fi
 done
 
-# One helper so the alias rule lives in exactly one place.
 fleet_ssh() {
   local idx="$1"; shift
   local -a opts=(-o ConnectTimeout=8 -o BatchMode=yes)
@@ -201,11 +166,8 @@ for i in "${!NAMES[@]}"; do
 done
 [[ ${#LIVE_IDX[@]} -gt 0 ]] || die "no hosts reachable"
 
-# fleet_ssh can paper over a known_hosts entry stored under a NAME while we
-# connect by IP, using HostKeyAlias. ./deploy cannot: it has no such option and
-# runs with StrictHostKeyChecking. So a host that only works here because of an
-# alias will pass every check in this script and then fail inside deploy. Say so
-# up front rather than discovering it mid-run.
+# ./deploy uses strict host-key checking without this helper's HostKeyAlias.
+# Warn when its direct target lacks a known_hosts entry.
 for i in "${LIVE_IDX[@]}"; do
   [[ -n "${ALIASES[$i]}" ]] || continue
   if ! ssh-keygen -F "${TARGETS[$i]}" >/dev/null 2>&1; then
@@ -233,11 +195,7 @@ if $DO_UPDATE && ! $CHECK_ONLY; then
 Routine fleet update. Closures are built by CI and substituted onto each host;
 nothing is compiled on the targets, several of which do not have the memory to
 do it." || die "commit failed"
-    # --no-verify is required, not laziness: the pre-push hook runs
-    # `nix flake check`, which tries to build aarch64-linux derivations and
-    # therefore cannot pass on an aarch64-darwin controller with no Linux
-    # builder. CI runs the same check on Linux runners, which is where it is
-    # meaningful.
+    # Let Linux CI run the build checks; the controller may have no Linux builder.
     git push --no-verify -q origin "HEAD:$branch" || die "push failed"
     gh pr create --base main --head "$branch" \
       --title "Update flake inputs" \
@@ -269,19 +227,12 @@ build there is not a slow success, it is an outage." >/dev/null || die "pr faile
       gh pr merge "$pr" --merge >/dev/null || die "merge failed"
       ok "merged PR #$pr"
     fi
-    # Unguarded, a failed fast-forward here leaves HEAD on the OLD main, and
-    # every later stage then agrees with itself: the old closures are cached,
-    # prefetch succeeds, deploy's ancestry check passes, and the run reports
-    # "already running this closure" for the whole fleet. The operator is told
-    # everything is up to date when nothing was updated.
+    # Abort on a failed fast-forward rather than silently deploying stale main.
     git switch -q main || die "could not switch to main"
     git pull -q --ff-only || die "main could not fast-forward; resolve local divergence and re-run with --no-update"
 
     info "Waiting for CI to build and publish closures"
-    # Must be tied to the merge commit. `--limit 1` without a commit filter
-    # returns the PREVIOUS main run, which is already "completed success", so
-    # the wait would return instantly and satisfy itself against a build that
-    # predates the change.
+    # Match the exact commit, not an earlier successful main build.
     head_sha=$(git rev-parse HEAD)
     run=""
     for _ in $(seq 1 20); do
@@ -302,30 +253,19 @@ build there is not a slow success, it is an outage." >/dev/null || die "pr faile
       esac
       sleep 30
     done
-    # Without this the loop could simply expire and fall through to the cache
-    # gate, which would then fail confusingly instead of saying what went wrong.
     $build_done || die "timed out waiting for closure build (run $run)"
   fi
 fi
 
 # --------------------------------------------------------------- cache gate ---
-# The load-bearing check. Every closure must already exist in the binary cache
-# before any host is touched, because the alternative is a target trying to
-# build it.
+# Select only cached toplevels; ./deploy checks complete closures before activation.
 info "Verifying every closure is in the binary cache"
 declare -a READY_IDX=() READY_PATHS=()
 cache_ok=true
 for i in "${LIVE_IDX[@]}"; do
   n="${NAMES[$i]}"
-  # Some hosts cannot be evaluated on this controller AT ALL. Evaluating a
-  # configuration whose packages use import-from-derivation forces a build of
-  # that derivation, and if it is aarch64-linux there is no way to satisfy it
-  # from aarch64-darwin without a Linux builder. nixpi4-bare is the current
-  # example: its Haskell workload pulls in a cabal2nix derivation.
-  #
-  # This is NOT a reason to deploy blind. It just means the controller cannot
-  # confirm the closure hash, so the host is reported and skipped rather than
-  # being sent to a target that would then try to build it.
+  # Import-from-derivation may require a matching builder during evaluation.
+  # Skip hosts whose closure path the controller cannot determine.
   if ! path=$(nix eval --raw ".#nixosConfigurations.$n.config.system.build.toplevel" \
                 --apply 'x: x.outPath' 2>/tmp/eval-$n.err | tail -1) || [[ -z "$path" ]]; then
     if grep -q "required system or feature not available" /tmp/eval-$n.err 2>/dev/null; then
@@ -353,9 +293,7 @@ for i in "${LIVE_IDX[@]}"; do
   fi
 done
 
-# A host we cannot verify is skipped, not fatal: the rest of the fleet is still
-# worth updating. Only a host that is verifiable AND uncached is a hard stop,
-# because that means CI has not finished.
+# Unverifiable or uncached hosts are skipped; abort if none remain.
 if ! $cache_ok; then
   warn "some hosts could not be verified and will be skipped (see above)"
 fi
@@ -376,10 +314,7 @@ if $CHECK_ONLY; then
 fi
 
 # ----------------------------------------------------------------- prefetch ---
-# --dry-run exits before ./deploy's interactive guard, so this phase is safe to
-# run unattended. It copies the closure onto each host WITHOUT activating, which
-# means the later activation is near-instant and, more importantly, that a slow
-# or failed download happens now rather than half way through changing the edge.
+# Populate stores without activation, so download failures precede service changes.
 info "Pre-fetching closures (no activation)"
 for k in "${!READY_IDX[@]}"; do
   i="${READY_IDX[$k]}"; n="${NAMES[$i]}"
@@ -416,21 +351,9 @@ for k in "${!READY_IDX[@]}"; do
   info "$n  ($t)"
   say "  role: ${NOTES[$i]}"
 
-  # The Time Machine box is the one host with a real interlock. Its whole job is
-  # a rolling 600+ GB backup over SMB, and activation can restart services.
-  # Interrupting a first backup means starting it again from zero.
+  # Activation can restart Samba and interrupt an active Time Machine backup.
   if [[ "$n" == "raspberrytimemachine" ]]; then
-    # This interlock must FAIL CLOSED. The obvious spelling,
-    #   sessions=$(fleet_ssh ... 'smbstatus | grep -c timemachine' || echo 0)
-    # is wrong in a way that is easy to miss and dangerous in practice: any ssh
-    # timeout, dropped connection or missing binary collapses to "0", which is
-    # indistinguishable from a genuine "nobody is connected" and activates
-    # WITHOUT prompting. That is precisely the case the interlock exists to
-    # catch, and it is reachable -- this is a 1.8 GiB Pi under sustained SMB
-    # write load, being queried immediately after a closure copy.
-    # `grep -c` also exits 1 when it counts zero, so success and failure are
-    # not distinguishable by exit status either. Hence the explicit sentinel:
-    # only a well-formed OK:<n> is trusted, and anything else prompts.
+    # Malformed or missing probe output requires confirmation, not a zero default.
     probe=$(fleet_ssh "$i" 'c=$(sudo smbstatus -b 2>/dev/null | grep -c timemachine); echo "OK:${c:-unknown}"' 2>/dev/null)
     if [[ "$probe" =~ ^OK:([0-9]+)$ ]]; then
       sessions="${BASH_REMATCH[1]}"
@@ -450,9 +373,7 @@ for k in "${!READY_IDX[@]}"; do
     fi
   fi
 
-  # ./deploy prompts twice on purpose: once to arm a dead-man rollback timer,
-  # once to disarm it after the host has been seen healthy. That guard is the
-  # reason this phase is interactive, and it is not worth automating away.
+  # Keep both confirmations: arm rollback, then disarm only after health checks.
   if ! ./deploy "$n" --test --ssh-target "sspeaks@$t"; then
     bad "$n failed to activate"
     die "stopping before any later host is touched"

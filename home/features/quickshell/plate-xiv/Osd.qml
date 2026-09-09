@@ -1,12 +1,6 @@
-// OSD — Plate XIV volume / brightness overlay
-//
-// IPC contract: target "osd", functions showVolume() and
-// showBrightness(). Each call polls the matching Plate helper and
-// refreshes this small centred overlay.
-//
-// Layer-shell contract: layer Overlay, no anchors, exclusiveZone 0,
-// keyboardFocus None — like Launcher, this floats on the compositor's
-// default/focused screen without reserving space.
+// Volume/brightness overlay; takes no keyboard focus or reserved screen space.
+// IPC: osd.showVolume() / showBrightness() polls the matching Plate helper.
+// Helper stdout contracts live in packages/plate-controls/default.nix.
 
 pragma ComponentBehavior: Bound
 
@@ -80,7 +74,6 @@ PanelWindow {
     }
 
     // ── Backend reads ─────────────────────────────────────────────────────
-    // `plate-volume-get` → "VOLUME MUTED" e.g. "0.72 0" or "0.50 1"
     Process {
         id:      volumeReadProc
         command: ["plate-volume-get"]
@@ -106,7 +99,6 @@ PanelWindow {
         }
     }
 
-    // `plate-brightness-get` → "CURRENT MAX" e.g. "420 800"
     Process {
         id:      brightnessReadProc
         command: ["plate-brightness-get"]

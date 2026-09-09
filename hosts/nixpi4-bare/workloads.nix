@@ -1,19 +1,13 @@
 { inputs, config, lib, pkgs, ... }:
-# Boggle and pogbot, migrated off the retired Azure `nixos` VM.
-#
-# Both were previously reached by Caddy at the VM's public hostname. They are
-# now behind the home-initiated tunnel, so the edge reaches them at
-# 10.10.0.3 and nothing on the home network accepts an inbound connection.
+# Boggle and pogbot are exposed only through the home-initiated edge tunnel.
 let
   sopsFileLocation = {
     format = "yaml";
-    # nixpi4-bare shares the nixpi age identity: same Pi, same SD card,
-    # therefore the same SSH host key.
+    # nixpi4-bare and nixpi share a device and SSH-derived age identity.
     sopsFile = ../../secrets/nixpi.yaml;
   };
 
-  # Carried over from the retired Azure workload host. These overrides are not
-  # optional decoration: without them pogbot's Python closure fails to build.
+  # Compatibility fixes for pogbot's Python dependencies.
   pythonOverrides = _: pythonPrev:
     {
       inline-snapshot = pythonPrev.inline-snapshot.overridePythonAttrs (
@@ -54,8 +48,7 @@ in
     OPEN_AI_KEY = sopsFileLocation;
   };
 
-  # Clip assets live outside the user's home so the service does not depend on
-  # a home directory that home-manager rewrites.
+  # Keep service assets independent of the home-manager-managed user home.
   systemd.tmpfiles.rules = [
     "d /srv/pogbot 0750 pogbot pogbot -"
     "d /srv/pogbot/assets 0750 pogbot pogbot -"
@@ -71,7 +64,6 @@ in
     trimmerUrl = "https://mycatsonfire.com/pogbot";
   };
 
-  # Only the overlay needs to reach these; they are never LAN- or
-  # internet-exposed directly.
+  # Allow workload access only over the overlay, not directly from LAN/internet.
   networking.firewall.interfaces.wg-edge.allowedTCPPorts = [ 8080 8081 ];
 }

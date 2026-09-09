@@ -35,9 +35,8 @@ in
     if [ ! -f "${ageKeyFile}" ]; then
       echo "WARNING: age key not found at ${ageKeyFile}, skipping copilot token injection" >&2
     else
-      # Only bootstrap credentials when Copilot has no authenticated user yet.
-      # If a working login already exists, leave it completely untouched so a
-      # switch never replaces the user you are currently signed in as.
+      # Bootstrap only when no tokens exist; never replace an existing login
+      # or overwrite an unparseable configuration.
       inject=1
       cleaned=""
       if [ -f "$copilotConfig" ]; then

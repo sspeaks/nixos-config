@@ -33,10 +33,8 @@
     };
   };
 
-  # Trim old generations of the per-user profiles only. Reclaiming the store
-  # itself is the system GC's job (nix.gc in hosts/common/global); doing it here
-  # too just deadlocks on the GC lock and frees nothing. Running daily keeps
-  # these roots released well before the weekly system GC runs.
+  # Release user profile roots before the weekly system GC. Leave store
+  # collection to hosts/common/global to avoid competing for its GC lock.
   systemd.user.services.nix-user-profile-trim = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     Unit.Description = "Trim old Nix user profile generations";
     Service = {

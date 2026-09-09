@@ -1,18 +1,6 @@
-# Plate XIV — deterministic wallpaper package (R5 / D5)
-#
 # Produces $out/share/backgrounds/plate-xiv.png at 3024×1964 from a
 # compile-time SVG rendered via resvg. No network access or runtime mutation.
-#
-# Color source: ../../home/features/theme/plate.nix (sole authority per D5).
-# - bg.void           ground and translucent mist
-# - line.hairline     grid and distant forest
-# - line.rule         midground/foreground engraving and silhouette washes
-# - accent.vermilion  exact-centre registration crosshair only
-#
-# Art direction: “Plate XIV: Old-Growth Survey.” Three depth layers depict a
-# Pacific Northwest conifer forest: distant trees behind a low ridge and mist,
-# uneven midground Douglas-firs, and cropped hero trunks framing a fern-covered
-# forest floor. The central-right mist clearing remains usable negative space.
+# Colors come from theme/plate.nix; only the central crosshair uses vermilion.
 { pkgs, ... }:
 
 let
@@ -20,9 +8,9 @@ let
 
   width = 3024;
   height = 1964;
-  cx = width / 2; # 1512
-  cy = height / 2; # 982
-  arm = 16; # ±16 px
+  cx = width / 2;
+  cy = height / 2;
+  arm = 16;
 
   svgSource = ''
     <?xml version="1.0" encoding="UTF-8"?>
@@ -39,7 +27,7 @@ let
                 stroke-width="1"/>
         </pattern>
 
-        <!-- Three deliberately different conifer profiles. -->
+        <!-- Conifer profiles. -->
         <symbol id="fir-a" viewBox="0 0 200 1000">
           <path d="M100 8 L82 115 48 188 72 196 34 282 63 286 18 390
                    55 390 8 510 49 505 0 642 45 632 10 760 58 744
@@ -95,7 +83,7 @@ let
       <rect width="${toString width}" height="${toString height}"
             fill="url(#major)" opacity="0.42"/>
 
-      <!-- Distance: 22 simplified trees behind a low ridge. -->
+      <!-- Distant trees and ridge. -->
       <g fill="${t.line.hairline}" fill-opacity="0.16"
          stroke="${t.line.hairline}" stroke-width="1.2" opacity="0.40">
         <use href="#fir-c" x="-35" y="785" width="170" height="850"/>
@@ -136,7 +124,7 @@ let
               stroke-width="190" opacity="0.70"/>
       </g>
 
-      <!-- Midground: eleven complete conifers, uneven and overlapping. -->
+      <!-- Midground conifers. -->
       <g fill="${t.line.rule}" fill-opacity="0.16"
          stroke="${t.line.rule}" stroke-width="2.2"
          stroke-linejoin="round" opacity="0.92">
@@ -163,7 +151,7 @@ let
               stroke-width="300" opacity="0.88"/>
       </g>
 
-      <!-- Forest floor, fallen nurse log, and three rock groups. -->
+      <!-- Forest floor, fallen nurse log, and rocks. -->
       <path d="M0 1690Q240 1645 480 1700T950 1680T1430 1715
                T1920 1668T2400 1710T3024 1660V1964H0Z"
             fill="${t.line.rule}" fill-opacity="0.11"
@@ -185,7 +173,7 @@ let
         <path d="M980 1744L944 1695 M1320 1716L1348 1668 M1515 1730L1550 1688"/>
       </g>
 
-      <!-- Reusable fern fronds: 15 varied placements across the bottom 300px. -->
+      <!-- Fern fronds. -->
       <g fill="none" stroke="${t.line.rule}" stroke-width="2"
          stroke-linecap="round" stroke-linejoin="round">
         <use href="#fern" x="20" y="1745" width="175" height="146"/>
@@ -205,7 +193,7 @@ let
         <use href="#fern" x="2730" y="1765" width="180" height="150"/>
       </g>
 
-      <!-- Foreground hero trunks: hand-authored irregular Douglas-fir bark. -->
+      <!-- Foreground trunks and bark. -->
       <g stroke="${t.line.rule}" stroke-linejoin="round">
         <path d="M64 1964L82 1760 70 1510 105 1280 119 1010 160 790
                  205 570 274 365 350 170 410 0H530L490 180 444 370

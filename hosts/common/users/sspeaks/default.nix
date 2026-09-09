@@ -6,14 +6,11 @@ let
       (lib.attrByPath [ "home-manager" "users" "sspeaks" "home" "packages" ] [ ] config);
   copilotActivationScript = pkgs.writeShellScript "inject-copilot-token" ''
     copilotConfig="${copilotConfigPath}"
-    # Only bootstrap credentials when Copilot has no authenticated user yet.
-    # If a working login already exists, leave it completely untouched so a
-    # rebuild never replaces the user you are currently signed in as.
+    # Bootstrap only without stored tokens; preserve existing logins on rebuild.
     inject=1
     cleaned=""
     if [ -f "$copilotConfig" ]; then
-      # ~/.copilot/config.json is JSONC (leading // comment lines); strip
-      # full-line comments so jq can parse it.
+      # Strip full-line JSONC comments before passing the config to jq.
       cleaned=$(${pkgs.gnused}/bin/sed '/^[[:space:]]*\/\//d' "$copilotConfig")
       if printf '%s' "$cleaned" | ${pkgs.jq}/bin/jq -e '(.copilotTokens // {}) | length > 0' >/dev/null 2>&1; then
         inject=0

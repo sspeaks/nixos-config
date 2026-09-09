@@ -4,7 +4,6 @@ let
 in
 
 {
-  # WireGuard VPN with kill switch
   sops.secrets.wireguard-private-key = lib.mkIf enableWireguard {
     sopsFile = ../../secrets/asahi.yaml;
   };
@@ -14,7 +13,7 @@ in
     dns = [ "1.1.1.1" ];
     privateKeyFile = config.sops.secrets.wireguard-private-key.path;
 
-    # Kill switch: only allow traffic through WireGuard
+    # Block non-local traffic outside WireGuard, except its marked tunnel packets.
     postUp = ''
       ${pkgs.iptables}/bin/iptables -I OUTPUT ! -o wg0 -m mark ! --mark $(${pkgs.wireguard-tools}/bin/wg show wg0 fwmark) -m addrtype ! --dst-type LOCAL -j REJECT
       ${pkgs.iptables}/bin/ip6tables -I OUTPUT ! -o wg0 -m mark ! --mark $(${pkgs.wireguard-tools}/bin/wg show wg0 fwmark) -m addrtype ! --dst-type LOCAL -j REJECT
@@ -28,18 +27,8 @@ in
       {
         publicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0=";
         allowedIPs = [ "0.0.0.0/0" "::/0" ];
-        # NO ENDPOINT. The server this used to dial was the `nixos` Azure VM at
-        # 13.91.123.214, deleted 2026-09-04. Azure has taken that Basic
-        # public IP back into its pool, so it can be reassigned to an unrelated
-        # tenant; leaving the literal here would mean anyone flipping
-        # enableWireguard to true would start sending handshakes to a stranger.
-        #
-        # The VM was not running WireGuard by the end anyway: its NixOS config
-        # had networking.wireguard.enable = false and defined no interfaces. The
-        # UDP 51820 rule in nixosNSG was a leftover from the earlier imperative
-        # setup, alongside the Minecraft and Dynmap rules.
-        #
-        # Set a new endpoint here before re-enabling this tunnel.
+        # Set and verify a new endpoint before enabling; the retired VM's
+        # released public address may belong to another tenant.
         persistentKeepalive = 25;
       }
     ];

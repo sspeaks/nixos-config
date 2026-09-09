@@ -30,9 +30,5 @@
     packages = with pkgs; [ terminus_font ];
     earlySetup = true;
   };
-  #  services.xserver.enable = true;
-  #  programs.sway.enable = true;
-  #  services.xserver.displayManager.gdm.enable = true;
   nixpkgs.hostPlatform = "aarch64-linux";
 }
-

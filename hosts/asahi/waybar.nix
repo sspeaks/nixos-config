@@ -15,7 +15,6 @@ in
         min-height: 0;
       }
 
-      /* Transparent bar strip: each module floats as its own frosted island. */
       window#waybar {
         background: transparent;
       }
@@ -30,7 +29,6 @@ in
         color: ${mocha.text};
       }
 
-      /* Shared floating-island styling for every module. */
       #workspaces,
       #window,
       #clock,
@@ -56,7 +54,6 @@ in
         transition: all 0.2s ease;
       }
 
-      /* Interactive info pills brighten their border on hover. */
       #clock:hover,
       #battery:hover,
       #cpu:hover,

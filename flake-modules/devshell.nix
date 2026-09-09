@@ -39,9 +39,7 @@ in
         text = checkTemporaryFixes;
       };
 
-      # Force the wrapped package values far enough to emit their lazy notices,
-      # but only retain plain version strings so the check has no package build
-      # dependencies.
+      # Force lazy notices without making the check build the affected packages.
       temporaryFixNoticeState = lib.concatMapStringsSep "\n"
         (target:
           let
@@ -68,7 +66,7 @@ in
 
       devshells.default = {
         name = "nixos-config";
-        packages = with pkgs; [ sops age ssh-to-age nix-output-monitor ];
+        packages = with pkgs; [ sops age ssh-to-age nix-output-monitor gh ];
         commands = [
           { name = "fmt"; help = "Format the tree"; command = "nix fmt"; }
           {

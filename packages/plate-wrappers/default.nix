@@ -1,38 +1,7 @@
-# Plate XIV compositor-detection wrappers (D24, Batch 2).
-#
-# hypridle's config and wlogout's config are compositor-agnostic protocol
-# consumers (ext-idle-notify-v1 / plain shell commands) — only the specific
-# actions they invoke are Hyprland-coupled (`hyprctl dispatch ...`). Rather
-# than forking the idle daemon or the logout menu per compositor, these three
-# wrapper binaries branch on the active compositor at call time and dispatch
-# to the verified equivalent command. hypridle/wlogout call these binaries by
-# name instead of hardcoding `hyprctl` strings (Switch/Trinity wire the call
-# sites; this file only owns the wrapper contract itself).
-#
-# Detection: `$NIRI_SOCKET` is set by niri for the lifetime of a niri
-# session (confirmed present as a literal env-var name inside the built
-# `nixpkgs#niri` binary via `strings`) and `$HYPRLAND_INSTANCE_SIGNATURE` is
-# set by Hyprland the same way (confirmed the same way against the locally
-# installed `hyprctl` binary) — both are genuine runtime signals, not guesses.
-#
-# Commands dispatched:
-#   plate-dpms-on   -> niri: `niri msg action power-on-monitors`
-#                      hypr: `hyprctl dispatch dpms on`
-#   plate-dpms-off  -> niri: `niri msg action power-off-monitors`
-#                      hypr: `hyprctl dispatch dpms off`
-#   plate-logout    -> niri: `niri msg action quit`
-#                      hypr: `hyprctl dispatch exit`
-#
-# All three niri subcommands (`power-on-monitors`, `power-off-monitors`,
-# `quit`) were verified empirically against the real, locally built
-# `nixpkgs#niri` 26.04 binary's `niri msg action --help` output — none of
-# these names were guessed (D24 explicitly forbids that for the two
-# power-*-monitors names; `quit` was already confirmed live in
-# home/features/niri/config.kdl.nix).
-#
-# If neither environment variable is present (e.g. a TTY or an unsupported
-# compositor), the wrapper exits non-zero with a clear error instead of
-# silently no-op'ing or guessing a fallback command.
+# Shared DPMS/logout actions for hypridle and wlogout.
+# Detect the active compositor at call time: NIRI_SOCKET takes precedence
+# over HYPRLAND_INSTANCE_SIGNATURE. With neither set, exit non-zero with an
+# error rather than guessing a compositor or silently doing nothing.
 
 { pkgs }:
 

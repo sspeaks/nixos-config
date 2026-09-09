@@ -17,8 +17,7 @@ rec {
     dotnet-sdk = pkgs.dotnetCorePackages.sdk_10_0;
     dotnet-runtime = pkgs.dotnetCorePackages.runtime_10_0;
     dotnetBuildFlags = "-m:1";
-    # Garnet multi-targets net8.0;net9.0 — restrict to net9.0 only
-    # since we only provide the .NET 9.0 SDK/runtime.
+    # Restrict multi-targeting to the SDK/runtime provided above.
     dotnetFlags = [ "-p:TargetFrameworks=net10.0" ];
     dotnetInstallFlags = [ "-f" "net10.0" ];
 

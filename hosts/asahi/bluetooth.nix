@@ -7,15 +7,15 @@
     settings = {
       General = {
         Experimental = true; # Required for BLE FIDO2/passkey (caBLE hybrid transport)
-        KernelExperimental = true; # Enable kernel-level BLE experimental features
+        KernelExperimental = true;
       };
     };
   };
 
-  # Blueman service (provides root-level D-Bus mechanism for blueman-applet)
+  # Provide the privileged D-Bus backend for blueman-applet.
   services.blueman.enable = true;
 
-  # Allow non-root access to /dev/uhid (required for FIDO2/passkey caBLE hybrid transport)
+  # Passkey caBLE transport needs non-root /dev/uhid access.
   services.udev.extraRules = ''
     KERNEL=="uhid", GROUP="input", MODE="0660"
   '';

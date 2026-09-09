@@ -18,7 +18,7 @@ in
       selection-background = plate.stripHash plate.bg.inset;
       selection-foreground = plate.stripHash plate.fg.primary;
 
-      # D15 — ratified 16-colour ANSI table.
+      # ANSI colors retain distinct hues even though the shell theme is neutral.
       palette = [
         "0=111111" # black    — plate surface
         "1=c23b2a" # red      — vermilion dark

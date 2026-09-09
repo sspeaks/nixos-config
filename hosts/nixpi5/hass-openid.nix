@@ -10,8 +10,4 @@ buildHomeAssistantComponent rec {
     rev = "1.2.0";
     sha256 = "sha256-tfdTwUWE8dUwN6zie5jPJF3SVa+GngWZwj4MiXEUwAA=";
   };
-  # dependencies = [
-  #    http
-  #    auth
-  #  ];
 }

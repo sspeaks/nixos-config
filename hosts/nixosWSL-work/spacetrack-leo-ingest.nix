@@ -49,10 +49,7 @@ in
     conjunction = {
       enable = true;
       mode = "optimized";
-      # Compacting GC (-c) keeps the per-tile propagation table from doubling at
-      # major GC; -N uses all cores. -M16g is a safety ceiling: the tiled screen
-      # peaks around 6 GB, so a runaway fails as a clean heap overflow instead of
-      # driving this 22 GB host into the OOM killer.
+      # Compacting GC avoids copying large propagation tables; cap heap growth.
       rtsOptions = [ "-N" "-c" "-M16g" ];
     };
   };

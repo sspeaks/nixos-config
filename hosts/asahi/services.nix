@@ -8,14 +8,12 @@
   services.openssh.enable = false;
   services.openssh.settings.X11Forwarding = false;
 
-  # Docker
   virtualisation.docker.enable = true;
   users.users.sspeaks.extraGroups = [ "docker" ];
 
-  # Keyring - auto-unlocks at login for Chromium, git, etc.
+  # Unlock the application keyring through SDDM's PAM session.
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.sddm.enableGnomeKeyring = true;
 
-  # Power management
   services.power-profiles-daemon.enable = true;
 }

@@ -48,13 +48,10 @@ in
         };
         wireguardPeers = [
           {
-            PublicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0="; # server public key
+            PublicKey = "vq/1shvvFP1lTc7TjdAhIJDEz7hh1Bijv5QwlJz4ND0=";
             AllowedIPs = [ "0.0.0.0/0" ];
-            # NO Endpoint. This dialled the `nixos` Azure VM at 13.91.123.214,
-            # deleted 2026-09-04. Azure has reclaimed that Basic public
-            # IP, so it can be reassigned to an unrelated tenant -- keeping the
-            # literal would mean re-enabling this tunnel sends handshakes to
-            # whoever holds it now. Set a new endpoint before re-enabling.
+            # Set and verify a new endpoint before enabling; the retired VM's
+            # released public address may belong to another tenant.
             RouteTable = "off";
           }
         ];
@@ -83,23 +80,19 @@ in
       "10-wan" = {
         matchConfig.Name = "wlan0";
         networkConfig = {
-          # start a DHCP Client for IPv4 Addressing/Routing
           DHCP = "ipv4";
           DNSOverTLS = true;
           DNSSEC = true;
           IPv6PrivacyExtensions = false;
           IPv4Forwarding = true;
         };
-        # make routing on this interface a dependency for network-online.target
+        # Wait for a WAN route before declaring the router online.
         linkConfig.RequiredForOnline = "routable";
       };
 
       "10-wg0" = lib.mkIf enableWireguard {
         matchConfig.Name = "wg0";
         address = [ "10.100.0.3/24" ];
-        #        gateway = [
-        #         "10.100.0.1"
-        #      ];
         routingPolicyRules = [
           {
             Family = "both";

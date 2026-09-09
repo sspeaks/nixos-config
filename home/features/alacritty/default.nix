@@ -44,7 +44,7 @@ in
         size = 12.0;
       };
 
-      # Catppuccin Mocha theme (sourced from home/features/theme/palette.nix)
+      # Catppuccin Mocha
       colors = {
         primary = {
           background = mocha.base;
@@ -149,14 +149,11 @@ in
 
       keyboard = {
         bindings = [
-          # Shift+Enter sends escape then return (useful for some terminal apps)
+          # Shift+Enter sends Escape then Return for terminal applications.
           { key = "Return"; mods = "Shift"; chars = "\\u001B\\r"; }
-          # Ctrl+Shift+C/V for copy/paste
           { key = "C"; mods = "Control|Shift"; action = "Copy"; }
           { key = "V"; mods = "Control|Shift"; action = "Paste"; }
-          # Ctrl+Shift+N for new window
           { key = "N"; mods = "Control|Shift"; action = "SpawnNewInstance"; }
-          # Increase/decrease font size
           { key = "Plus"; mods = "Control"; action = "IncreaseFontSize"; }
           { key = "Minus"; mods = "Control"; action = "DecreaseFontSize"; }
           { key = "Key0"; mods = "Control"; action = "ResetFontSize"; }

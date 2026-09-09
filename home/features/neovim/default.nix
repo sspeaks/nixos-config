@@ -1,16 +1,4 @@
 { pkgs, inputs, ... }:
-# let
-#   telescope_live_args = pkgs.vimUtils.buildVimPlugin {
-#     name = "telescope-live-grep-args";
-#     src = pkgs.fetchFromGitHub {
-#       owner = "nvim-telescope";
-#       repo = "telescope-live-grep-args.nvim";
-#       rev = "b80ec2c70ec4f32571478b501218c8979fab5201";
-#       sha256 = "sha256-VmX7K21v3lErm7f5I7/1rJ/+fSbFxZPrbDokra9lZpQ=";
-#     };
-#   };
-# in
-
 {
   imports = [ inputs.nixvim.homeModules.nixvim ];
 

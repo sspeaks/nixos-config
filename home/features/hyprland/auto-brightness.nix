@@ -11,9 +11,7 @@ let
     SCREEN_MAX=$(${pkgs.brightnessctl}/bin/brightnessctl -d "$SCREEN_DEV" max)
     KBD_MAX=$(${pkgs.brightnessctl}/bin/brightnessctl -d "$KBD_DEV" max)
 
-    # ALS modifier: scales user brightness up/down based on ambient light.
-    # Returns a multiplier as percentage (100 = no change).
-    # Bright room = boost, dark room = dim.
+    # Ambient-light multiplier for user brightness, in percent (100 = unchanged).
     get_als_modifier() {
       local als=$1
       if   [ "$als" -le 10 ];  then echo 30
@@ -46,7 +44,6 @@ let
       echo "$val"
     }
 
-    # Initialize user brightness to current actual brightness percentage
     current=$(${pkgs.brightnessctl}/bin/brightnessctl -d "$SCREEN_DEV" get)
     user_pct=$(( current * 100 / SCREEN_MAX ))
     echo "$user_pct" > "$USER_PCT_FILE"
@@ -64,14 +61,14 @@ let
       modifier=$(get_als_modifier "$als")
       kbd_pct=$(get_kbd_pct "$als")
 
-      # Read user-set brightness (slider/keys write to this file)
+      # Plate brightness helpers record the user's chosen baseline here.
       user_pct=$(cat "$USER_PCT_FILE" 2>/dev/null || echo 50)
 
-      # Apply ALS modifier to user brightness
       final=$(( user_pct * modifier / 100 ))
       final=$(clamp "$final" 1 100)
 
-      # Only update screen if ALS modifier changed and Hypridle is not dimming.
+      # Preserve manual brightness changes until ambient light changes.
+      # Do not counteract hypridle's temporary dimming.
       if [ "$modifier" != "$prev_modifier" ] && [ ! -e "$DIMMING_SENTINEL" ]; then
         ${pkgs.brightnessctl}/bin/brightnessctl -d "$SCREEN_DEV" set "''${final}%" -q
         prev_modifier="$modifier"

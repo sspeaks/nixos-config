@@ -15,9 +15,7 @@ let
   };
 in
 {
-  # Only define (and therefore decrypt) the sops secrets when the service is
-  # enabled. With enableService = false this is mkIf false, so the secrets are
-  # never decrypted.
+  # Do not decrypt service credentials while the service is disabled.
   sops.secrets = lib.mkIf enableService {
     spacetrack-username = {
       sopsFile = ../../secrets/asahi.yaml;
@@ -37,8 +35,7 @@ in
   services.spacetrack-leo-ingest = {
     enable = enableService;
 
-    # Guarded by mkIf so config.sops.secrets.*.path is never forced when the
-    # service (and thus the secrets above) is disabled.
+    # Avoid resolving paths to secrets that are disabled above.
     spacetrack.usernameFile = lib.mkIf enableService config.sops.secrets.spacetrack-username.path;
     spacetrack.passwordFile = lib.mkIf enableService config.sops.secrets.spacetrack-password.path;
 
@@ -57,10 +54,7 @@ in
     conjunction = {
       enable = enableService;
       mode = "optimized";
-      # Compacting GC (-c) keeps the per-tile propagation table from doubling at
-      # major GC; -N uses all cores. -M16g is a safety ceiling: the tiled screen
-      # peaks around 6 GB, so a runaway fails as a clean heap overflow instead of
-      # driving this 22 GB host into the OOM killer.
+      # Compacting GC avoids copying large propagation tables; cap heap growth.
       rtsOptions = [ "-N" "-c" "-M16g" ];
     };
   };

@@ -1,53 +1,9 @@
-// ControlCenter — Plate XIV status / system-control panel
+// Plate XIV status and system controls. IPC: controlCenter.toggle().
+// Pointer-driven controls leave the keyboard grab to the launcher.
 //
-// D23 groups this with the notification surfaces under one layer-shell
-// contract: layer Top, exclusiveZone 0, keyboardFocus None — positioned
-// below the caption at top margin = Theme.captionHeight + Theme.spacingLg.
-// keyboardFocus None is intentional even though this panel has clickable
-// controls: everything here is mouse-driven (chips, buttons, sliders),
-// nothing needs text entry, so it never has to compete with the launcher
-// for keyboard grab.
-//
-// IPC: D23 authored this panel's *content* contract but never named an
-// IPC target or niri keybind for opening it, so this file exposes
-// `target: "controlCenter"`, function `toggle()` — mirroring the
-// launcher's D10 shape exactly. Trinity has since landed the niri side:
-// `Mod+Shift+Space` in config.kdl.nix calls
-// `qs ipc -c plate-xiv call controlCenter toggle` (the corrected argument
-// order — `-c`/`--config` belongs to `qs ipc`, not `ipc call`; see the
-// trinity-niri-batch2-* inbox note for the D10 correction record), so this
-// panel is reachable in a live niri session.
-//
-// Batch 3 — five system-control rows (D32):
-//   battery status  · UPower.displayDevice (already imported, enhanced)
-//   brightness      · plate-brightness-get / plate-brightness-set (Tank D32 wrappers)
-//   volume + mute   · plate-volume-get / plate-volume-set / plate-volume-toggle-mute
-//   Wi-Fi           · plate-wifi-status / plate-wifi-toggle / plate-wifi-configure
-//   Bluetooth       · plate-bluetooth-status / plate-bluetooth-toggle
-//
-// All five use Tank's plate-controls wrapper binaries (packages/plate-controls,
-// added to environment.systemPackages in hosts/asahi/desktop.nix).  QML never
-// calls raw CLI tools directly — wrappers own device names, argument order, and
-// output contracts so this file stays compositor-agnostic.
-//
-// Polling contract: all five run on a 3 s timer *only while visible*; the
-// timer starts on show, stops on hide, and all in-flight processes are
-// cancelled on hide.  Explicitly loading/error/unsupported states are shown
-// for every row — no silent success-shaped defaults.
-//
-// Wrapper stdout contracts (Tank D32 — these are the only strings parsed here):
-//   plate-brightness-get  → "CURRENT MAX"    e.g. "420 800"
-//   plate-brightness-set  → (no stdout)       arg: integer 0-100
-//   plate-volume-get      → "VOL MUTED"       e.g. "0.72 0" or "0.50 1"
-//   plate-volume-set      → (no stdout)       arg: float 0.0-1.0
-//   plate-volume-toggle-mute → (no stdout)
-//   plate-wifi-status     → "POWERED STATE SSID" e.g. "1 connected HomeNet"
-//                                                   or "0 disconnected "
-//   plate-wifi-toggle     → (no stdout)
-//   plate-wifi-configure  → launches the graphical network configurator
-//   plate-bluetooth-status → "POWERED COUNT"  e.g. "1 2" (powered=1, 2 connected)
-//   plate-bluetooth-toggle → (no stdout)
-//   All wrappers: exit non-0 + stderr message when hardware/daemon absent.
+// Battery state comes from UPower; packages/plate-controls owns the other
+// backends and their stdout/error contracts. Status helpers poll every 3 s
+// while visible; hiding cancels reads, not in-flight mutations.
 
 pragma ComponentBehavior: Bound
 
@@ -153,7 +109,6 @@ PanelWindow {
     }
 
     // ── Poll timer ────────────────────────────────────────────────────────
-    // Runs every 3 s while visible; cancelled immediately on hide.
     Timer {
         id:       pollTimer
         interval: 3000
@@ -183,7 +138,7 @@ PanelWindow {
             pollTimer.start();
         } else {
             pollTimer.stop();
-            // Cancel in-flight processes.
+            // Stop reads without interrupting mutations.
             brightnessGetProc.running = false;
             volumeReadProc.running    = false;
             wifiStatusProc.running    = false;
@@ -192,9 +147,6 @@ PanelWindow {
     }
 
     // ── Brightness processes ──────────────────────────────────────────────
-    // Read: `plate-brightness-get` → "CURRENT MAX" e.g. "420 800"
-    // Percentage derived: round(cur / max * 100). Wrapper targets apple-panel-bl
-    // explicitly (Tank D32) — device name not repeated here.
     Process {
         id:      brightnessGetProc
         command: ["plate-brightness-get"]
@@ -236,8 +188,6 @@ PanelWindow {
     }
 
     // ── Volume processes ──────────────────────────────────────────────────
-    // Read: `plate-volume-get` → "VOL MUTED"  e.g. "0.72 0" or "0.50 1"
-    // VOL is already 0.0-1.0 — no conversion needed for the slider.
     Process {
         id:      volumeReadProc
         command: ["plate-volume-get"]
@@ -278,7 +228,6 @@ PanelWindow {
         }
     }
 
-    // Mute toggle: `plate-volume-toggle-mute` — no args.
     // Re-reads volume after toggle so mute indicator updates immediately.
     Process {
         id:      volumeMuteProc
@@ -291,9 +240,7 @@ PanelWindow {
     }
 
     // ── Wi-Fi processes ───────────────────────────────────────────────────
-    // Status: `plate-wifi-status` → "POWERED STATE SSID". POWERED, connection
-    // state, and SSID are deliberately independent; an enabled radio can be
-    // disconnected and SSID may be empty.
+    // Radio power and connection state are independent; preserve spaces in SSIDs.
     Process {
         id:      wifiStatusProc
         command: ["plate-wifi-status"]
@@ -331,7 +278,6 @@ PanelWindow {
         }
     }
 
-    // Toggle through the Plate helper, then re-poll status.
     Process {
         id:      wifiToggleProc
         command: ["plate-wifi-toggle"]
@@ -353,9 +299,6 @@ PanelWindow {
     }
 
     // ── Bluetooth processes ───────────────────────────────────────────────
-    // Status: `plate-bluetooth-status` → "POWERED CONNECTED"
-    //   POWERED = 0|1, CONNECTED = count of connected devices.
-    //   Exit non-0 when no adapter or backend service is available.
     Process {
         id:      btStatusProc
         command: ["plate-bluetooth-status"]
@@ -382,8 +325,7 @@ PanelWindow {
         }
     }
 
-    // The button starts only this helper. Completion is always followed by a
-    // status poll, including failures, so UI state never relies on optimism.
+    // Re-poll after success or failure rather than assuming the radio changed.
     Process {
         id:      btToggleProc
         command: ["plate-bluetooth-toggle"]
@@ -403,7 +345,6 @@ PanelWindow {
     }
 
     // ── IPC ───────────────────────────────────────────────────────────────
-    // Mirrors the launcher's D10 IPC shape (see file header note).
     IpcHandler {
         target: "controlCenter"
 
@@ -506,7 +447,6 @@ PanelWindow {
                     Layout.preferredWidth: 30
                 }
 
-                // Mini progress bar.
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight:   4
@@ -536,7 +476,6 @@ PanelWindow {
             }
 
             // ── Brightness row ────────────────────────────────────────────
-            // Hidden permanently once brightnessctl confirms no backlight.
             RowLayout {
                 Layout.fillWidth: true
                 implicitHeight:   Theme.captionHeight
@@ -551,7 +490,6 @@ PanelWindow {
                     Layout.preferredWidth: 30
                 }
 
-                // Loading state: show "--" until first value arrives.
                 Text {
                     visible:        root.brightnessPct < 0
                     text:           "--"
@@ -566,8 +504,6 @@ PanelWindow {
                     Layout.fillWidth: true
                     visible:          root.brightnessPct >= 0
                     from:  0;  to: 100;  stepSize: 1
-                    // Bind value only when not currently being dragged so poll
-                    // updates flow in without fighting the user's drag gesture.
                     value: root.brightnessPct >= 0 ? root.brightnessPct : 0
                     onMoved: {
                         const pct = Math.round(brightnessSlider.value);
@@ -589,7 +525,6 @@ PanelWindow {
             }
 
             // ── Volume row ────────────────────────────────────────────────
-            // Hidden permanently once wpctl confirms no default sink.
             RowLayout {
                 Layout.fillWidth: true
                 implicitHeight:   Theme.captionHeight
@@ -604,7 +539,6 @@ PanelWindow {
                     Layout.preferredWidth: 30
                 }
 
-                // Loading state.
                 Text {
                     visible:        root.volumeLevel < 0
                     text:           "--"
@@ -635,7 +569,6 @@ PanelWindow {
                     color:          Theme.fgMuted
                 }
 
-                // Mute toggle button: dim when muted.
                 Rectangle {
                     visible:        root.volumeLevel >= 0
                     implicitWidth:  muteLabel.implicitWidth + Theme.spacingSm * 2
@@ -650,7 +583,6 @@ PanelWindow {
                         text:             "MUTE"
                         font.family:      Theme.fontUi
                         font.pointSize:   8
-                        // Dimmed when muted to show the muted state visually.
                         color: root.volumeMuted ? Theme.fgPrimary : Theme.fgMuted
                     }
 
@@ -683,7 +615,6 @@ PanelWindow {
                     Layout.preferredWidth: 30
                 }
 
-                // State / network label.
                 Text {
                     Layout.fillWidth: true
                     text: {
@@ -816,10 +747,6 @@ PanelWindow {
                 }
             }
 
-            // ── Quick actions removed ─────────────────────────────────────
-            // LOCK and LOGOUT moved to ActionMenu (Batch 5) which owns all
-            // session / power / recording actions exclusively.  ControlCenter
-            // retains only polling status + system-control sliders.
         }
     }
 }

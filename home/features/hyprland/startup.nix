@@ -1,11 +1,7 @@
 { asahiPaths, pkgs, ... }:
 
-# Plate XIV startup slice — Hyprland only.
-# Wallpaper is sourced from the immutable store path provided by Tank;
-# the mutable-path watcher units (swaybg-refresh, swaybg-wallpaper path)
-# are removed. swaybg runs as a plain systemd service against a fixed path.
-# Quickshell is NOT launched here — it belongs in niri's spawn-at-startup
-# once the niri session is activated.
+# Wallpaper uses the host's immutable store path.
+# Quickshell autostart is configured in niri/config.kdl.nix, not here.
 let
   swaybgCommand = "${pkgs.swaybg}/bin/swaybg -i ${asahiPaths.wallpaper} -m fill";
 in

@@ -27,16 +27,14 @@ fallback_commit_message() {
   fi
 }
 
-# Stage everything
 git add -A
 
-# Exit early if nothing to commit
 if git diff --cached --quiet; then
   echo "Nothing to commit."
   exit 0
 fi
 
-# Generate a commit message from a bounded staged summary via Copilot CLI.
+# Send filenames and statistics to Copilot, not file contents.
 diff_summary=$(
   {
     echo "Changed files:"

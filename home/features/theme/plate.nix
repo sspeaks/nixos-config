@@ -1,17 +1,10 @@
-# Plate XIV — Semantic Token Foundation
-#
-# Role-based design tokens for the Plate XIV palette.
-# Pure attrset: no imports, no side effects, no pkgs dependency.
+# Plate XIV role-based design tokens; no pkgs dependency.
 # Consumers reference tokens by role, not by raw hex.
-# Ratified: D1, D2, D4 — Morpheus design review 2026-08-08.
 
 let
-  # ---------------------------------------------------------------------------
-  # Color utility helpers (internal — also re-exported below per D4)
-  # ---------------------------------------------------------------------------
   stripHash = color: builtins.substring 1 6 color;
 
-  # Hyprland/hyprlock format: "rgba(rrggbbAA)" — alpha is 2 uppercase hex digits.
+  # Hyprland/hyprlock use packed hex rgba(rrggbbaa), not CSS rgba(r, g, b, a).
   hyprRgba = color: alpha: "rgba(${stripHash color}${alpha})";
   hyprRgb = color: "rgb(${stripHash color})";
 
@@ -50,47 +43,45 @@ let
 
 in
 {
-  # ── Semantic groups ────────────────────────────────────────────────────────
-
-  # Background layers — darkest to lightest (D1)
+  # Background layers — darkest to lightest
   bg = {
-    void = "#0a0a0a"; # true black; wallpaper / deepest layer
+    void = "#0a0a0a"; # wallpaper / deepest layer
     plate = "#111111"; # primary surface (bars, menus)
     panel = "#1a1a1a"; # elevated surface (tooltips, popups)
     inset = "#232323"; # interactive fill (inputs, hover)
   };
 
-  # Structural lines (D1)
+  # Structural lines
   line = {
     hairline = "#2e2e2e"; # subtle separator / divider (wallpaper grid fine)
     rule = "#404040"; # visible separator (wallpaper grid coarse)
     edge = "#555555"; # visible border / outline (inactive)
   };
 
-  # Foreground text hierarchy (D1)
+  # Foreground text hierarchy
   fg = {
     muted = "#5a5a5a"; # disabled, placeholders (intentionally sub-AA)
     secondary = "#909090"; # captions, subtext (AA)
     primary = "#d4d4d4"; # body text, labels (AAA)
   };
 
-  # Accent — vermilion is the ONLY non-neutral hue (D1)
+  # Vermilion is the only non-neutral hue.
   accent = {
-    vermilion = "#e03c28"; # primary brand / focus / urgent (AA on bg.plate)
+    vermilion = "#e03c28"; # primary brand / focus / urgent
     on = "#ffffff"; # text on vermilion surfaces
   };
 
-  # Semantic state colors (D1)
+  # Semantic state colors
   state = {
     focus = "#e03c28"; # focused / active element highlight (= vermilion)
     urgent = "#e03c28"; # urgent notification (= vermilion)
     warn = "#a0a0a0"; # warning / modified state
     ok = "#6e6e6e"; # success / ok state
     inactive = "#333333"; # inactive / disabled element
-    fail = "#e03c28"; # failure / error state (= vermilion, D25 — no new hue)
+    fail = "#e03c28"; # failure / error state
   };
 
-  # Layout geometry — string values per D1 (CSS-compatible units)
+  # Geometry uses CSS strings; numeric consumers must strip the units.
   geometry = {
     radius = "0px"; # corner rounding — sharp edges, Plate XIV style
     border = "1px"; # default border width
@@ -98,14 +89,14 @@ in
     gapOuter = "8px"; # outer gap / margin to screen edge
   };
 
-  # Typography — fontconfig family strings (D2)
+  # Typography — fontconfig family strings
   type = {
     mono = "Iosevka Nerd Font"; # general monospace / code
     terminal = "IosevkaTerm Nerd Font"; # terminal emulator
     sddm = "Iosevka Nerd Font"; # login screen (SDDM/QML)
     monoCss = ''"Iosevka Nerd Font", "Symbols Nerd Font", monospace''; # CSS font-family stack
 
-    # Size scale — CSS-compatible strings (D1)
+    # CSS size scale
     size = {
       xs = "11px";
       sm = "12px";
@@ -115,8 +106,6 @@ in
     };
   };
 
-  # ── Emit-format helpers (D4) ──────────────────────────────────────────────
-  # Exact surface: stripHash, toRgb, hyprRgba, hyprRgb, cssRgb, cssRgba.
-  # Bare hex IS the token value; identity passthroughs are rejected.
+  # Tokens are bare hex; these helpers emit compositor or CSS formats.
   inherit stripHash toRgb hyprRgba hyprRgb cssRgb cssRgba;
 }

@@ -1,7 +1,5 @@
 { ... }:
 
-# Plate XIV compositor slice — flat, restrained, token-driven.
-# Rounding/blur/shadow/dim are all off. Square, opaque, 1 px border.
 let
   plate = import ../theme/plate.nix;
 in

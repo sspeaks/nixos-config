@@ -1,25 +1,16 @@
 let
-  # Each temporary workaround below is paired with a best-effort obsolescence
-  # check that fires when the upstream issue looks resolved, so these don't
-  # silently linger. `breakOnObsolete` turns notices into hard (build-breaking)
-  # eval errors — but only for `precise` checks; heuristic checks always stay
-  # warnings so a routine version/input bump can't block evaluation.
+  # Precise obsolescence checks may fail evaluation; heuristics always warn
+  # so routine input updates are not blocked by uncertain matches.
   breakOnObsolete = false;
 
-  # verifyBuild <attr>: a command (run from the repo root) that builds <attr>
-  # from the flake's own locked nixpkgs with NO temporary-fixes overlay.
-  # `--inputs-from .` reuses the locked nixpkgs, so there's no flake.lock/jq
-  # parsing. A clean build ⇒ obsolete. A failure is INCONCLUSIVE: confirm it
-  # reproduces the *original* failure (e.g. the disabled test), not an unrelated
-  # dependency/platform issue. For a non-current arch, prefix the attr with
-  # `legacyPackages.<system>.` (needs that arch's builder/emulation).
+  # Build from the repo root against locked nixpkgs without this overlay.
+  # A clean build makes the workaround obsolete; failures must reproduce the
+  # original issue. For another architecture, use legacyPackages.<system>.<attr>
+  # with a matching builder or emulation.
   verifyBuild = attr:
     ''nix build -L --no-link --inputs-from . "nixpkgs#${attr}"'';
 
-  # mkNotice lib { obsolete, what, evidence, verify ? null, precise ? false } <value>:
-  #   returns <value> unchanged, but at eval time warns (or throws, when
-  #   breakOnObsolete && precise) if `obsolete`. Pass `verify` (a command) when
-  #   detection is only heuristic so the reader can settle it for sure.
+  # Heuristic notices should supply a verification command.
   mkNotice = lib: { obsolete, what, evidence, verify ? null, precise ? false }:
     let
       msg = "temporary-fixes.nix: '${what}' may be obsolete — ${evidence}."
@@ -28,8 +19,7 @@ let
     in
     (if breakOnObsolete && precise then lib.throwIf else lib.warnIf) obsolete msg;
 
-  # Package values to force during `nix flake check`, so their lazy notices are
-  # emitted without building the packages.
+  # Force these packages' notices during flake checks without building them.
   noticeTargets = [ ];
 
   # Isolated upstream builds used by the `check-temporary-fixes` command.

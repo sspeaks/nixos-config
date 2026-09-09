@@ -31,7 +31,7 @@ let
   fonts = {
     mono = "JetBrainsMono Nerd Font";
     monoCss = ''"JetBrainsMono Nerd Font", "JetBrains Mono Nerd Font", "JetBrains Mono", "Symbols Nerd Font", "Font Awesome 6 Free", monospace'';
-    # Cascadia Code (ligature variant) — ligatures render in Ghostty.
+    # Cascadia Code's ligature variant.
     terminal = "CaskaydiaCove Nerd Font";
     sddm = "JetBrains Mono";
   };
@@ -78,11 +78,10 @@ let
   cssRgb = color: "rgb(${toRgb color})";
   cssRgba = color: alpha: "rgba(${toRgb color}, ${alpha})";
 
-  # Single accent knob. Change these two lines to re-theme the whole desktop.
+  # Accents for consumers of this palette; Plate XIV has separate tokens.
   accent = mocha.blue;
   accentAlt = mocha.mauve;
 
-  # Shared corner-radius scale so every surface rounds consistently.
   radius = {
     sm = "6px";
     md = "10px";
@@ -90,8 +89,7 @@ let
     xl = "20px";
   };
 
-  # Semantic, ready-to-drop-in CSS surfaces derived from the palette above.
-  # Blur is enabled on these layers, so translucency reads cleanly.
+  # Shared translucent CSS surfaces.
   surfaces = {
     bar = cssRgba mocha.crust "0.85"; # top-level bar / menu window background
     panel = cssRgba mocha.base "0.6"; # individual modules / grouped chips
@@ -120,6 +118,5 @@ in
     surfaces
     ;
 
-  # Plate XIV semantic token foundation — import for role-based access.
   plate = import ./plate.nix;
 }

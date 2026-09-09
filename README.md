@@ -15,7 +15,7 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 | `raspberrytimemachine` | aarch64-linux | Raspberry Pi 4 — Time Machine appliance with a USB backup disk; network hostname remains `raspberrypi` |
 | `vidbox` | x86_64-linux | Home Hyper-V VM — video streaming and AI coaching |
 | `vm` | x86_64-linux | Minimal test/dev VM |
-| `asahi` | aarch64-linux | Apple Silicon Mac — GNOME desktop workstation |
+| `asahi` | aarch64-linux | Apple Silicon Mac — Niri desktop with Hyprland fallback |
 
 ## Standalone Home-Manager Profiles
 
@@ -29,18 +29,19 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 ## Repository Structure
 
 ```
-flake.nix          # Flake entrypoint — hosts, home profiles, packages, checks
-treefmt.nix        # Formatter configuration (nixpkgs-fmt via treefmt-nix)
-temporary-fixes.nix # Temporary upstream/workaround fixes to revisit later
-overlays.nix       # Nixpkgs overlays (waagent fix, custom packages)
+flake.nix           # Flake entrypoint
+flake-modules/      # Hosts, home profiles, packages, checks, and development shell
+  treefmt.nix       # nixpkgs-fmt via treefmt-nix
+temporary-fixes.nix # Upstream workarounds and obsolescence checks
+overlays.nix        # Nixpkgs overlays and custom packages
 hosts/
   common/          # Shared config: global defaults, sops, user definitions
   <host>/          # Per-host NixOS configurations
 home/
-  global/          # Shared home-manager config (shell, editor, tools)
+  global/          # Shared home-manager defaults
   features/        # Opt-in home-manager feature modules (git, zsh, sops, etc.)
   sspeaks.nix      # Full home profile
-  sspeaks-blog.nix # Minimal blog server profile
+  sspeaks-blog.nix  # Minimal blog server profile
 modules/           # Custom NixOS service modules (wireguard, minecraft, etc.)
 packages/          # Custom Nix packages (copilot-cli, gac, etc.)
 secrets/           # SOPS-encrypted secrets (age-encrypted YAML)
@@ -49,7 +50,10 @@ scripts/           # Maintenance scripts (bootstrap, update helpers)
 
 ## Quick Start
 
-### Deploy a NixOS host
+### Rebuild locally
+
+These commands may build packages locally. For cache-only remote deployment,
+use `./deploy <hostname>` or [update the fleet](#updating-the-fleet).
 
 ```bash
 # Rebuild the current host
@@ -95,27 +99,23 @@ nix flake check
 ./update-fleet --prefetch-only  # copy closures to the hosts, activate by hand
 ```
 
-The rule it enforces is that **nothing ever builds on a target**. Most of this
-fleet cannot: `proxy` has 938 MiB of RAM and the two Pi 4s have 1.8 GiB, and the
-controller is `aarch64-darwin` with no Linux builder, so it cannot build for any
-of them either. Every closure is built once by CI, pushed to Cachix, and only
-substituted onto each host. The script refuses to deploy a host whose closure is
-not already in the cache rather than letting that host try to build it.
+**Targets never build.** CI builds closures and publishes them to Cachix;
+deployment refuses cache misses instead of compiling on low-memory hosts.
+Cache-only deployment also supports an `aarch64-darwin` controller without a
+local Linux builder, subject to the evaluation limitation below.
 
-Hosts are activated in ascending order of blast radius — Time Machine box,
-`vidbox`, `nixpi4-bare`, `nixpi5`, then the edge — and each is checked for
-failed units before the next is touched, so a bad closure stops the run instead
-of reaching `proxy`. Activation uses `--test`, keeping `./deploy`'s interactive
-dead-man rollback guard; `--switch` per host makes it permanent.
+Activation proceeds from lower-impact hosts to the public edge:
+`raspberrytimemachine`, `vidbox`, `nixpi4-bare`, `nixpi5`, then `proxy`.
+A failed-unit check stops the run before the next host. Activation uses
+`./deploy --test` with an interactive rollback guard; use `./deploy --switch`
+for each host after a successful test to make the configuration persistent.
 
-Two known limitations it reports rather than hides:
+Limitations:
 
-- `nixpi4-bare` cannot be evaluated on an `aarch64-darwin` controller at all.
-  Its Haskell workload uses import-from-derivation, which forces an
-  `aarch64-linux` build during evaluation. Deploy it from a machine of its own
-  architecture, or configure an `aarch64-linux` remote builder.
-- Configurations not in its table are listed as unmanaged, so a new server
-  cannot silently go un-updated.
+- `nixpi4-bare` needs an `aarch64-linux` builder even during evaluation because
+  its Haskell workload uses import-from-derivation. Use a controller of that
+  architecture or configure a matching remote builder.
+- Configurations outside the fleet table are reported as unmanaged.
 
 ## Host Cache Builds
 
@@ -138,27 +138,18 @@ The `proxyAzureImage` package is a separate Gen2 VHD output. It is not built by
 this workflow: image creation needs KVM, which the hosted ARM runner lacks.
 Build it on `nixpi5`, where `/dev/kvm` is available.
 
-Note: the aarch64 build jobs use the GitHub Actions ARM runner label `ubuntu-24.04-arm`. If ARM hosted runners are unavailable for your repository plan, switch those jobs to a self-hosted aarch64 runner.
+ARM jobs use `ubuntu-24.04-arm`; use a self-hosted aarch64 runner if that label
+is unavailable for the repository.
 
 ### CI variables/secrets
 
-Set this in GitHub repository settings to push build outputs to Cachix:
-
-- Secret `CACHIX_AUTH_TOKEN`
-
-The workflow is pinned to cache name `sspeaks-nix`.
-
-If the secret is missing, the workflow fails fast before building.
+Set the repository secret `CACHIX_AUTH_TOKEN` to publish to the `sspeaks-nix`
+cache. It is exposed only to each job's final publish step, never to builds.
 
 ### sops-nix safety in CI
 
-This pipeline intentionally performs build-only operations:
-
-- Builds system closures and the Pi installation image
-- Does not run `nixos-rebuild switch`
-- Does not run activation scripts
-
-That keeps sops-nix decryption on target hosts where age keys already exist (for example `/var/lib/sops-nix/key.txt`) and avoids storing private age keys in CI.
+CI builds closures and the Pi installation image without activating them.
+sops-nix decryption happens on target hosts using their age keys, not in CI.
 
 ## Secrets Management
 

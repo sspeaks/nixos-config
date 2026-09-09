@@ -35,12 +35,9 @@ in
       emailClaim = "email";
       groupsClaim = "groups";
       emailDomains = [ "*" ];
-      # authentik has no email-verification feature and since 2025.10 reports
-      # email_verified = false rather than assert something it cannot prove.
-      # Safe here because accounts are admin-provisioned in authentik and users
-      # cannot self-register or change their own address; if that ever changes,
-      # set this back to false, because the evidence ledger attributes entries
-      # to this email.
+      # Authentik reports unverified emails. This requires admin-managed
+      # accounts/addresses: disable if users can register or change their email,
+      # since the evidence ledger attributes entries to that address.
       allowUnverifiedEmail = true;
       adminGroups = [ "quartet-members" ];
       editorGroups = [ ];
@@ -91,10 +88,8 @@ in
       staticRoot = artifacts.web-frontend;
     };
 
-    # Backs the worker's http_json extraction provider. Enabling this makes the
-    # module set EVIDENCE_EXTRACTION_PROVIDER and EVIDENCE_EXTRACTION_ENDPOINT
-    # on the worker; the worker's EVIDENCE_EXTRACTION_API_KEY must equal this
-    # container's EXTRACTION_GATEWAY_INBOUND_API_KEY.
+    # The worker's EVIDENCE_EXTRACTION_API_KEY must match the gateway's
+    # EXTRACTION_GATEWAY_INBOUND_API_KEY for http_json extraction.
     extractionGateway = {
       enable = true;
       image = "ai-coaching/extraction-gateway:flake";
@@ -109,11 +104,7 @@ in
     };
   };
 
-  # The aiCoaching module writes a pg_hba rule allowing the container subnet to
-  # reach PostgreSQL, but never opens the host firewall for it, so the packets
-  # are dropped before PostgreSQL ever sees them and the API hangs in
-  # init_schema() until its startup probe times out. podman assigns the bridge
-  # name, so the module cannot infer it; open the port on that interface here.
+  # The module's pg_hba rule also needs firewall access from the Podman bridge.
   networking.firewall.interfaces."podman1".allowedTCPPorts = [ 5432 ];
 
   services.postgresql.settings = {

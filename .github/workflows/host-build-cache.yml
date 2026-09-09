@@ -12,20 +12,12 @@ concurrency:
   group: host-build-cache
   cancel-in-progress: false
 
-# Supply-chain boundary.
+# Cache writers can publish systems activated as root. Expose CACHIX_AUTH_TOKEN
+# only to each job's final publish step, never to builds or job-level env.
+# Configure Cachix read-only and do not add steps after publication.
 #
-# A trusted cache writer is root-equivalent: anything holding CACHIX_AUTH_TOKEN
-# can publish a signed closure that a target will activate as root. Every build
-# step below evaluates Nix code from the repository, so no build step may ever
-# see that token.
-#
-# Therefore CACHIX_AUTH_TOKEN appears exactly once per job, in the `env:` of the
-# final "Publish to Cachix" step, and NOTHING runs after that step. The
-# cachix-action configure step deliberately passes no authToken -- it only adds
-# the public cache as a signature-verified substituter for reads.
-#
-# Do not reintroduce a job-level `env: CACHIX_AUTH_TOKEN`, and do not add a step
-# after a publish step.
+# Cache project paths here; targets fetch upstream dependencies from
+# cache.nixos.org with signature verification rather than mirroring nixpkgs.
 
 jobs:
   build-x86-linux:
@@ -44,8 +36,6 @@ jobs:
           use-flakehub: disabled
           use-gha-cache: enabled
 
-      # Read-only substituter setup. No authToken: builds must not hold a
-      # cache-write credential.
       - name: Configure Cachix (read-only substituter)
         uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
@@ -64,7 +54,6 @@ jobs:
           done
           cat closures.txt
 
-      # FINAL STEP. The only place the write token exists. Nothing may follow.
       - name: Publish to Cachix
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -72,11 +61,6 @@ jobs:
           set -euo pipefail
           test -s closures.txt
 
-          # Push the project-specific closure. Cachix deliberately does NOT
-          # mirror all of nixpkgs: forcing the full closure here would upload
-          # gigabytes per host on every commit and is not what a project cache
-          # is for. Upstream paths come from cache.nixos.org at fetch time,
-          # signature-verified against the official key.
           xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
 
@@ -102,8 +86,7 @@ jobs:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
 
-      # nixpi4-bare is the same Pi 4 hardware/kernel as nixpi, so it reuses the
-      # warm store of the first build instead of paying for a second ARM runner.
+      # Both Pi 4 variants share a runner to reuse the first build's store.
       - name: Build host closures (no activation, no credential)
         run: |
           set -euo pipefail
@@ -123,11 +106,6 @@ jobs:
           set -euo pipefail
           test -s closures.txt
 
-          # Push the project-specific closure. Cachix deliberately does NOT
-          # mirror all of nixpkgs: forcing the full closure here would upload
-          # gigabytes per host on every commit and is not what a project cache
-          # is for. Upstream paths come from cache.nixos.org at fetch time,
-          # signature-verified against the official key.
           xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-nixpi5:
@@ -168,11 +146,6 @@ jobs:
           set -euo pipefail
           test -s closures.txt
 
-          # Push the project-specific closure. Cachix deliberately does NOT
-          # mirror all of nixpkgs: forcing the full closure here would upload
-          # gigabytes per host on every commit and is not what a project cache
-          # is for. Upstream paths come from cache.nixos.org at fetch time,
-          # signature-verified against the official key.
           xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-asahi:
@@ -215,11 +188,6 @@ jobs:
           set -euo pipefail
           test -s closures.txt
 
-          # Push the project-specific closure. Cachix deliberately does NOT
-          # mirror all of nixpkgs: forcing the full closure here would upload
-          # gigabytes per host on every commit and is not what a project cache
-          # is for. Upstream paths come from cache.nixos.org at fetch time,
-          # signature-verified against the official key.
           xargs -a closures.txt cachix push "$CACHIX_CACHE_NAME"
 
   build-images:
@@ -244,22 +212,9 @@ jobs:
           name: ${{ env.CACHIX_CACHE_NAME }}
           skipPush: true
 
-      # A toplevel closure is neither an Azure VHD nor a bootable SD card.
-      # Build, inspect and checksum the Pi image here; the Azure VHD is
-      # deliberately NOT built here.
-      #
-      # `make-disk-image.nix` runs inside a VM and requires the `kvm` system
-      # feature. GitHub-hosted ubuntu-24.04-arm runners have no /dev/kvm
-      # (verified 2026-09-02: "ls: cannot access '/dev/kvm'"), so the VHD
-      # cannot be produced on this runner at all -- advertising the feature
-      # only moves the failure later.
-      #
-      # Build the VHD on nixpi5 instead: it is real aarch64 hardware WITH
-      # /dev/kvm. Check available disk space before starting. This keeps image
-      # production independent of both hosted-runner KVM support and the
-      # retired Azure ARM build VM.
-      #
-      # Everything below needs no VM and is genuinely faster here.
+      # The SD image needs no VM. Azure VHD creation requires KVM, unavailable
+      # on this hosted ARM runner; build that artifact on nixpi5 with enough
+      # free disk space instead.
       - name: Build Pi SD image and Arm64 host closures
         run: |
           set -euo pipefail
@@ -270,10 +225,7 @@ jobs:
           nix build --show-trace --print-build-logs --accept-flake-config \
             --no-link --print-out-paths \
             .#nixosConfigurations.proxy.config.system.build.toplevel >> closures.txt
-          # The SD image alone is only good for FIRST install. Without the
-          # system closure cached as well, this host cannot be updated the way
-          # every other machine is -- it has 1.8 GiB of RAM, so building its own
-          # closure is not a realistic fallback. Build the toplevel too.
+          # Cache the system closure too: subsequent updates do not use the image.
           nix build --show-trace --print-build-logs --accept-flake-config \
             --no-link --print-out-paths \
             .#nixosConfigurations.raspberrytimemachine.config.system.build.toplevel >> closures.txt
@@ -284,15 +236,10 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts
           PI_IMAGE="$(sed -n 1p closures.txt)"
-          # -type f matters: the Nix output PATH is itself a directory named
-          # "...img.zst", containing sd-image/...img.zst. Without -type f,
-          # find returns the directory and zstd fails with
-          # "is a directory -- ignored".
+          # The output directory also ends in .img.zst; select only files.
           IMAGE_ZST="$(find "$PI_IMAGE" -type f -name '*.img.zst' | head -1)"
           test -s "$IMAGE_ZST"
-          # `nix shell`, not `nix run`: `nix run nixpkgs#util-linux` tries to
-          # exec a binary literally named "util-linux", which does not exist --
-          # the package provides fdisk, lsblk and friends.
+          # util-linux provides fdisk but has no default executable for nix run.
           nix shell nixpkgs#zstd nixpkgs#util-linux --command bash -c '
             set -euo pipefail
             zstd -t "$0"
@@ -300,8 +247,7 @@ jobs:
             zstd -dc "$0" > artifacts/rtm.img
             fdisk -l artifacts/rtm.img | tee artifacts/pi-image-fdisk.txt
           ' "$IMAGE_ZST"
-          # A Pi image must be MBR/DOS with a FAT firmware partition; a GPT
-          # layout here would not boot on a Pi 4 at all.
+          # Pi 4 firmware needs an MBR/DOS layout with a FAT firmware partition.
           grep -qiE 'Disklabel type: dos' artifacts/pi-image-fdisk.txt
           grep -qiE 'FAT' artifacts/pi-image-fdisk.txt
           rm -f artifacts/rtm.img
