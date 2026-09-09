@@ -89,7 +89,10 @@ nix flake check
 
 ## Updating the fleet
 
-`./update-fleet` updates every always-on machine in one run:
+`./update-fleet` updates the selected always-on machines using a temporary,
+locked Nix runtime. A working Nix installation is the only additional local
+bootstrap prerequisite: Bash, Git, `gh`, OpenSSH and the required GNU tools
+are supplied without installing them globally or entering `nix develop`.
 
 ```bash
 ./update-fleet --check          # report only: reachability, cache state, drift
@@ -99,16 +102,68 @@ nix flake check
 ./update-fleet --prefetch-only  # copy closures to the hosts, activate by hand
 ```
 
+The fleet launcher defaults to its own checkout, regardless of the current
+directory. Use `--repo PATH` to select another checkout. Standalone `./deploy`
+continues to default to the current directory, with `--flake-dir PATH` as its
+override. The equivalent packaged commands are `nix run .#update-fleet -- ...`
+and `nix run .#deploy -- ...`; packaged fleet invocation defaults to the current
+directory unless `--repo` is supplied.
+
+Update/publish mode requires an authenticated GitHub account (`gh auth login`),
+a clean checkout at the current `origin/main`, and permission to push and merge
+the update PR. Nix supplies `gh`, not credentials. From the checkout, authenticate
+without globally installing it:
+
+```bash
+nix --extra-experimental-features 'nix-command flakes' shell \
+  --no-write-lock-file --inputs-from . nixpkgs#gh -c gh auth login
+```
+
+`--check` and `--no-update` do not require GitHub authentication.
+All target access requires independently verified SSH host keys and the normal
+unprivileged SSH account; deployment also requires noninteractive `sudo` and
+the target's NixOS deployment tools. No remote dependencies are installed.
+Host-key aliases from the fleet table apply consistently to probes and
+deployment; standalone deploy accepts `--host-key-alias ALIAS`. Do not bypass
+host-key verification or trust an unverified `ssh-keyscan` result.
+
 **Targets never build.** CI builds closures and publishes them to Cachix;
 deployment refuses cache misses instead of compiling on low-memory hosts.
 Cache-only deployment also supports an `aarch64-darwin` controller without a
 local Linux builder, subject to the evaluation limitation below.
 
+The update path waits for successful PR checks for the exact update commit,
+merges only that head, then selects the exact merge commit in detached-HEAD
+state while waiting for its cache workflow. The checkout and expected closure
+are checked again during deployment; unexpected drift stops the run.
+Failures leave branches, PRs and local changes available for inspection, not
+automatically reset. To resume after a publication failure, select a clean
+reviewed commit with published closures and use `--no-update`.
+
 Activation proceeds from lower-impact hosts to the public edge:
 `raspberrytimemachine`, `vidbox`, `nixpi4-bare`, `nixpi5`, then `proxy`.
-A failed-unit check stops the run before the next host. Activation uses
-`./deploy --test` with an interactive rollback guard; use `./deploy --switch`
-for each host after a successful test to make the configuration persistent.
+Fresh SSH, the expected running closure, and zero failed systemd units are
+required **before the rollback guard can be disarmed**. Failed probes are
+failures, not zero counts. The operator must still independently verify the
+management path and affected services, then explicitly confirm disarm.
+An activation or health failure stops the run before the next host, leaving an
+armed guard to recover the previous boot configuration. Do not retry blindly
+while a guard is pending.
+
+Activation uses `./deploy --test`; use the printed `deploy --switch` command
+(or `./deploy` with those arguments) for each verified host to make its exact
+configuration persistent. Active or unknown Time Machine sessions require an
+additional confirmation. `--auto-merge` skips only the merge prompt, never
+activation confirmations.
+
+Each mode summarizes every selected host. Unreachable or uncached hosts are
+skipped while eligible hosts continue, but incomplete runs, declined
+activations, and failed verification return nonzero. Drift alone in `--check`
+is not a failure. `--check` does not change Git or targets, though startup and
+evaluation may fetch local tooling/cache metadata. `--prefetch-only` writes
+target stores; without `--no-update` it still updates inputs and publishes a PR.
+Activation requires a terminal; unattended publication/prefetch requires
+`--prefetch-only --auto-merge`.
 
 Limitations:
 
