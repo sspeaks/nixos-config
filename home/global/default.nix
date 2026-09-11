@@ -1,9 +1,5 @@
 { lib, pkgs, config, ... }:
 {
-  imports = [
-    ../features/step-ssh
-  ];
-
   nix = {
     package = lib.mkDefault pkgs.nix;
     settings = {
