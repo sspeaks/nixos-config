@@ -17,7 +17,11 @@ export TEST_CLOSURE="/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-nixos-system-fi
 export TEST_COMMIT="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 export TEST_SCENARIO=normal
 
-printf '#!%s\n' "$(command -v bash)" >"$test_dir/bin/mock"
+# Absolute bash path: the Nix check sandbox has no /usr/bin/env, so generated
+# mock scripts must not rely on an env shebang.
+bash_bin="$(command -v bash)"
+
+printf '#!%s\n' "$bash_bin" >"$test_dir/bin/mock"
 cat >>"$test_dir/bin/mock" <<'MOCK'
 set -euo pipefail
 cmd="${0##*/}"
@@ -566,8 +570,8 @@ awk '/<<.REMOTE_REBOOT_CHECK./ {body=1; next} /^REMOTE_REBOOT_CHECK$/ {exit} bod
 [[ -s "$test_dir/reboot-probe" ]]
 
 # readlink mock: booted has different kernel/initrd/modules than new → REBOOT
-cat >"$test_dir/bin/readlink" <<'READLINK_DIFF'
-#!/usr/bin/env bash
+printf '#!%s\n' "$bash_bin" >"$test_dir/bin/readlink"
+cat >>"$test_dir/bin/readlink" <<'READLINK_DIFF'
 case "$2" in
   /run/booted-system/kernel)         echo /nix/store/kernel-old ;;
   /run/booted-system/initrd)         echo /nix/store/initrd-old ;;
@@ -582,8 +586,8 @@ chmod +x "$test_dir/bin/readlink"
 [[ "$(bash "$test_dir/reboot-probe" /nix/store/aaa-nixos-system-test)" == REBOOT ]]
 
 # readlink mock: booted identical to new → CURRENT (userspace-only change)
-cat >"$test_dir/bin/readlink" <<'READLINK_SAME'
-#!/usr/bin/env bash
+printf '#!%s\n' "$bash_bin" >"$test_dir/bin/readlink"
+cat >>"$test_dir/bin/readlink" <<'READLINK_SAME'
 case "$2" in
   /run/booted-system/kernel)         echo /nix/store/kernel-same ;;
   /run/booted-system/initrd)         echo /nix/store/initrd-same ;;
@@ -598,8 +602,8 @@ chmod +x "$test_dir/bin/readlink"
 [[ "$(bash "$test_dir/reboot-probe" /nix/store/aaa-nixos-system-test)" == CURRENT ]]
 
 # readlink failure → ERR: output and non-zero exit (no silent swallow)
-cat >"$test_dir/bin/readlink" <<'READLINK_FAIL'
-#!/usr/bin/env bash
+printf '#!%s\n' "$bash_bin" >"$test_dir/bin/readlink"
+cat >>"$test_dir/bin/readlink" <<'READLINK_FAIL'
 exit 1
 READLINK_FAIL
 chmod +x "$test_dir/bin/readlink"
@@ -614,8 +618,8 @@ rm -f "$test_dir/bin/readlink"
 # The probe body now uses -e; verify the distinction by having readlink succeed
 # only for existing paths (exit 0 returns path) and fail for missing paths
 # (exit 1, which must cause ERR: output and non-zero exit from the probe body).
-cat >"$test_dir/bin/readlink" <<'READLINK_E'
-#!/usr/bin/env bash
+printf '#!%s\n' "$bash_bin" >"$test_dir/bin/readlink"
+cat >>"$test_dir/bin/readlink" <<'READLINK_E'
 # Simulate -e semantics: /run/booted-system/* paths exist; new system paths do not.
 case "$2" in
   /run/booted-system/kernel)         echo /nix/store/kernel-old ;;
@@ -642,8 +646,8 @@ awk '/<<.REMOTE_ACTIVATE./ {body=1; next} /^REMOTE_ACTIVATE$/ {exit} body {print
 
 # Create a fake switch-to-configuration alongside a fixture store path
 mkdir -p "$test_dir/store/aaa-nixos-system-fixture/bin"
-cat >"$test_dir/store/aaa-nixos-system-fixture/bin/switch-to-configuration" <<'STC'
-#!/usr/bin/env bash
+printf '#!%s\n' "$bash_bin" >"$test_dir/store/aaa-nixos-system-fixture/bin/switch-to-configuration"
+cat >>"$test_dir/store/aaa-nixos-system-fixture/bin/switch-to-configuration" <<'STC'
 [[ "$1" == switch ]] || exit 99
 printf 'activating the configuration...\n'
 printf 'installing bootloader...\n' >&2
