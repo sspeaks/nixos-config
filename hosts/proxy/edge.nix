@@ -57,10 +57,18 @@ in
 
   # Azure Pipelines publishes static content over SSH as this key-only user.
   # Preserve the account, keys, and upload paths when moving the edge.
-  users.groups.devops.gid = 1001;
+  #
+  # Keep this outside the 1000+ range NixOS auto-allocates normal users from.
+  # Pinning devops to 1001 collided with auto-allocated sspeaks (serial-rescue
+  # had already taken 1000), so both resolved to uid 1001: getpwuid returned
+  # "devops" for sspeaks' files, home-manager's user units were written to
+  # /home/sspeaks but looked up against /home/devops, and devops could write
+  # /home/sspeaks/.ssh/authorized_keys to log in as a passwordless-sudo wheel
+  # user. Changing these values requires chowning /var/www and /home/devops.
+  users.groups.devops.gid = 2001;
   users.users.devops = {
     isNormalUser = true;
-    uid = 1001;
+    uid = 2001;
     group = "devops";
     extraGroups = [ "caddy" ];
     home = "/home/devops";
