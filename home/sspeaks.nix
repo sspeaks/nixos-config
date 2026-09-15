@@ -29,6 +29,8 @@ in
       gac
       comma
       squad-cli
+      taskwarrior3
+      lazydocker
     ];
     sessionVariables = {
       EDITOR = "vim";
