@@ -32,7 +32,13 @@
     efiSupport = true;
     device = "nodev";
     efiInstallAsRemovable = true;
-    configurationLimit = 3;
+    # The 256 MiB ESP holds ~236 MiB after GRUB's own files, while each aarch64
+    # generation costs ~87 MiB (61 MiB uncompressed Image + 25 MiB initrd).
+    # install-grub copies the incoming generation before pruning obsolete ones,
+    # so peak usage is (configurationLimit + 1) generations: 2 fits, 3 does not.
+    # Roll back over SSH instead (nix-env --rollback on the system profile plus
+    # switch-to-configuration boot); nix.gc never reclaims ESP space.
+    configurationLimit = 1;
   };
   boot.loader.efi.canTouchEfiVariables = false;
 
@@ -83,6 +89,17 @@
   system.autoUpgrade.enable = lib.mkForce false;
   # Avoid swap consuming the small root disk and adding billed writes.
   swapDevices = lib.mkForce [ ];
+
+  # The 15 GiB root cannot carry the fleet-wide 14 day retention, and a weekly
+  # timer leaves no chance to recover before the next deploy substitutes a
+  # closure. min-free/max-free additionally collects mid-substitution, which is
+  # the only thing that runs during an update-fleet prefetch.
+  nix.gc = {
+    dates = lib.mkForce "daily";
+    options = lib.mkForce "--delete-older-than 7d";
+  };
+  nix.settings.min-free = 1024 * 1024 * 1024;
+  nix.settings.max-free = 3 * 1024 * 1024 * 1024;
 
   security.sudo.wheelNeedsPassword = false;
 
