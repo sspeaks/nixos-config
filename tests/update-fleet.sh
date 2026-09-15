@@ -360,6 +360,11 @@ assert_output 'already current'
 run_case cache-fail 1 --check --only vidbox
 assert_output 'cache unavailable'
 
+# A freshly pushed closure must not be judged absent from a stale negative
+# narinfo cache entry, so the availability probe disables that cache.
+run_case normal 0 --check --only vidbox
+assert_log 'path-info.*--option narinfo-cache-negative-ttl 0'
+
 # Missing host in manifest: that host is skipped; rest continue.
 run_case manifest-missing-host 1 --check --only nixpi4-bare
 assert_output 'unexpected structure'
@@ -716,6 +721,7 @@ grep -q 'nix-store.*--realise' "$test_dir/probe-output" \
   || grep -q 'nix-store' "$TEST_LOG"
 assert_log 'nix-store.*--max-jobs 0 --builders .*--option substituters https://cachix https://upstream'
 assert_log 'nix-store.*--option require-sigs true --option fallback false'
+assert_log 'nix-store.*--option narinfo-cache-negative-ttl 0'
 
 # nix-store failure → body must exit non-zero
 export TEST_SCENARIO=activate-fail  # reuses same nix-store fail case

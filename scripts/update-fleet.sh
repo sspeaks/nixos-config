@@ -196,10 +196,13 @@ for i in "${live[@]}"; do
   fi
   [[ "$path" =~ ^/nix/store/[a-z0-9]{32}-nixos-system-[A-Za-z0-9._+-]+$ ]] ||
     die "unexpected closure path for $name: $path"
+  # narinfo-cache-negative-ttl 0: a probe made while CI was still pushing caches
+  # "absent" for an hour, which would wrongly fail every host until it expires.
   if ! timeout 60 nix --extra-experimental-features nix-command path-info \
       --store "$CACHIX_URL" \
       --option trusted-public-keys "$CACHIX_KEY" \
       --option require-sigs true \
+      --option narinfo-cache-negative-ttl 0 \
       "$path" >"$tmp/cache.log" 2>&1; then
     skip "$i" "cache unavailable, missing or unverifiable toplevel"
     printf '%s\n' "$(<"$tmp/cache.log")" >&2
@@ -339,6 +342,7 @@ exec nix-store --realise \
   --option substituters "$cachix_url $upstream_url" \
   --option trusted-public-keys "$cachix_key $upstream_key" \
   --option require-sigs true --option fallback false \
+  --option narinfo-cache-negative-ttl 0 \
   "$new_system"
 REMOTE_FETCH
   then
