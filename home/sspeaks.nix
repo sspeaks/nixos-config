@@ -10,6 +10,7 @@ in
     features/git
     features/tmux
     features/neovim
+    features/taskwiki
     features/starship
     features/zsh
   ];
@@ -29,7 +30,6 @@ in
       gac
       comma
       squad-cli
-      taskwarrior3
       lazydocker
     ];
     sessionVariables = {
