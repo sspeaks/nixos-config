@@ -29,7 +29,6 @@
   ];
 
   nix.settings.trusted-users = [ "sspeaks" "root" ];
-  nix.settings.lazy-trees = true;
 
   system.autoUpgrade = {
     enable = true;

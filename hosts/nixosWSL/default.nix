@@ -12,8 +12,6 @@
   wsl.enable = true;
   wsl.defaultUser = "sspeaks";
 
-  nix.settings.lazy-trees = true;
-
   networking = {
     hostName = "NixOS-WSL";
   };
