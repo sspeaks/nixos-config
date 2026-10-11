@@ -81,9 +81,6 @@
       # nixpi5 shares root Home Manager modules, so keep system pkgs aligned.
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    simple-nixos-mailserver = {
-      url = "gitlab:simple-nixos-mailserver/nixos-mailserver/nixos-25.11";
-    };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
