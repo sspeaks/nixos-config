@@ -36,7 +36,7 @@ in
       modules = [
         ../hosts/nixpi5
         inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.base
-      ];
+      ] ++ inputs.nixpkgs.lib.optional (temporaryHostModules ? nixpi5) temporaryHostModules.nixpi5;
     };
   };
 }
