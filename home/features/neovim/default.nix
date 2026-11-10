@@ -178,6 +178,7 @@ in
             };
           };
           pylsp.enable = false;
+          # Rust is handled by rustaceanvim below; enabling both attaches two clients
         };
         # gd/gD/gt/gi go through snacks pickers, see keymaps below
         keymaps.lspBuf = {
@@ -185,6 +186,8 @@ in
           "ga" = "code_action";
         };
       };
+      # Drives rust-analyzer itself; cargo/rustc come from the project's dev shell
+      rustaceanvim.enable = true;
       luasnip.enable = true;
       comment.enable = true;
       cmp-nvim-lsp.enable = true;
