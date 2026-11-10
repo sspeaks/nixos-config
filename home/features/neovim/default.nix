@@ -99,24 +99,40 @@ in
           };
           dashboard = {
             enabled = true;
-            # no '' pairs in the art: they would end the Nix string
+            # no '' pairs in the art: they would end the Nix string.
+            # Only the rocket is padded: padLines counts bytes, and each
+            # one-word motto line centers correctly on its own anyway.
             preset.header = padLines ''
-                                   /\
-                       *          /  \          .
-                                 /    \     +
-                    .           |      |
-                                |  ()  |            *
-                       +        |      |       .
-                                |  ()  |
-                     .         /|      |\          .
-                              / |      | \     *
-                             /__|______|__\
-                                \/\/\/\/        +
-                         *       \/\/\/
-                                  \/\/         .
-                        .          \/
+                     _
+                   .' '.
+                  /     \
+                 |       |
+                 |       |
+                 |_______|
+                 |       |
+                 |=======|
+                /|       |\
+                 |   N   |
+                 |   E   |
+                 |   W   |
+                 |       |
+                 |   G   |
+                 |   L   |
+                 |   E   |
+                 |   N   |
+                 |   N   |
+                ||       ||
+               /||_______||\
+               / /ooooooo\ \
+              /_/ \:::::/ \_\
+                   \:::/
+                    \:/
+                     V'' + "\n\n" + ''
+              █▀▀ █▀█ ▄▀█ █▀▄ ▄▀█ ▀█▀ █ █▀▄▀█
+              █▄█ █▀▄ █▀█ █▄▀ █▀█  █  █ █ ▀ █
 
-                       ground control to major vim'';
+              █▀▀ █▀▀ █▀█ █▀█ █▀▀ █ ▀█▀ █▀▀ █▀█
+              █▀  ██▄ █▀▄ █▄█ █▄▄ █  █  ██▄ █▀▄'';
             preset.keys = [
               { icon = " "; key = "f"; desc = "Find File"; action.__raw = "function() Snacks.picker.files() end"; }
               { icon = " "; key = "g"; desc = "Grep"; action.__raw = "function() Snacks.picker.grep() end"; }
