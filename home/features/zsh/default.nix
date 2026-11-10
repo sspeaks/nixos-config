@@ -8,6 +8,7 @@
     shellAliases = {
       ls = "ls --color=auto -F";
       cat = "${pkgs.bat}/bin/bat";
+      vim = "nvim";
       yolo = "claude --dangerously-skip-permissions";
     };
 
