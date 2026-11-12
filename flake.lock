@@ -823,6 +823,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_7": {
+      "locked": {
+        "lastModified": 1792502884,
+        "narHash": "sha256-IoNisKcGbUjdd45qCqywGMCYmZ5EnkxezvLII0FWwNA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "02c087f3fe673c9e317f206a627cb6b910336dbe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixvim": {
       "inputs": {
         "flake-parts": [
@@ -943,6 +959,7 @@
         "sops-nix": "sops-nix",
         "spock": "spock",
         "systems": "systems_3",
+        "todo-tui": "todo-tui",
         "treefmt-nix": "treefmt-nix",
         "vscode-server": "vscode-server"
       }
@@ -1029,6 +1046,24 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "todo-tui": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_7"
+      },
+      "locked": {
+        "lastModified": 1794002285,
+        "narHash": "sha256-dLSA47ZGw/XHGzLtg7JdfkNrvdaaw3gdIYTMmio82yE=",
+        "owner": "sspeaks",
+        "repo": "todo-tui",
+        "rev": "d637a83d8aaf2b93ac3317284c53ef8613c680a4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sspeaks",
+        "repo": "todo-tui",
         "type": "github"
       }
     },

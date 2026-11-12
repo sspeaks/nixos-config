@@ -14,11 +14,10 @@ keys:
     - &nixpi5 age1q9khmexesfhl56c4ste9ur59fdcyfauy728jvmzlay2nhvlz74ssvh784j
     - &proxy age15fp39am5ghay6hcrwrseyz3ksrhdqtjyehatrc3hxeyr0l08sp7s59pa62
     - &vidstream age1sxpm3la3wdl6k5qyrzrlky34tc9kk3ewrklu48nf99hr4dzwep3qvj9v6y
-    # P3.2 home replacement for vid-stream: a Hyper-V VM on the desktop.
-    # Derived from its host key with ssh-to-age after nixos-anywhere ran -- a
-    # host has no identity until it has been installed, which is why secrets
-    # always land on a SECOND deploy.
-    - &vidbox age16mhhzl87mdqmf2huek3anxqntzd9rt4rgr46tm64vr6xthvmxedqsgv8kj
+    # The physical home server that replaced the lost Hyper-V vidbox.
+    # Derived from its host key with ssh-to-age after its NixOS install -- a
+    # host has no identity until it has been installed.
+    - &vidbox age1wz428avkqmw3catrxxjz42ajctyjjhzr4fagjwfsruwyl2s8tq9scjwsv4
 creation_rules:
   # The client-certificate CA that guards home-assistant.sspeaks.net.
   #
