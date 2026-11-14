@@ -29,6 +29,7 @@ printf '%s %s\n' "$cmd" "$*" >> "$TEST_LOG"
 case "$cmd" in
   timeout) shift; exec "$@" ;;
   sleep) exit 0 ;;
+  uname) echo "${TEST_LOCAL_HOST:-workstation}" ;;
   find)
     # For the manifest-dl search: create the file if the directory exists.
     if [[ "$*" == *"fleet-host-paths.json"* ]]; then
@@ -114,7 +115,7 @@ case "$cmd" in
       *) echo "Unexpected nix invocation: $*" >&2; exit 97 ;;
     esac ;;
   ssh)
-    if [[ "$TEST_SCENARIO" == unreachable || ( "$TEST_SCENARIO" == partial && "$*" == *192.168.5.195* ) ]]; then
+    if [[ "$TEST_SCENARIO" == unreachable || ( "$TEST_SCENARIO" == partial && "$*" == *192.168.5.178* ) ]]; then
       echo 'SSH connection failed' >&2; exit 255
     fi
     case "$*" in
@@ -123,7 +124,7 @@ case "$cmd" in
         if [[ "$TEST_SCENARIO" == reboot-timeout && -e "$TEST_LOG.rebooted" ]]; then
           exit 255
         fi
-        echo fixture ;;
+        if [[ "$*" == *192.168.5.178* ]]; then echo vidbox; else echo fixture; fi ;;
       *"readlink"*"/run/current-system"*)
         [[ "$TEST_SCENARIO" != running-fail ]] || exit 255
         case "$TEST_SCENARIO" in
@@ -264,7 +265,7 @@ case "$cmd" in
 esac
 MOCK
 chmod +x "$test_dir/bin/mock"
-for cmd in git nix ssh gh timeout sleep sudo smbstatus systemctl nix-env nix-store find; do
+for cmd in git nix ssh gh timeout sleep sudo smbstatus systemctl nix-env nix-store find uname; do
   ln -s mock "$test_dir/bin/$cmd"
 done
 export PATH="$test_dir/bin:$PATH"
@@ -446,6 +447,26 @@ run_case reboot-needed 0 --only vidbox
 assert_output 'activated and rebooted'
 assert_output 'verified'
 assert_log 'systemctl reboot'
+
+# Run on vidbox (the controller): vidbox is updated last, and its reboot is
+# scheduled locally after the summary instead of over SSH mid-run.
+export TEST_LOCAL_HOST=vidbox
+run_case reboot-needed 0 --only vidbox --only nixpi5
+unset TEST_LOCAL_HOST
+assert_output 'vidbox: this is the local host; it is updated last'
+assert_output 'reboot scheduled after this run (local host)'
+assert_output 'this host reboots in 1 minute'
+first="$(grep -n 'nixpi5: verified' "$test_dir/output" | cut -d: -f1)"
+last="$(grep -n 'vidbox: verified' "$test_dir/output" | cut -d: -f1)"
+[[ -n "$first" && -n "$last" ]] && (( first < last )) || { cat "$test_dir/output" >&2; exit 1; }
+assert_log '192.168.5.238 sudo -n /run/current-system/sw/bin/systemctl reboot'
+reject_log '192.168.5.178 sudo -n /run/current-system/sw/bin/systemctl reboot'
+assert_log '^sudo -n systemctl reboot --when=+1min'
+
+# Elsewhere (the default mock hostname), vidbox reboots over SSH as before
+# and nothing is scheduled locally.
+run_case reboot-needed 0 --only vidbox
+reject_log '^sudo -n systemctl reboot --when'
 
 # Host doesn't come back after reboot → incomplete nonzero
 run_case reboot-timeout 1 --only vidbox

@@ -1,6 +1,17 @@
 { pkgs, inputs, ... }:
 {
-  imports = [ inputs.nixvim.homeModules.nixvim ];
+  imports = [
+    inputs.nixvim.homeModules.nixvim
+    ./colorscheme.nix
+    ./snacks.nix
+    ./dashboard.nix
+    ./diffview.nix
+    ./lsp.nix
+    ./completion.nix
+    ./treesitter.nix
+    ./ale.nix
+    ./mdkite.nix
+  ];
 
   programs.nixvim = {
     enable = true;
@@ -10,19 +21,7 @@
     version.enableNixpkgsReleaseCheck = false;
     extraConfigVim = ''
       set mouse=
-      let g:ale_linters = {'haskell': []}
     '';
-
-    diagnostic.settings = {
-      virtual_text = true;
-      underline = true;
-      signs = true;
-    };
-
-    colorschemes.catppuccin = {
-      enable = true;
-      settings.flavour = "mocha";
-    };
 
     globals.mapleader = ",";
 
@@ -34,78 +33,10 @@
     };
 
     plugins = {
-      telescope = {
-        enable = true;
-        keymaps = {
-          "<leader>ff" = "find_files";
-          "<leader>gf" = "git_files";
-          "<leader>fg" = "live_grep_args";
-          "<leader>b" = "buffers";
-          "<leader>fs" = "treesitter";
-        };
-        enabledExtensions = [ "live_grep_args" ];
-
-      };
-      treesitter.enable = true;
-
       web-devicons.enable = true;
-
-      lsp = {
-        enable = true;
-        servers = {
-          csharp_ls.enable = false;
-          nixd.enable = true;
-          hls = {
-            enable = true;
-            package = null; # Use HLS from nix-shell/direnv, not a global one
-            installGhc = false; # GHC comes from the project's nix-shell too
-            settings = {
-              haskell = {
-                plugin.semanticTokens.globalOn = true;
-              };
-            };
-          };
-          pylsp.enable = false;
-        };
-        keymaps.lspBuf = {
-          "gd" = "definition";
-          "gD" = "references";
-          "gt" = "type_definition";
-          "gi" = "implementation";
-          "K" = "hover";
-          "ga" = "code_action";
-        };
-      };
-      luasnip.enable = true;
       comment.enable = true;
-      cmp-nvim-lsp.enable = true;
-      cmp-buffer.enable = true;
-      cmp-path.enable = true;
-      cmp = {
-        enable = true;
-        settings = {
-          sources = [
-            { name = "nvim_lsp"; }
-            { name = "luasnip"; }
-            { name = "buffer"; }
-            { name = "path"; }
-          ];
-          mapping = {
-            "<C-n>" = "cmp.mapping.select_next_item()";
-            "<C-p>" = "cmp.mapping.select_prev_item()";
-            "<C-u>" = "cmp.mapping.scroll_docs(-4)";
-            "<C-d>" = "cmp.mapping.scroll_docs(4)";
-            "<C-Space>" = "cmp.mapping.complete()";
-            "<C-e>" = "cmp.mapping.abort()";
-            "<CR>" = "cmp.mapping.confirm({ select = true })";
-          };
-          snippet = {
-            expand = "function(args) require('luasnip').lsp_expand(args.body) end";
-          };
-        };
-      };
     };
-    extraPlugins = with pkgs.vimPlugins; [ ale vim-nix telescope-live-grep-args-nvim ];
-    extraPackages = with pkgs; [ fd ];
+
+    extraPlugins = with pkgs.vimPlugins; [ vim-nix ];
   };
 }

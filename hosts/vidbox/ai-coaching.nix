@@ -104,6 +104,14 @@ in
     };
   };
 
+  # The `evidence` role is created by postgresql-setup (ensureUsers); on an
+  # empty database, setting its password before that fails with
+  # `role "evidence" does not exist`.
+  systemd.services.ai-coaching-postgresql-password = {
+    after = [ "postgresql-setup.service" ];
+    requires = [ "postgresql-setup.service" ];
+  };
+
   # The module's pg_hba rule also needs firewall access from the Podman bridge.
   networking.firewall.interfaces."podman1".allowedTCPPorts = [ 5432 ];
 

@@ -8,7 +8,7 @@ readonly UPSTREAM_KEY="cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcD
 readonly GH_REPO="${FLEET_GH_REPO:-sspeaks/nixos-config}"
 readonly FLEET=(
   "raspberrytimemachine|192.168.5.106||Time Machine appliance"
-  "vidbox|192.168.5.195||video and ai-coaching"
+  "vidbox|192.168.5.178||video, ai-coaching and todo-tui"
   "nixpi4-bare|192.168.5.16|nixpi4-bare|pogbot and boggle"
   "nixpi5|192.168.5.238||Authentik SSO and home services"
   "proxy|20.83.103.87||public edge"
@@ -24,6 +24,11 @@ phase="arguments"
 summary_enabled=false
 incomplete=false
 head_sha=""
+# The fleet host this script runs on (vidbox when run there), if any. It is
+# activated last and never rebooted mid-run: its reboot is scheduled after the
+# summary instead.
+controller=""
+controller_reboot=false
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'ERROR [%s]: %s\n' "$phase" "$*" >&2; exit 1; }
@@ -40,6 +45,8 @@ usage() {
     'fleet hosts. Paths come from CI-published manifests; no flake inputs are' \
     'updated and deployment never builds system closures.' \
     'Activation is persistent (switch); hosts reboot automatically when needed.' \
+    'Run on a fleet host (vidbox), that host is activated last and its reboot,' \
+    'if needed, is scheduled for one minute after the summary.' \
     '' \
     'GitHub authentication, SSH access, and independently verified host keys must' \
     'be configured. Incomplete or per-host-failed runs exit nonzero.' \
@@ -54,6 +61,15 @@ finish() {
     for i in "${!names[@]}"; do
       printf '  %-24s %s\n' "${names[$i]}" "${outcomes[$i]}"
     done
+  fi
+  if $controller_reboot; then
+    say ""
+    if sudo -n systemctl reboot --when=+1min; then
+      say "${names[$controller]}: this host reboots in 1 minute to finish its update"
+    else
+      say "${names[$controller]}: could not schedule its reboot; run: sudo systemctl reboot"
+      (( status != 0 )) || status=1
+    fi
   fi
   [[ -z "$tmp" ]] || rm -rf -- "$tmp"
   if $incomplete && (( status == 0 )); then status=1; fi
@@ -102,7 +118,7 @@ for entry in "${FLEET[@]}"; do
 done
 
 phase=preflight
-for command in nix git ssh jq gh timeout mktemp rm sleep; do
+for command in nix git ssh jq gh timeout mktemp rm sleep uname; do
   command -v "$command" >/dev/null || die "missing runtime command: $command; use the Nix launcher"
 done
 timeout 30 gh auth status ||
@@ -132,10 +148,12 @@ skip() {
 }
 live=()
 phase=reachability
+local_hostname="$(uname -n)"
 for i in "${!names[@]}"; do
   if fleet_ssh "$i" 'hostname' >"$tmp/probe" 2>&1; then
     live+=("$i")
     outcomes[$i]="reachable; not yet verified"
+    [[ "$(<"$tmp/probe")" != "$local_hostname" ]] || controller="$i"
   else
     skip "$i" "unreachable or untrusted SSH host"
     printf '%s\n' "$(<"$tmp/probe")" >&2
@@ -213,6 +231,12 @@ for i in "${live[@]}"; do
   outcomes[$i]="cached toplevel verified"
 done
 (( ${#ready[@]} )) || die "no selected hosts have a verifiable cached closure"
+if [[ -n "$controller" ]] && contains "$controller" "${ready[@]}"; then
+  say "${names[$controller]}: this is the local host; it is updated last"
+  reordered=()
+  for i in "${ready[@]}"; do [[ "$i" == "$controller" ]] || reordered+=("$i"); done
+  ready=("${reordered[@]}" "$controller")
+fi
 
 running_path() {
   local result
@@ -436,6 +460,13 @@ REMOTE_ACTIVATE
   fi
   case "$reboot_probe_result" in
     REBOOT)
+      if [[ "$i" == "$controller" ]]; then
+        # Rebooting now would kill this run; finish() schedules it instead.
+        controller_reboot=true
+        outcomes[$i]="activated; reboot scheduled after this run (local host)"
+        say "${names[$i]}: verified (${outcomes[$i]})"
+        continue
+      fi
       if ! schedule_and_verify_reboot "$i"; then continue; fi
       if [[ "$activate_result" == CURRENT ]]; then
         outcomes[$i]="rebooted (boot change pending from prior switch)"

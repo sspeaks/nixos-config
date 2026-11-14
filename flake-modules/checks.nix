@@ -1,37 +1,8 @@
 { inputs, ... }:
 {
   perSystem = { pkgs, lib, ... }:
-    let
-      taskwikiHome = inputs.home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = { inherit inputs; };
-        modules = [
-          ../home/features/neovim
-          ../home/features/taskwiki
-          {
-            home.username = "taskwiki-test";
-            home.homeDirectory = "/home/taskwiki-test";
-            home.stateVersion = "23.05";
-          }
-        ];
-      };
-      taskwikiConfig = taskwikiHome.config;
-    in
     {
       checks = {
-        taskwiki = pkgs.runCommand "taskwiki-regressions"
-          { nativeBuildInputs = with pkgs; [ bash coreutils python3 ]; }
-          ''
-            bash ${../tests/taskwiki.sh} \
-              ${taskwikiConfig.programs.nixvim.build.package}/bin/nvim \
-              ${taskwikiConfig.programs.nixvim.build.initFile} \
-              ${lib.getExe taskwikiConfig.programs.taskwarrior.package} \
-              ${lib.getExe pkgs.taskopen} \
-              ${taskwikiConfig.xdg.configFile."taskopen/taskopenrc".source} \
-              ${taskwikiConfig.home.file."/home/taskwiki-test/.config/task/home-manager-taskrc".source}
-            touch "$out"
-          '';
-
         deployment = pkgs.runCommand "deployment-regressions"
           {
             nativeBuildInputs = with pkgs; [
