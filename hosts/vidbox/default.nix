@@ -5,10 +5,9 @@ let
     sopsFile = ../../secrets/vidbox.yaml;
   };
 in
-# Home Hyper-V VM for video and ai-coaching.
-  # Provision key-only access before enabling the shared SOPS-backed user.
+# Home server (physical i7-8700): video, ai-coaching, the todo-tui daemon on the
+  # tailnet, and the fleet controller that runs update-fleet.
   # Register the host's SSH-derived age identity and re-encrypt its secrets first.
-  # Installers also need the project cache for this flake's Determinate build.
 {
   imports = [
     ../common/global
@@ -16,6 +15,8 @@ in
     ../common/users/sspeaks/authorized-keys.nix
     ./hardware-configuration.nix
     ./ai-coaching.nix
+    ./todo-tui.nix
+    ./fleet-controller.nix
     ../../modules/restic-offsite.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.determinate.nixosModules.default
@@ -134,7 +135,7 @@ in
     imports = [ ../../home/sspeaks-bare.nix ];
   };
 
-  # nixos-anywhere and ./deploy need non-interactive sudo for activation.
+  # update-fleet and ./deploy need non-interactive sudo for activation.
   security.sudo.wheelNeedsPassword = false;
   programs.nix-ld.enable = true;
 

@@ -31,6 +31,8 @@
       argsOverride.kernelPatches = (with pkgs.kernelPatches; [
         bridge_stp_helper
         request_key_helper
+        # Temporary: see the `__u128` note in temporary-fixes.nix.
+        tools_128bit_types
       ]) ++ [{
         name = "disable-preempt-lazy";
         patch = null;

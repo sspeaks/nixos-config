@@ -11,7 +11,7 @@
     ./authentik.nix
     ./home-assistant.nix
     ./go2rtc.nix
-    ./webmailclient.nix
+    #./webmailclient.nix
     ../../modules/restic-offsite.nix
     # Restore the garage-monitor input in flake.nix before enabling these.
     # inputs.garage-monitor.nixosModules.default
@@ -91,7 +91,7 @@
       "/var/lib/hass"
       # DynamicUser state, including Authentik media/certificates and ntfy-sh.
       "/var/lib/private"
-      "/var/lib/snappymail"
+      #"/var/lib/snappymail"
       # Irreplaceable Time Machine recovery seed, including the Samba passdb.
       "/var/lib/migration-seed"
     ];
