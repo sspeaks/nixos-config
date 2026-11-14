@@ -20,7 +20,16 @@ in
       ../home/features/wsl-browser
     ];
     "sspeaks@blog" = mkHome "x86_64-linux" [ ../home/sspeaks-blog.nix ];
-    "sspeaks@darwin" = mkHome "aarch64-darwin" [ ../home/sspeaks.nix ];
+    "sspeaks@darwin" = mkHome "aarch64-darwin" [
+      ../home/sspeaks.nix
+      ../home/features/fonts
+      ../home/features/ghostty
+      {
+        # Spotlight doesn't index symlinked .app bundles; copy them into ~/Applications instead.
+        targets.darwin.linkApps.enable = false;
+        targets.darwin.copyApps.enable = true;
+      }
+    ];
     "sspeaks@aarch64-linux" = mkHome "aarch64-linux" [ ../home/sspeaks.nix ../home/features/sops ];
   };
 }
