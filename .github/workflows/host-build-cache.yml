@@ -58,7 +58,7 @@ jobs:
           jq -n --arg sha "$GITHUB_SHA" --argjson paths "$paths" \
             '{"headSha": $sha, "paths": $paths}' > host-paths-x86.json
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: host-paths-x86
           path: host-paths-x86.json
@@ -117,7 +117,7 @@ jobs:
           jq -n --arg sha "$GITHUB_SHA" --argjson paths "$paths" \
             '{"headSha": $sha, "paths": $paths}' > host-paths-nixpi4.json
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: host-paths-nixpi4
           path: host-paths-nixpi4.json
@@ -165,7 +165,7 @@ jobs:
           jq -n --arg sha "$GITHUB_SHA" --arg path "$path" \
             '{"headSha": $sha, "paths": {"nixpi5": $path}}' > host-paths-nixpi5.json
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: host-paths-nixpi5
           path: host-paths-nixpi5.json
@@ -268,7 +268,7 @@ jobs:
           jq -n --arg sha "$GITHUB_SHA" --argjson paths "$paths" \
             '{"headSha": $sha, "paths": $paths}' > host-paths-arm64.json
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: host-paths-arm64
           path: host-paths-arm64.json
@@ -295,7 +295,7 @@ jobs:
           grep -qiE 'FAT' artifacts/pi-image-fdisk.txt
           rm -f artifacts/rtm.img
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: raspberrytimemachine-image-evidence
           path: artifacts/
@@ -341,7 +341,7 @@ jobs:
             host-paths-*.json > fleet-host-paths.json
           cat fleet-host-paths.json
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fleet-host-paths
           path: fleet-host-paths.json
