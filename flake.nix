@@ -49,6 +49,11 @@
     ai-coaching-dashboard = {
       url = "github:sspeaks/ai-coaching-dashboard";
     };
+    # Not following our nixpkgs: its per-system pnpm deps hashes are tied to
+    # the pnpm in its own nixpkgs pin.
+    todo-tui = {
+      url = "github:sspeaks/todo-tui";
+    };
     spock = {
       url = "github:sspeaks/Spock-clip-trimmer";
       inputs.nixpkgs.follows = "nixpkgs";

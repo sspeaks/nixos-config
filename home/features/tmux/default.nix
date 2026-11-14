@@ -9,6 +9,10 @@
       bind-key j select-pane -D
       bind-key k select-pane -U
       bind-key l select-pane -R
+
+      bind-key c new-window -c "#{pane_current_path}"
+      bind-key '"' split-window -v -c "#{pane_current_path}"
+      bind-key % split-window -h -c "#{pane_current_path}"
     '';
     plugins = with pkgs; [
       tmuxPlugins.cpu
