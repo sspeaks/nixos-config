@@ -38,13 +38,13 @@ in
       # resolve_btfids fails to build. nixpkgs only patches its own mainline
       # kernels; the vendor kernels need it too. Drop once upstream
       # 10a47fb67340 is in each vendor kernel (the patch will then fail to apply).
+      # The Asahi kernel (7.3.3+) already carries it.
       # nixpi's kernel ignores boot.kernelPatches; see hosts/nixpi/hardware-config.nix.
       tools128bitTypes = { pkgs, ... }: {
         boot.kernelPatches = [ pkgs.kernelPatches.tools_128bit_types ];
       };
     in
     {
-      asahi = tools128bitTypes;
       nixpi5 = tools128bitTypes;
     };
 
