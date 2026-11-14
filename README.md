@@ -13,7 +13,7 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 | `NixOS-WSL-work` | x86_64-linux | WSL dev environment (work) |
 | `proxy` | aarch64-linux | Public Azure edge — seven Caddy vhosts and the WireGuard listener |
 | `raspberrytimemachine` | aarch64-linux | Raspberry Pi 4 — Time Machine appliance with a USB backup disk; network hostname remains `raspberrypi` |
-| `vidbox` | x86_64-linux | Home Hyper-V VM — video streaming and AI coaching |
+| `vidbox` | x86_64-linux | Home server — video streaming, AI coaching, todo-tui, fleet controller |
 | `vm` | x86_64-linux | Minimal test/dev VM |
 | `asahi` | aarch64-linux | Apple Silicon Mac — Niri desktop with Hyprland fallback |
 
@@ -148,6 +148,13 @@ activation and reboots can interrupt services or active backups. Standalone
 
 If a host's `nixos-upgrade.service` is active at activation time, that host is
 skipped to avoid a concurrent-upgrade collision and reported in the summary.
+
+**Running from vidbox.** vidbox is set up as the fleet controller
+(`hosts/vidbox/fleet-controller.nix`). There, `update-fleet` is on `PATH`, reads
+a GitHub token from sops, connects with `~/.ssh/id_fleet` and uses pinned host keys.
+It needs a checkout at `~/nixos-config` (`gh repo clone sspeaks/nixos-config ~/nixos-config`).
+When the script runs on a fleet host, it updates that host last. If that host needs a
+reboot, the script schedules it for one minute after the summary instead of rebooting mid-run.
 
 **Bootstrap note.** The `fleet-host-paths` artifact is produced by the
 `collect-paths` job added to `.github/workflows/host-build-cache.yml`. Until a

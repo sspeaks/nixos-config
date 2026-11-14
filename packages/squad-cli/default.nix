@@ -5,16 +5,16 @@
 
 buildNpmPackage rec {
   pname = "squad-cli";
-  version = "0.13.1";
+  version = "1.1.0";
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@bradygaster/squad-cli/-/squad-cli-${version}.tgz";
-    hash = "sha512-ogfx2nhyx6fqMyqlaI5tDnOzUbRdh+a6Uh/rMQ0aNJwAXnvQp4N37Xp/eOTyB5CxcB7E34NBtAfCxyXbWSiS8w==";
+    hash = "sha512-BrbyctLqv4KqhaOcT9/F097hBMJfqCLLHOPWn0fGFpz9X5g3Kj6+PGXkNRD6DCbuaIzCRhP61MUqpwZLq5Zqkg==";
   };
 
   sourceRoot = "package";
 
-  npmDepsHash = "sha256-9+SheeoUDQsd+XF+P3s1uFabV6PBUMv830TBqoiV6Sk=";
+  npmDepsHash = "sha256-0loVTPCLElG7NDduRe+TmfYXhP37sOqiQ94E7dViFGI=";
   npmInstallFlags = [ "--omit=dev" ];
 
   postPatch = ''

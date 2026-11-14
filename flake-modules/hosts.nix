@@ -24,11 +24,7 @@ in
       "${inputs.nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
     ];
     vm = mkHost ../hosts/vm [ ];
-    # Disko supplies the Gen2/UEFI disk layout for this Hyper-V guest.
-    vidbox = mkHost ../hosts/vidbox [
-      inputs.disko.nixosModules.disko
-      ../hosts/vidbox/disko.nix
-    ];
+    vidbox = mkHost ../hosts/vidbox [ ];
     asahi = mkHost ../hosts/asahi
       (inputs.nixpkgs.lib.optional (temporaryHostModules ? asahi) temporaryHostModules.asahi);
     nixpi5 = inputs.nixos-raspberrypi.lib.nixosSystem {
@@ -36,7 +32,7 @@ in
       modules = [
         ../hosts/nixpi5
         inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.base
-      ];
+      ] ++ inputs.nixpkgs.lib.optional (temporaryHostModules ? nixpi5) temporaryHostModules.nixpi5;
     };
   };
 }

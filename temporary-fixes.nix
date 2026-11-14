@@ -31,7 +31,22 @@ in
     (_: _: { })
   ];
 
-  hostModules = { };
+  hostModules =
+    let
+      # Temporary workaround: glibc 2.44's arm64 UAPI headers use `__u128`,
+      # which the kernel's private tools/include/linux/types.h lacks, so
+      # resolve_btfids fails to build. nixpkgs only patches its own mainline
+      # kernels; the vendor kernels need it too. Drop once upstream
+      # 10a47fb67340 is in each vendor kernel (the patch will then fail to apply).
+      # nixpi's kernel ignores boot.kernelPatches; see hosts/nixpi/hardware-config.nix.
+      tools128bitTypes = { pkgs, ... }: {
+        boot.kernelPatches = [ pkgs.kernelPatches.tools_128bit_types ];
+      };
+    in
+    {
+      asahi = tools128bitTypes;
+      nixpi5 = tools128bitTypes;
+    };
 
   inherit noticeTargets verifyTargets manualChecks;
 }
