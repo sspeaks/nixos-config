@@ -18,10 +18,13 @@ in
       bind-key c new-window -c "#{pane_current_path}"
       bind-key '"' split-window -v -c "#{pane_current_path}"
       bind-key % split-window -h -c "#{pane_current_path}"
+      # Prefix + N: a new session in this pane's directory (tmux's default is the server's)
+      bind-key N new-session -c "#{pane_current_path}"
 
       # Truecolor + styled underlines from the outer terminal, and let programs
       # (image viewers, scripts/plate-orb.py) pass Kitty graphics through to it.
-      set -as terminal-features ",xterm-ghostty:RGB:usstyle:sync:extkeys,xterm-kitty:RGB:usstyle:sync"
+      # osc7 forwards the active pane's directory, so Ghostty's new tabs open there.
+      set -as terminal-features ",xterm-ghostty:RGB:usstyle:sync:extkeys:osc7,xterm-kitty:RGB:usstyle:sync:osc7"
       set -g allow-passthrough on
 
       # Plate status bar: flat void background, text-only segments, no filled blocks

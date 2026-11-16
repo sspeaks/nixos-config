@@ -11,6 +11,7 @@
     ./treesitter.nix
     ./ale.nix
     ./mdkite.nix
+    ./render-markdown.nix
   ];
 
   programs.nixvim = {

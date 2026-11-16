@@ -46,4 +46,5 @@ in
   myCopilot = pkgs.callPackage ./github-copilot-cli.nix { };
   squad-cli = pkgs.callPackage ./squad-cli { };
   gac = pkgs.callPackage ./gac { };
+  mermaid-rs-renderer = pkgs.callPackage ./mermaid-rs-renderer { };
 } // linuxPackages
