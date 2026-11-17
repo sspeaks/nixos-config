@@ -46,7 +46,12 @@ in
         words.enabled = true;
         indent.enabled = true;
         lazygit.enabled = true;
-        picker.enabled = true;
+        picker = {
+          enabled = true;
+          # Typing at the end of the prompt sometimes snaps the cursor back a column, so the
+          # next character lands before the last one (folke/snacks.nvim#2810)
+          win.input.wo.virtualedit = "all";
+        };
         explorer = {
           enabled = true;
           replace_netrw = true;
