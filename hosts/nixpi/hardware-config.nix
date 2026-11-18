@@ -31,7 +31,11 @@
       argsOverride.kernelPatches = (with pkgs.kernelPatches; [
         bridge_stp_helper
         request_key_helper
-        # Temporary: see the `__u128` note in temporary-fixes.nix.
+        # Temporary: glibc 2.44's arm64 UAPI headers use `__u128`, which the
+        # kernel's private tools/include/linux/types.h lacks, so resolve_btfids
+        # fails to build. Drop once upstream 10a47fb67340 is in this kernel
+        # (the patch will then fail to apply). nixos-raspberrypi already
+        # applies it to nixpi5's vendor kernel itself.
         tools_128bit_types
       ]) ++ [{
         name = "disable-preempt-lazy";
