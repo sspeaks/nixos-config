@@ -111,6 +111,30 @@ in
           reverse_proxy 10.10.0.5:8080
         '';
 
+        # vid-streamer on vidbox, which has no login of its own: Authentik's
+        # embedded outpost gates everything except share links (/s/*) and the
+        # static assets their pages load, and vid-streamer checks share tokens
+        # itself. This needs the forward-auth provider whose external host is
+        # https://vidplayback.sspeaks.net to be assigned to the embedded outpost;
+        # until then the gate fails closed.
+        # Its cookies are Secure-only, so it needs this HTTPS front. Leave Caddy's
+        # defaults: no compression, buffering or timeouts on HLS range requests.
+        "vidplayback.sspeaks.net".extraConfig = ''
+          @share path /s/* /static/* /favicon.ico
+          handle @share {
+            reverse_proxy 10.10.0.5:8081
+          }
+          handle {
+            route {
+              reverse_proxy /outpost.goauthentik.io/* 10.10.0.2:9000
+              forward_auth 10.10.0.2:9000 {
+                uri /outpost.goauthentik.io/auth/caddy
+              }
+              reverse_proxy 10.10.0.5:8081
+            }
+          }
+        '';
+
         "auth.sspeaks.net".extraConfig = ''
           reverse_proxy 10.10.0.2:9000
         '';
