@@ -25,11 +25,9 @@ in
       htop
       shellcheck
       direnv
-      myCopilot
-      gac
       comma
-      squad-cli
-      lazydocker
+      #myCopilot
+      glab
     ];
     sessionVariables = {
       EDITOR = "vim";

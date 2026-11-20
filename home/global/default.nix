@@ -1,15 +1,7 @@
 { lib, pkgs, config, ... }:
 {
-  nix = {
-    package = lib.mkDefault pkgs.nix;
-    settings = {
-      experimental-features = [
-        "nix-command"
-        "flakes"
-      ];
-      warn-dirty = false;
-    };
-  };
+
+  nix.enable = false;
 
   programs = {
     home-manager.enable = true;

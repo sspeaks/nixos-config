@@ -76,6 +76,8 @@ in
       (snacksKey "<leader>fg" "Snacks.picker.grep()" "Grep")
       (snacksKey "<leader>b" "Snacks.picker.buffers()" "Buffers")
       (snacksKey "<leader>fs" "Snacks.picker.treesitter()" "Treesitter symbols")
+      (snacksKey "<leader>fl" "Snacks.picker.lsp_symbols()" "LSP symbols (file)")
+      (snacksKey "<leader>fS" "Snacks.picker.lsp_workspace_symbols()" "LSP symbols (workspace)")
       (snacksKey "<leader>fr" "Snacks.picker.recent()" "Recent files")
       (snacksKey "<leader>fd" "Snacks.picker.diagnostics()" "Diagnostics")
       (snacksKey "<leader>f." "Snacks.picker.resume()" "Resume last picker")
