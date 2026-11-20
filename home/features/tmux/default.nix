@@ -15,6 +15,12 @@ in
       bind-key k select-pane -U
       bind-key l select-pane -R
 
+      # Prefix + H/J/K/L resizes by 5 cells and repeats; Ghostty claims Option+Left/Right.
+      bind-key -r H resize-pane -L 5
+      bind-key -r J resize-pane -D 5
+      bind-key -r K resize-pane -U 5
+      bind-key -r L resize-pane -R 5
+
       bind-key c new-window -c "#{pane_current_path}"
       bind-key '"' split-window -v -c "#{pane_current_path}"
       bind-key % split-window -h -c "#{pane_current_path}"

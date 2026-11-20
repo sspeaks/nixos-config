@@ -614,8 +614,9 @@ fn main() {
     let mut out: Vec<u8> = Vec::with_capacity(1 << 20);
     let mut res_scale = 1.0f32; // auto-resolution factor on top of max_w
     let mut rebuild = false;
-    let (mut win_start, mut win_frames) = (Instant::now(), 0u32);
+    let (mut win_start, mut win_frames, mut win_busy) = (Instant::now(), 0u32, Duration::ZERO);
     let (mut render_ms, mut tty_ms) = (0.0f64, 0.0f64);
+    let mut next_frame = Instant::now();
 
     while running.load(Ordering::SeqCst) {
         let frame_start = Instant::now();
@@ -637,7 +638,7 @@ fn main() {
                 out.extend_from_slice(placeholders(img_cols, img_rows).as_bytes());
             }
             rebuild = false;
-            (win_start, win_frames) = (Instant::now(), 0);
+            (win_start, win_frames, win_busy) = (Instant::now(), 0, Duration::ZERO);
         }
 
         let t = (frame_start - start).as_secs_f32();
@@ -668,22 +669,29 @@ fn main() {
         fps = fps * 0.95 + 0.05 / (now - last).as_secs_f64().max(1e-6);
         last = now;
 
-        // Auto-resolution: once a second, if the target wasn't met, shrink the render so the
-        // pixel count (which both rendering and the terminal's upload scale with) fits.
+        // Auto-resolution: once a second, if the frame's work (render, send, terminal
+        // back-pressure; not the sleep) used up the budget, shrink the render so the pixel
+        // count (which both rendering and the terminal's upload scale with) fits. Judge by
+        // load, not delivered fps: pacing caps fps at the target, so jitter would read as a miss.
         win_frames += 1;
-        let elapsed = (now - win_start).as_secs_f64();
-        if elapsed >= 1.0 {
-            let measured = win_frames as f64 / elapsed;
-            if auto_res && measured < target_fps * 0.93 && scene.w as f32 > MIN_AUTO_W {
-                let shrink = ((measured / target_fps).sqrt() * 0.95) as f32;
+        win_busy += now - frame_start;
+        if (now - win_start).as_secs_f64() >= 1.0 {
+            let load = win_busy.as_secs_f64() / (win_frames as f64 * frame_dt.as_secs_f64());
+            if auto_res && load > 0.95 && scene.w as f32 > MIN_AUTO_W {
+                let shrink = ((1.0 / load).sqrt() * 0.95) as f32;
                 res_scale = (res_scale * shrink).max(MIN_AUTO_W / scene.w as f32 * res_scale);
                 rebuild = true;
             }
-            (win_start, win_frames) = (now, 0);
+            (win_start, win_frames, win_busy) = (now, 0, Duration::ZERO);
         }
-        // Sleep only for whatever is left of this frame's time budget.
-        if let Some(rest) = frame_dt.checked_sub(frame_start.elapsed()) {
-            std::thread::sleep(rest);
+        // Pace against an absolute schedule so sleep overshoot doesn't add up to a lower fps.
+        // If a frame ran long, restart the schedule instead of rushing to catch up.
+        next_frame += frame_dt;
+        let now = Instant::now();
+        if next_frame > now {
+            std::thread::sleep(next_frame - now);
+        } else {
+            next_frame = now;
         }
     }
 
