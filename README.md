@@ -11,7 +11,7 @@ Personal NixOS configuration flake managing multiple hosts, home-manager profile
 | `nixpi5` | aarch64-linux | Raspberry Pi 5 — Authentik (PostgreSQL 16), Home Assistant, go2rtc, SnappyMail |
 | `NixOS-WSL` | x86_64-linux | WSL dev environment |
 | `NixOS-WSL-work` | x86_64-linux | WSL dev environment (work) |
-| `proxy` | aarch64-linux | Public Azure edge — seven Caddy vhosts and the WireGuard listener |
+| `proxy` | aarch64-linux | Public Azure edge — eight Caddy vhosts and the WireGuard listener |
 | `raspberrytimemachine` | aarch64-linux | Raspberry Pi 4 — Time Machine appliance with a USB backup disk; network hostname remains `raspberrypi` |
 | `vidbox` | x86_64-linux | Home server — video streaming, AI coaching, todo-tui, fleet controller |
 | `vm` | x86_64-linux | Minimal test/dev VM |
